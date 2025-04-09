@@ -164,3 +164,13 @@ bot.onText(/\/cuaca/, async (msg) => {
     `🌤 Cuaca sekarang:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h ${weather.is_day}`
   );
 });
+
+bot.onText(/\/berita/, async (msg) => {
+  const chatId = msg.chat.id;
+  const res = await fetch(
+    "https://gnews.io/api/v4/top-headlines?token=process.env.GNEWS_API_TOKEN&lang=id&max=1"
+  );
+  const data = await res.json();
+  const article = data.articles[0];
+  bot.sendMessage(chatId, `📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`);
+});
