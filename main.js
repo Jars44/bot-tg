@@ -107,25 +107,25 @@ bot.onText(/\/quote/, async (msg) => {
 //   }
 // });
 
-// bot.onText(/\/anime (.+)/, async (msg, match) => {
-//   const query = match[1];
-//   const chatId = msg.chat.id;
+bot.onText(/\/anime (.+)/, async (msg, match) => {
+  const query = match[1];
+  const chatId = msg.chat.id;
 
-//   try {
-//     const res = await jikanjs.search("anime", query);
-//     const anime = res.results[0];
+  try {
+    const res = await jikanjs.search("anime", query);
+    const anime = res.results[0];
 
-//     bot.sendMessage(
-//       chatId,
-//       `🎬 ${anime.title}
-// 📅 Rilis: ${anime.start_date}
-// 📈 Skor: ${anime.score}
-// 📝 Sinopsis: ${anime.synopsis}`
-//     );
-//   } catch (err) {
-//     bot.sendMessage(chatId, "Anime gak ketemu, bro 😅");
-//   }
-// });
+    bot.sendMessage(
+      chatId,
+      `🎬 ${anime.title}
+📅 Rilis: ${anime.start_date}
+📈 Skor: ${anime.score}
+📝 Sinopsis: ${anime.synopsis}`
+    );
+  } catch (err) {
+    bot.sendMessage(chatId, "Anime gak ketemu, bro 😅");
+  }
+});
 
 // bot.onText(/\/cuaca (.+)/, async (msg, match) => {
 //   const lokasi = match[1];
@@ -175,22 +175,22 @@ bot.onText(/\/berita/, async (msg) => {
   bot.sendMessage(chatId, `📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`);
 });
 
-// bot.onText(/\/translate (.+)/, async (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const text = match[1];
-//   const res = await fetch("https://libretranslate.com/translate", {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({
-//       q: text,
-//       source: "en",
-//       target: "id",
-//       format: "text",
-//     }),
-//   });
-//   const data = await res.json();
-//   bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
-// });
+bot.onText(/\/translate (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const text = match[1];
+  const res = await fetch("https://libretranslate.com/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      q: text,
+      source: "en",
+      target: "id",
+      format: "text",
+    }),
+  });
+  const data = await res.json();
+  bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
+});
 
 // bot.onText(/\/tanya (.+)/, async (msg, match) => {
 //   const chatId = msg.chat.id;
