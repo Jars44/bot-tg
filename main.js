@@ -1,11 +1,11 @@
 const axios = require("axios"); // Import axios for HTTP requests
-const cheerio = require("cheerio"); // Import cheerio for web scraping
+// const cheerio = require("cheerio"); // Import cheerio for web scraping
 const TelegramBot = require("node-telegram-bot-api");
 // const AladhanAPI = "https://api.aladhan.com/v1"; // Import Aladhan API URL
+// const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 // import OpenAI from "openai"; // Import OpenAI library
 // const client = new OpenAI();
 // var cron = require("node-cron"); // Import cron library
-// const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 // const zenquotesAPI = "https://zenquotes.io/api/quotes/"; // Import ZenQuotes API URL
 // const { Translate } = require("@google-cloud/translate").v2; // Import Google Cloud Translate library
 // const lyricsAPI = "https://api.lyrics.ovh/v1/artist/title"; // Import Lyrics API URL
@@ -106,3 +106,48 @@ bot.onText(/\/quote/, async (msg) => {
 //     bot.sendMessage(chatId, "Gagal ambil quote bro 😢");
 //   }
 // });
+
+// bot.onText(/\/anime (.+)/, async (msg, match) => {
+//   const query = match[1];
+//   const chatId = msg.chat.id;
+
+//   try {
+//     const res = await jikanjs.search("anime", query);
+//     const anime = res.results[0];
+
+//     bot.sendMessage(
+//       chatId,
+//       `🎬 ${anime.title}
+// 📅 Rilis: ${anime.start_date}
+// 📈 Skor: ${anime.score}
+// 📝 Sinopsis: ${anime.synopsis}`
+//     );
+//   } catch (err) {
+//     bot.sendMessage(chatId, "Anime gak ketemu, bro 😅");
+//   }
+// });
+
+bot.onText(/\/cuaca (.+)/, async (msg, match) => {
+  const lokasi = match[1];
+  const chatId = msg.chat.id;
+
+  try {
+    // Contoh: Koordinat Malang
+    const lat = -7.983908;
+    const lon = 112.621391;
+
+    const res = await axios.get(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+    );
+
+    const cuaca = res.data.current_weather;
+    bot.sendMessage(
+      chatId,
+      `Cuaca sekarang:
+🌡️ Suhu: ${cuaca.temperature}°C
+💨 Angin: ${cuaca.windspeed} km/h`
+    );
+  } catch (err) {
+    bot.sendMessage(chatId, "Gagal mengambil info cuaca 😓");
+  }
+});
