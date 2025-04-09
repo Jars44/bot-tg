@@ -192,23 +192,23 @@ bot.onText(/\/berita/, async (msg) => {
 //   bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
 // });
 
-bot.onText(/\/tanya (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const prompt = match[1];
+// bot.onText(/\/tanya (.+)/, async (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const prompt = match[1];
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer YOUR_OPENROUTER_KEY`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
+//   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+//     method: "POST",
+//     headers: {
+//       Authorization: `Bearer YOUR_OPENROUTER_KEY`,
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       model: "openai/gpt-3.5-turbo",
+//       messages: [{ role: "user", content: prompt }],
+//     }),
+//   });
 
-  const data = await res.json();
-  const reply = data.choices[0].message.content;
-  bot.sendMessage(chatId, reply);
-});
+//   const data = await res.json();
+//   const reply = data.choices[0].message.content;
+//   bot.sendMessage(chatId, reply);
+// });
