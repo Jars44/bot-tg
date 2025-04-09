@@ -1,4 +1,5 @@
 const axios = require("axios"); // Import axios for HTTP requests
+const cheerio = require("cheerio"); // Import cheerio for web scraping
 const TelegramBot = require("node-telegram-bot-api");
 // const AladhanAPI = "https://api.aladhan.com/v1"; // Import Aladhan API URL
 // import OpenAI from "openai"; // Import OpenAI library
@@ -84,7 +85,6 @@ bot.onText(/\/lirik (.+) /, async (msg, match) => {
 });
 
 bot.onText(/\/quote/, async (msg) => {
-  bot.sendMessage(chatId, "Mencari quote...");
   const chatId = msg.chat.id;
   const res = await fetch("https://favqs.com/api/qotd");
   const data = await res.json();
@@ -92,3 +92,17 @@ bot.onText(/\/quote/, async (msg) => {
   const author = data.quote.author;
   bot.sendMessage(chatId, `"${quote}"\n\n- ${author}`);
 });
+
+// bot.onText(/\/quote|\/bijak/, async (msg) => {
+//   const chatId = msg.chat.id;
+//   try {
+//     const res = await axios.get("https://jagokata.com/kata-bijak/acak.html");
+//     const $ = cheerio.load(res.data);
+//     const quote = $(".quote").first().text().trim();
+//     const author = $(".author").first().text().trim();
+
+//     bot.sendMessage(chatId, `💬 *"${quote}"*\n\n— ${author}`, { parse_mode: "Markdown" });
+//   } catch (err) {
+//     bot.sendMessage(chatId, "Gagal ambil quote bro 😢");
+//   }
+// });
