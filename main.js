@@ -212,3 +212,27 @@ bot.onText(/\/berita/, async (msg) => {
 //   const reply = data.choices[0].message.content;
 //   bot.sendMessage(chatId, reply);
 // });
+
+bot.onText(/\/shalat (.+)/, async (msg, match) => {
+  const kota = match[1];
+  const chatId = msg.chat.id;
+
+  try {
+    const res = await axios.get(
+      `https://api.aladhan.com/v1/timingsByCity?city=${kota}&country=Indonesia&method=11`
+    );
+    const data = res.data.data.timings;
+
+    bot.sendMessage(
+      chatId,
+      `🕌 Jadwal Shalat di ${kota}:
+Subuh: ${data.Fajr}
+Dzuhur: ${data.Dhuhr}
+Ashar: ${data.Asr}
+Maghrib: ${data.Maghrib}
+Isya: ${data.Isha}`
+    );
+  } catch (err) {
+    bot.sendMessage(chatId, "Gagal ambil jadwal shalat 😢");
+  }
+});
