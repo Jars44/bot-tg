@@ -60,8 +60,35 @@ bot.onText(gempa, async (callback) => {
   });
 });
 
-bot.on("message", (callback) => {
-  if (!sayHi.test(callback.text) && !gempa.test(callback.text)) {
-    bot.sendMessage(callback.from.id, "apalah");
+// bot.on("message", (callback) => {
+//   if (!sayHi.test(callback.text) && !gempa.test(callback.text)) {
+//     bot.sendMessage(callback.from.id, "apalah");
+//   }
+// });
+
+bot.onText(/\/lirik (.+) /, async (msg, match) => {
+  const input = match[1];
+  const [artist, title] = input.split(" - ");
+  const chatId = msg.chat.id;
+
+  if (!artist || !title) {
+    return bot.sendMessage(chatId, "Format salah! Gunakan: /lirik artist - title");
   }
+  bot.sendMessage(chatId, "Mencari lirik...");
+  try {
+    const res = await axios.get(`https://api.lyrics.ovh/v1/${artist}/${title}`);
+    bot.sendMessage(chatId, `Lirik :\n${res.data.lyrics}`);
+  } catch (error) {
+    bot.sendMessage(chatId, "Lirik tidak ditemukan!");
+  }
+});
+
+bot.onText(/\/quote/, async (msg) => {
+  bot.sendMessage(chatId, "Mencari quote...");
+  const chatId = msg.chat.id;
+  const res = await fetch("https://favqs.com/api/qotd");
+  const data = await res.json();
+  const quote = data.quote.body;
+  const author = data.quote.author;
+  bot.sendMessage(chatId, `"${quote}"\n\n- ${author}`);
 });
