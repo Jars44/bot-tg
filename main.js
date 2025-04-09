@@ -127,27 +127,40 @@ bot.onText(/\/quote/, async (msg) => {
 //   }
 // });
 
-bot.onText(/\/cuaca (.+)/, async (msg, match) => {
-  const lokasi = match[1];
+// bot.onText(/\/cuaca (.+)/, async (msg, match) => {
+//   const lokasi = match[1];
+//   const chatId = msg.chat.id;
+
+//   try {
+//     // Contoh: Koordinat Malang
+//     const lat = -7.983908;
+//     const lon = 112.621391;
+
+//     const res = await axios.get(
+//       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+//     );
+
+//     const cuaca = res.data.current_weather;
+//     bot.sendMessage(
+//       chatId,
+//       `Cuaca sekarang:
+// 🌡️ Suhu: ${cuaca.temperature}°C
+// 💨 Angin: ${cuaca.windspeed} km/h`
+//     );
+//   } catch (err) {
+//     bot.sendMessage(chatId, "Gagal mengambil info cuaca 😓");
+//   }
+// });
+
+bot.onText(/\/cuaca/, async (msg) => {
   const chatId = msg.chat.id;
-
-  try {
-    // Contoh: Koordinat Malang
-    const lat = -7.983908;
-    const lon = 112.621391;
-
-    const res = await axios.get(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
-    );
-
-    const cuaca = res.data.current_weather;
-    bot.sendMessage(
-      chatId,
-      `Cuaca sekarang:
-🌡️ Suhu: ${cuaca.temperature}°C
-💨 Angin: ${cuaca.windspeed} km/h`
-    );
-  } catch (err) {
-    bot.sendMessage(chatId, "Gagal mengambil info cuaca 😓");
-  }
+  const res = await fetch(
+    "https://api.open-meteo.com/v1/forecast?latitude=-7.98&longitude=112.63&current_weather=true"
+  );
+  const data = await res.json();
+  const weather = data.current_weather;
+  bot.sendMessage(
+    chatId,
+    `🌤 Cuaca sekarang:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h ${weather.is_day}`
+  );
 });
