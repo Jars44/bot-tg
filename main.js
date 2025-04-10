@@ -93,44 +93,44 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
 });
 
 // Command untuk mencari lirik menggunakan Genius API
-bot.onText(/\/lirikg (.+)/, async (msg, match) => {
-  const input = match[1].trim();
-  const [artist, title] = input.split(" - ");
-  const chatId = msg.chat.id;
+// bot.onText(/\/lirikg (.+)/, async (msg, match) => {
+//   const input = match[1].trim();
+//   const [artist, title] = input.split(" - ");
+//   const chatId = msg.chat.id;
 
-  if (!artist || !title) {
-    return bot.sendMessage(chatId, "Format salah! Contoh: /lirikg Coldplay - Yellow");
-  }
+//   if (!artist || !title) {
+//     return bot.sendMessage(chatId, "Format salah! Contoh: /lirikg Coldplay - Yellow");
+//   }
 
-  bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist} di Genius...`);
+//   bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist} di Genius...`);
 
-  try {
-    // Cari lagu di Genius
-    const searchRes = await axios.get(`${GENIUS_API_URL}/search`, {
-      params: { q: `${title} ${artist}` },
-      headers: { Authorization: `Bearer ${GENIUS_API_KEY}` }
-    });
+//   try {
+//     // Cari lagu di Genius
+//     const searchRes = await axios.get(`${GENIUS_API_URL}/search`, {
+//       params: { q: `${title} ${artist}` },
+//       headers: { Authorization: `Bearer ${GENIUS_API_KEY}` }
+//     });
 
-    const song = searchRes.data.response.hits[0]?.result;
-    if (!song) {
-      throw new Error('Lagu tidak ditemukan di Genius');
-    }
+//     const song = searchRes.data.response.hits[0]?.result;
+//     if (!song) {
+//       throw new Error('Lagu tidak ditemukan di Genius');
+//     }
 
-    // Note: Diperlukan implementasi scraper untuk mengambil lirik dari Genius
-    // Ini hanya contoh - perlu disesuaikan dengan implementasi aktual
-    const lyricsRes = await axios.get(`https://example-lyrics-scraper.com/genius/${song.id}`);
-    const lyrics = lyricsRes.data.lyrics
-      .replace(/\r\n/g, "\n")
-      .replace(/(\n{3,})/g, "\n\n");
+//     // Note: Diperlukan implementasi scraper untuk mengambil lirik dari Genius
+//     // Ini hanya contoh - perlu disesuaikan dengan implementasi aktual
+//     const lyricsRes = await axios.get(`https://example-lyrics-scraper.com/genius/${song.id}`);
+//     const lyrics = lyricsRes.data.lyrics
+//       .replace(/\r\n/g, "\n")
+//       .replace(/(\n{3,})/g, "\n\n");
 
-    bot.sendMessage(chatId, `🎵 *${title}* - ${artist} (via Genius)\n\n${lyrics}`, {
-      parse_mode: "Markdown",
-    });
-  } catch (error) {
-    console.error("Genius lyrics search error:", error);
-    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}" di Genius\nCoba format: /lirikg <artist> - <title>`);
-  }
-});
+//     bot.sendMessage(chatId, `🎵 *${title}* - ${artist} (via Genius)\n\n${lyrics}`, {
+//       parse_mode: "Markdown",
+//     });
+//   } catch (error) {
+//     console.error("Genius lyrics search error:", error);
+//     bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}" di Genius\nCoba format: /lirikg <artist> - <title>`);
+//   }
+// });
 
 bot.onText(/\/quote/, async (msg) => {
   const chatId = msg.chat.id;
