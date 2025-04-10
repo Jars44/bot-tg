@@ -12,16 +12,23 @@ const options = {
 
 const bot = new TelegramBot(token, options);
 
-const prefix = ".";
 
-const sayHi = new RegExp(`^${prefix}halo$`);
-const gempa = new RegExp(`^${prefix}gempa$`);
-
-bot.onText(sayHi, (callback) => {
-  bot.sendMessage(callback.from.id, "Halo juga!");
+bot.on("polling_error", (error) => {
+  console.error('Polling Error:', {
+    code: error.code,
+    message: error.message,
+    stack: error.stack,
+    fullError: error
+  });
 });
 
-bot.onText(gempa, async (callback) => {
+bot.onText(/\/halo/, async (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Halo juga!");
+});
+
+bot.onText(/\/gempa/, async (msg) => {
+  const chatId = msg.chat.id;
   const url = "https://data.bmkg.go.id/DataMKG/TEWS/";
 
   const apiCall = await fetch(url + "/autogempa.json");
@@ -38,23 +45,17 @@ bot.onText(gempa, async (callback) => {
   Koordinat: ${Coordinates}
   Lintang: ${Lintang}
   Bujur: ${Bujur}
-  Magnitudo: ${Magnitude}
+  Magnitudo: ${Magnitude} SR
   Kedalaman: ${Kedalaman}
   Wilayah: ${Wilayah}
   Potensi: ${Potensi}
   `;
 
-  bot.sendMessage(callback.from.id, "Ini berita gempa!");
-  bot.sendPhoto(callback.from.id, image, {
+  bot.sendMessage(chatId, "Ini berita gempa!");
+  bot.sendPhoto(chatId, image, {
     caption: resultText,
   });
 });
-
-// bot.on("message", (callback) => {
-//   if (!sayHi.test(callback.text) && !gempa.test(callback.text)) {
-//     bot.sendMessage(callback.from.id, "apalah");
-//   }
-// });
 
 bot.onText(/\/lirik (.+) /, async (msg, match) => {
   const input = match[1];
@@ -238,22 +239,12 @@ bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : '';
   
-  // Check for random text patterns (like "adsfgugirugasuyerfyuwgu")
-  const isRandomText = text.length >= 5 && 
-    !text.includes(' ') && 
-    !text.match(/^[0-9]+$/) && // Exclude pure numbers
-    (/[a-z]{4,}/i.test(text) || /(.)\1{2,}/.test(text)); // Either 4+ letters or 3+ repeating chars
-  
-  // Check for insults
-  const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'pukimak', 'bajingan', 'brengsek', 'dongok'];
-  const isInsult = insults.some(word => text.includes(word));
-  
-  // List of all valid commands (both dot and slash)
+  // List of all valid commands
   const validCommands = [
-    sayHi, gempa,
     /^\/lirik/, /^\/quote/, /^\/anime/,
     /^\/cuaca/, /^\/berita/, /^\/translate/,
-    /^\/shalat/, /^\/tanya/
+    /^\/shalat/, /^\/tanya/, /^\/gempa/,
+    /^\/help/, /^\/start/, /^\/halo/
   ];
 
   // Check for incomplete commands
@@ -263,19 +254,34 @@ bot.on("message", (msg) => {
     /^\/anime$/   // /anime without title
   ];
 
-  // Check if it's an invalid command (starts with prefix or slash but not recognized)
-  const isInvalidCommand = (text.startsWith(prefix) || text.startsWith('/')) && 
-    !validCommands.some(cmd => cmd.test(text));
+  // Check if it's an invalid command (starts slash but not recognized)
+  const isInvalidCommand = (!validCommands.some(cmd => cmd.test(text)));
   
   const isIncompleteCommand = incompleteCommands.some(cmd => cmd.test(text));
 
   if (isInvalidCommand) {
     bot.sendMessage(chatId, "saya tidak mengerti");
+    return;
   }
   else if (isIncompleteCommand) { 
     bot.sendMessage(chatId, "Format salah! Silakan coba lagi.");
+    return;
   }
-  else if (isRandomText || isInsult) {
-    bot.sendMessage(chatId, "apalah");
+
+  // Only check for random text/insults in non-command messages
+  if (!text.startsWith('/')) {
+    // More lenient random text detection
+    const isRandomText = text.length >= 8 && 
+      !text.includes(' ') && 
+      !text.match(/^[0-9]+$/) && // Exclude pure numbers
+      (/[a-z]{6,}/i.test(text) || /(.)\1{3,}/.test(text)); // Either 6+ letters or 4+ repeating chars
+    
+    // Check for insults
+    const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'pukimak', 'bajingan', 'brengsek', 'dongok'];
+    const isInsult = insults.some(word => text.includes(word));
+
+    if (isRandomText || isInsult) {
+      bot.sendMessage(chatId, "apalah");
+    }
   }
 });
