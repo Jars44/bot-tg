@@ -253,16 +253,29 @@ bot.on("message", (msg) => {
     sayHi, gempa,
     /^\/lirik/, /^\/quote/, /^\/anime/,
     /^\/cuaca/, /^\/berita/, /^\/translate/,
-    /^\/shalat/
+    /^\/shalat/, /^\/tanya/
+  ];
+
+  // Check for incomplete commands
+  const incompleteCommands = [
+    /^\/shalat$/, // /shalat without city
+    /^\/tanya$/,  // /tanya without question
+    /^\/anime$/   // /anime without title
   ];
 
   // Check if it's an invalid command (starts with prefix or slash but not recognized)
   const isInvalidCommand = (text.startsWith(prefix) || text.startsWith('/')) && 
     !validCommands.some(cmd => cmd.test(text));
   
-  if (isRandomText || isInsult) {
-    bot.sendMessage(chatId, "apalah");
-  } else if (isInvalidCommand) {
+  const isIncompleteCommand = incompleteCommands.some(cmd => cmd.test(text));
+
+  if (isInvalidCommand) {
     bot.sendMessage(chatId, "saya tidak mengerti");
+  }
+  else if (isIncompleteCommand) { 
+    bot.sendMessage(chatId, "Format salah! Silakan coba lagi.");
+  }
+  else if (isRandomText || isInsult) {
+    bot.sendMessage(chatId, "apalah");
   }
 });
