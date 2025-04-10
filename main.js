@@ -30,30 +30,35 @@ bot.onText(/\/gempa/, async (msg) => {
   const chatId = msg.chat.id;
   const url = "https://data.bmkg.go.id/DataMKG/TEWS/";
 
-  const apiCall = await fetch(url + "/autogempa.json");
-  const {
-    Infogempa: {
-      gempa: { Tanggal, Jam, Magnitude, Kedalaman, Wilayah, Potensi, Coordinates, Lintang, Bujur, Shakemap },
-    },
-  } = await apiCall.json();
+  try {
+    const apiCall = await fetch(url + "/autogempa.json");
+    const {
+      Infogempa: {
+        gempa: { Tanggal, Jam, Magnitude, Kedalaman, Wilayah, Potensi, Coordinates, Lintang, Bujur, Shakemap },
+      },
+    } = await apiCall.json();
 
-  const image = url + Shakemap;
+    const image = url + Shakemap;
 
-  const resultText = `
-  Waktu: ${Tanggal} | ${Jam}
-  Koordinat: ${Coordinates}
-  Lintang: ${Lintang}
-  Bujur: ${Bujur}
-  Magnitudo: ${Magnitude} SR
-  Kedalaman: ${Kedalaman}
-  Wilayah: ${Wilayah}
-  Potensi: ${Potensi}
-  `;
+    const resultText = `
+Waktu: ${Tanggal} | ${Jam}
+Koordinat: ${Coordinates}
+Lintang: ${Lintang}
+Bujur: ${Bujur}
+Magnitudo: ${Magnitude} SR
+Kedalaman: ${Kedalaman}
+Wilayah: ${Wilayah}
+Potensi: ${Potensi}
+`;
 
-  bot.sendMessage(chatId, "Ini berita gempa!");
-  bot.sendPhoto(chatId, image, {
-    caption: resultText,
-  });
+    bot.sendMessage(chatId, "Ini berita gempa!");
+    bot.sendPhoto(chatId, image, {
+      caption: resultText,
+    });
+  } catch (error) {
+    console.error("Error ambil data gempa:", error);
+    bot.sendMessage(chatId, "Gagal mengambil data gempa.");
+  }
 });
 
 bot.onText(/\/lirik (.+)/, async (msg, match) => {
@@ -299,7 +304,7 @@ bot.onText(/\/help/, async (msg) => {
   /anime - Cari Anime (Gunakan Format /anime <nama anime>)
   /lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
     );
-)};
+});
 
 // General message handler
 bot.on("message", (msg) => {
