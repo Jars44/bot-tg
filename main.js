@@ -23,7 +23,8 @@ bot.on("polling_error", (error) => {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Selamat datang di @Jars_Bot, Ketik /help untuk selengkapnya");
+  bot.sendMessage(chatId, `Selamat datang di @Jars_Bot
+  Ketik /help untuk selengkapnya`);
 });
 
 bot.onText(/\/halo/, async (msg) => {
