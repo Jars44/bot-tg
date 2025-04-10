@@ -24,7 +24,7 @@ bot.on("polling_error", (error) => {
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, `Selamat datang di @Jars_Bot
-  Ketik /help untuk selengkapnya`);
+Ketik /help untuk selengkapnya`);
 });
 
 bot.onText(/\/halo/, async (msg) => {
@@ -287,7 +287,7 @@ bot.onText(/\/sholat (.+)/, async (msg, match) => {
 
     bot.sendMessage(
       chatId,
-      `🕌 Jadwal Shalat di ${kota}:
+      `🕌 Jadwal Sholat di ${kota}:
 Subuh: ${data.Fajr}
 Dzuhur: ${data.Dhuhr}
 Ashar: ${data.Asr}
@@ -302,13 +302,13 @@ Isya: ${data.Isha}`
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, `/halo - Say Halo
-  /gempa - Berita Gempa Terbaru
-  /berita - Berita Terkini
-  /quote - Quote of the day
-  /cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
-  /sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota)
-  /anime - Cari Anime (Gunakan Format /anime <nama anime>)
-  /lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
+/gempa - Berita Gempa Terbaru
+/berita - Berita Terkini
+/quote - Quote of the day
+/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
+/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota)
+/anime - Cari Anime (Gunakan Format /anime <nama anime>)
+/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
     );
 });
 
