@@ -244,7 +244,7 @@ bot.on("message", (msg) => {
     /([a-zA-Z])\1{2,}/.test(text);
   
   // Check for insults
-  const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'sialan', 'pukimak', 'bajingan', 'setan', 'bajingan', 'brengsek'];
+  const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'pukimak', 'bajingan', 'brengsek', 'dongok'];
   const isInsult = insults.some(word => text.includes(word));
   
   // List of all valid commands (both dot and slash)
