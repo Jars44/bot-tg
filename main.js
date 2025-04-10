@@ -239,9 +239,10 @@ bot.on("message", (msg) => {
   const text = msg.text ? msg.text.toLowerCase() : '';
   
   // Check for random text patterns (like "adsfgugirugasuyerfyuwgu")
-  const isRandomText = text.length > 8 && 
+  const isRandomText = text.length >= 5 && 
     !text.includes(' ') && 
-    /([a-zA-Z])\1{2,}/.test(text);
+    !text.match(/^[0-9]+$/) && // Exclude pure numbers
+    (/[a-z]{4,}/i.test(text) || /(.)\1{2,}/.test(text)); // Either 4+ letters or 3+ repeating chars
   
   // Check for insults
   const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'pukimak', 'bajingan', 'brengsek', 'dongok'];
