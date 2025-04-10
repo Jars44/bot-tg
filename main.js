@@ -5,6 +5,10 @@ const axios = require("axios"); // Import axios for HTTP requests
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 // var cron = require("node-cron"); // Import cron library
 
+// Konfigurasi API
+const GENIUS_API_KEY = "YOUR_GENIUS_API_KEY"; // Ganti dengan API key asli
+const GENIUS_API_URL = "https://api.genius.com";
+
 const token = "process.env.BOT_TOKEN";
 const options = {
   polling: true,
@@ -12,13 +16,12 @@ const options = {
 
 const bot = new TelegramBot(token, options);
 
-
 bot.on("polling_error", (error) => {
-  console.error('Polling Error:', {
+  console.error("Polling Error:", {
     code: error.code,
     message: error.message,
     stack: error.stack,
-    fullError: error
+    fullError: error,
   });
 });
 
@@ -57,20 +60,75 @@ bot.onText(/\/gempa/, async (msg) => {
   });
 });
 
-bot.onText(/\/lirik (.+) /, async (msg, match) => {
-  const input = match[1];
+bot.onText(/\/lirik (.+)/, async (msg, match) => {
+  const input = match[1].trim();
   const [artist, title] = input.split(" - ");
   const chatId = msg.chat.id;
 
   if (!artist || !title) {
-    return bot.sendMessage(chatId, "Format salah! Gunakan: /lirik artist - title");
+    return bot.sendMessage(chatId, "Format salah! Contoh: /lirik Coldplay - Yellow");
   }
-  bot.sendMessage(chatId, "Mencari lirik...");
+
+  bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist}...`);
+
   try {
-    const res = await axios.get(`https://api.lyrics.ovh/v1/${artist}/${title}`);
-    bot.sendMessage(chatId, `Lirik :\n${res.data.lyrics}`);
+    const res = await axios.get(
+      `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+    );
+    if (!res.data.lyrics) {
+      throw new Error("Lirik tidak ditemukan");
+    }
+
+    const lyrics = res.data.lyrics
+      .replace(/\r\n/g, "\n") // Normalize line endings
+      .replace(/(\n{3,})/g, "\n\n"); // Remove excessive newlines
+
+    bot.sendMessage(chatId, `🎵 *${title}* - ${artist}\n\n${lyrics}`, {
+      parse_mode: "Markdown",
+    });
   } catch (error) {
-    bot.sendMessage(chatId, "Lirik tidak ditemukan!");
+    console.error("Lyrics search error:", error);
+    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}"\nCoba format: /lirik <artist> - <title>`);
+  }
+});
+
+// Command untuk mencari lirik menggunakan Genius API
+bot.onText(/\/lirikg (.+)/, async (msg, match) => {
+  const input = match[1].trim();
+  const [artist, title] = input.split(" - ");
+  const chatId = msg.chat.id;
+
+  if (!artist || !title) {
+    return bot.sendMessage(chatId, "Format salah! Contoh: /lirikg Coldplay - Yellow");
+  }
+
+  bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist} di Genius...`);
+
+  try {
+    // Cari lagu di Genius
+    const searchRes = await axios.get(`${GENIUS_API_URL}/search`, {
+      params: { q: `${title} ${artist}` },
+      headers: { Authorization: `Bearer ${GENIUS_API_KEY}` }
+    });
+
+    const song = searchRes.data.response.hits[0]?.result;
+    if (!song) {
+      throw new Error('Lagu tidak ditemukan di Genius');
+    }
+
+    // Note: Diperlukan implementasi scraper untuk mengambil lirik dari Genius
+    // Ini hanya contoh - perlu disesuaikan dengan implementasi aktual
+    const lyricsRes = await axios.get(`https://example-lyrics-scraper.com/genius/${song.id}`);
+    const lyrics = lyricsRes.data.lyrics
+      .replace(/\r\n/g, "\n")
+      .replace(/(\n{3,})/g, "\n\n");
+
+    bot.sendMessage(chatId, `🎵 *${title}* - ${artist} (via Genius)\n\n${lyrics}`, {
+      parse_mode: "Markdown",
+    });
+  } catch (error) {
+    console.error("Genius lyrics search error:", error);
+    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}" di Genius\nCoba format: /lirikg <artist> - <title>`);
   }
 });
 
@@ -237,48 +295,73 @@ Isya: ${data.Isha}`
 // General message handler
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
-  const text = msg.text ? msg.text.toLowerCase() : '';
-  
+  const text = msg.text ? msg.text.toLowerCase() : "";
+
   // List of all valid commands
   const validCommands = [
-    /^\/lirik/, /^\/quote/, /^\/anime/,
-    /^\/cuaca/, /^\/berita/, /^\/translate/,
-    /^\/shalat/, /^\/tanya/, /^\/gempa/,
-    /^\/help/, /^\/start/, /^\/halo/
+    /^\/lirik/,
+    /^\/quote/,
+    /^\/anime/,
+    /^\/cuaca/,
+    /^\/berita/,
+    /^\/translate/,
+    /^\/shalat/,
+    /^\/tanya/,
+    /^\/gempa/,
+    /^\/help/,
+    /^\/start/,
+    /^\/halo/,
   ];
 
   // Check for incomplete commands
   const incompleteCommands = [
     /^\/shalat$/, // /shalat without city
-    /^\/tanya$/,  // /tanya without question
-    /^\/anime$/   // /anime without title
+    /^\/tanya$/, // /tanya without question
+    /^\/anime$/, // /anime without title
+    /^\/lirik$/, // /lirik without artist - title
+    // /^\/cuaca$/, // /cuaca without location
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
-  const isInvalidCommand = (!validCommands.some(cmd => cmd.test(text)));
-  
-  const isIncompleteCommand = incompleteCommands.some(cmd => cmd.test(text));
+  const isInvalidCommand = text.startsWith("/") && !validCommands.some((cmd) => cmd.test(text));
+
+  const isIncompleteCommand = incompleteCommands.some((cmd) => cmd.test(text));
 
   if (isInvalidCommand) {
     bot.sendMessage(chatId, "saya tidak mengerti");
     return;
-  }
-  else if (isIncompleteCommand) { 
+  } else if (isIncompleteCommand) {
     bot.sendMessage(chatId, "Format salah! Silakan coba lagi.");
     return;
   }
 
   // Only check for random text/insults in non-command messages
-  if (!text.startsWith('/')) {
+  if (!text.startsWith("/")) {
     // More lenient random text detection
-    const isRandomText = text.length >= 8 && 
-      !text.includes(' ') && 
+    const isRandomText =
+      text.length >= 5 &&
+      !text.includes(" ") &&
       !text.match(/^[0-9]+$/) && // Exclude pure numbers
       (/[a-z]{6,}/i.test(text) || /(.)\1{3,}/.test(text)); // Either 6+ letters or 4+ repeating chars
-    
+
     // Check for insults
-    const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'pukimak', 'bajingan', 'brengsek', 'dongok'];
-    const isInsult = insults.some(word => text.includes(word));
+    const insults = [
+      "bego",
+      "goblok",
+      "tolol",
+      "anjing",
+      "bangsat",
+      "babi",
+      "kontol",
+      "memek",
+      "asu",
+      "jancok",
+      "pukimak",
+      "bajingan",
+      "brengsek",
+      "dongok",
+    ];
+    const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
       bot.sendMessage(chatId, "apalah");
