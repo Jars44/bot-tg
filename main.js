@@ -264,7 +264,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
 //   bot.sendMessage(chatId, reply);
 // });
 
-bot.onText(/\/shalat (.+)/, async (msg, match) => {
+bot.onText(/\/sholat (.+)/, async (msg, match) => {
   const kota = match[1];
   const chatId = msg.chat.id;
 
@@ -288,6 +288,19 @@ Isya: ${data.Isha}`
   }
 });
 
+bot.onText(/\/help/, async (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, `/halo - Say Halo
+  /gempa - Berita Gempa Terbaru
+  /berita - Berita Terkini
+  /quote - Quote of the day
+  /cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
+  /sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota)
+  /anime - Cari Anime (Gunakan Format /anime <nama anime>)
+  /lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
+    );
+)};
+
 // General message handler
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
@@ -301,7 +314,7 @@ bot.on("message", (msg) => {
     /^\/cuaca/,
     /^\/berita/,
     /^\/translate/,
-    /^\/shalat/,
+    /^\/sholat/,
     /^\/tanya/,
     /^\/gempa/,
     /^\/help/,
@@ -311,7 +324,7 @@ bot.on("message", (msg) => {
 
   // Check for incomplete commands
   const incompleteCommands = [
-    /^\/shalat$/, // /shalat without city
+    /^\/sholat$/, // /shalat without city
     /^\/tanya$/, // /tanya without question
     /^\/anime$/, // /anime without title
     /^\/lirik$/, // /lirik without artist - title
