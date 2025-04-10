@@ -232,3 +232,36 @@ Isya: ${data.Isha}`
     bot.sendMessage(chatId, "Gagal ambil jadwal shalat 😢");
   }
 });
+
+// General message handler
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text ? msg.text.toLowerCase() : '';
+  
+  // Check for random text patterns (like "adsfgugirugasuyerfyuwgu")
+  const isRandomText = text.length > 8 && 
+    !text.includes(' ') && 
+    /([a-zA-Z])\1{2,}/.test(text);
+  
+  // Check for insults
+  const insults = ['bego', 'goblok', 'tolol', 'anjing', 'bangsat', 'babi', 'kontol', 'memek', 'asu', 'jancok', 'sialan', 'pukimak', 'bajingan', 'setan', 'bajingan', 'brengsek'];
+  const isInsult = insults.some(word => text.includes(word));
+  
+  // List of all valid commands (both dot and slash)
+  const validCommands = [
+    sayHi, gempa,
+    /^\/lirik/, /^\/quote/, /^\/anime/,
+    /^\/cuaca/, /^\/berita/, /^\/translate/,
+    /^\/shalat/
+  ];
+
+  // Check if it's an invalid command (starts with prefix or slash but not recognized)
+  const isInvalidCommand = (text.startsWith(prefix) || text.startsWith('/')) && 
+    !validCommands.some(cmd => cmd.test(text));
+  
+  if (isRandomText || isInsult) {
+    bot.sendMessage(chatId, "apalah");
+  } else if (isInvalidCommand) {
+    bot.sendMessage(chatId, "saya tidak mengerti");
+  }
+});
