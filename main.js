@@ -5,10 +5,6 @@ const axios = require("axios"); // Import axios for HTTP requests
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 // var cron = require("node-cron"); // Import cron library
 
-// Konfigurasi API
-const GENIUS_API_KEY = "YOUR_GENIUS_API_KEY"; // Ganti dengan API key asli
-const GENIUS_API_URL = "https://api.genius.com";
-
 const token = "process.env.BOT_TOKEN";
 const options = {
   polling: true,
