@@ -95,7 +95,7 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
     });
   } catch (error) {
     console.error("Lyrics search error:", error);
-    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}"\nCoba format: /lirik <artist> - <title>`);
+    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}"\nCoba format: /lirik artist - title`);
   }
 });
 
@@ -305,10 +305,10 @@ bot.onText(/\/help/, async (msg) => {
 /gempa - Berita Gempa Terbaru
 /berita - Berita Terkini
 /quote - Quote of the day
-/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
-/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota)
-/anime - Cari Anime (Gunakan Format /anime <nama anime>)
-/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
+/cuaca - Cek Cuaca (Gunakan Format /cuaca nama kota)
+/sholat - Jadwal Sholat (Gunakan Format /sholat nama kota)
+/anime - Cari Anime (Gunakan Format /anime nama anime)
+/lirik - Cari Lirik Lagu (Gunakan Format /lirik penyanyi - judul)`
     );
 });
 
@@ -351,7 +351,7 @@ bot.on("message", (msg) => {
     bot.sendMessage(chatId, "saya tidak mengerti");
     return;
   } else if (isIncompleteCommand) {
-    bot.sendMessage(chatId, "Format salah! Silakan coba lagi.");
+    bot.sendMessage(chatId, "Format salah! Ketik /help untuk mendapatkan bantuan.");
     return;
   }
 
