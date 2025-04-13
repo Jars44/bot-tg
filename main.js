@@ -383,7 +383,15 @@ bot.on("message", (msg) => {
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      bot.sendMessage(chatId, "apalah");
+      // Send a random reply
+      const replies = [
+        "apalah",
+        "apacoba",
+        "gajelas"
+      ];
+      const randomReply = replies[Math.floor(Math.random() * replies.length)];
+      bot.sendMessage(chatId, randomReply);
+      // bot.sendMessage(chatId, "apalah");
     }
   }
 });
