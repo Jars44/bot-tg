@@ -21,23 +21,23 @@ bot.on("polling_error", (error) => {
   });
 });
 
-function capitalizeEachWord(text) {
-  return text
-    .split(" ") // pisahin teks per kata
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // kapitalin huruf pertama tiap kata
-    .join(" "); // gabungin lagi jadi kalimat
-}
+// function capitalizeEachWord(text) {
+//  return text
+//    .split(" ") // pisahin teks per kata
+//    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // kapitalin huruf pertama tiap kata
+//    .join(" "); // gabungin lagi jadi kalimat
+//}
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
     chatId,
-    "Selamat datang di @Jars_BotKetik \n/help untuk selengkapnya"
+    "Selamat datang di @Jars_Bot\n/help untuk selengkapnya"
   );
 });
 
 bot.onText("halo" || "hai" || "hi", async (msg, match) => {
-  const text = capitalizeEachWord(match[1]);
+  const text = match[1];
   const chatId = msg.chat.id;
   if (text === "halo") {
     bot.sendMessage(chatId, `Halo ${msg.from.first_name}, ada yang bisa saya bantu?`);
@@ -97,7 +97,7 @@ Potensi: ${Potensi}
 });
 
 bot.onText(/\/lirik (.+)/, async (msg, match) => {
-  const input = capitalizeEachWord(match[1].trim());
+  const input = match[1].trim();
   const [artist, title] = input.split(" - ");
   const chatId = msg.chat.id;
 
@@ -201,7 +201,7 @@ bot.onText(/\/quote/, async (msg) => {
 
 bot.onText(/\/anime (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const keyword = capitalizeEachWord(match[1]);
+  const keyword = match[1];
 
   try {
     bot.sendMessage(chatId, `🔍 Mencari anime "${keyword}"...`);
@@ -249,7 +249,7 @@ async function getCoordinates(cityName) {
 
 bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const location = match[1] ? capitalizeEachWord(match[1].trim()) : null;
+  const location = match[1] ? match[1].trim() : null;
 
   try {
     bot.sendMessage(chatId, `🔍 Mencari data cuaca di ${location}...`);
@@ -311,7 +311,7 @@ bot.onText(/\/berita/, async (msg) => {
 
 bot.onText(/\/translate (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const text = capitalizeEachWord(match[1]);
+  const text = match[1];
   bot.sendMessage(chatId, "🔍 Menerjemahkan...");
   try {
     const res = await fetch("https://libretranslate.com/translate", {
@@ -319,7 +319,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         q: text,
-        source: "en",
+        source: "auto",
         target: "id",
         format: "text",
       }),
@@ -356,7 +356,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
 // });
 
 bot.onText(/\/sholat (.+)/, async (msg, match) => {
-  const kota = capitalizeEachWord(match[1]);
+  const kota = match[1];
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, `🔍 Mencari jadwal sholat di ${kota}...`);
   try {
