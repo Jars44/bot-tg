@@ -475,6 +475,7 @@ bot.on("message", (msg) => {
       const stiker = './assets/stk1.webp'
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
       bot.sendSticker(chatId, {stiker})
+      bot.sendSticker(chatId, './assets/stk1.webp')
       bot.sendMessage(chatId, randomReply);
       // bot.sendMessage(chatId, "apalah");
     }
