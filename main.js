@@ -57,7 +57,6 @@ Wilayah: ${Wilayah}
 Potensi: ${Potensi}
 `;
 
-    bot.sendMessage(chatId, "Ini berita gempa!");
     bot.sendPhoto(chatId, image, {
       caption: resultText,
     });
@@ -185,7 +184,7 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
     });
   } catch (err) {
     console.error(err);
-    bot.sendMessage(chatId, "Gagal cari anime bro, coba lagi nanti 🙏");
+    bot.sendMessage(chatId, "Gagal mencari anime, coba lagi nanti 🙏");
   }
 });
 
@@ -305,10 +304,10 @@ bot.onText(/\/help/, async (msg) => {
 /gempa - Berita Gempa Terbaru
 /berita - Berita Terkini
 /quote - Quote of the day
-/cuaca - Cek Cuaca (Gunakan Format /cuaca nama kota)
-/sholat - Jadwal Sholat (Gunakan Format /sholat nama kota)
-/anime - Cari Anime (Gunakan Format /anime nama anime)
-/lirik - Cari Lirik Lagu (Gunakan Format /lirik penyanyi - judul)`
+/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
+/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota>)
+/anime - Cari Anime (Gunakan Format /anime <nama anime>)
+/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
     );
 });
 
@@ -348,7 +347,7 @@ bot.on("message", (msg) => {
   const isIncompleteCommand = incompleteCommands.some((cmd) => cmd.test(text));
 
   if (isInvalidCommand) {
-    bot.sendMessage(chatId, "saya tidak mengerti");
+    bot.sendMessage(chatId, "saya tidak mengerti \nKetik /help untuk mendapatkan bantuan.");
     return;
   } else if (isIncompleteCommand) {
     bot.sendMessage(chatId, "Format salah! Ketik /help untuk mendapatkan bantuan.");
