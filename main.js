@@ -23,8 +23,11 @@ bot.on("polling_error", (error) => {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `Selamat datang di @Jars_Bot
-Ketik /help untuk selengkapnya`);
+  bot.sendMessage(
+    chatId,
+    `Selamat datang di @Jars_Bot
+Ketik /help untuk selengkapnya`
+  );
 });
 
 bot.onText(/\/halo/, async (msg) => {
@@ -40,7 +43,18 @@ bot.onText(/\/gempa/, async (msg) => {
     const apiCall = await fetch(url + "/autogempa.json");
     const {
       Infogempa: {
-        gempa: { Tanggal, Jam, Magnitude, Kedalaman, Wilayah, Potensi, Coordinates, Lintang, Bujur, Shakemap },
+        gempa: {
+          Tanggal,
+          Jam,
+          Magnitude,
+          Kedalaman,
+          Wilayah,
+          Potensi,
+          Coordinates,
+          Lintang,
+          Bujur,
+          Shakemap,
+        },
       },
     } = await apiCall.json();
 
@@ -213,17 +227,57 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
 //   }
 // });
 
-bot.onText(/\/cuaca/, async (msg) => {
+// Fungsi untuk mendapatkan koordinat dari nama kota
+async function getCoordinates(cityName) {
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`);
+    const data = await response.json();
+    if (data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon)
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+}
+
+bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const res = await fetch(
-    "https://api.open-meteo.com/v1/forecast?latitude=-7.98&longitude=112.63&current_weather=true"
-  );
-  const data = await res.json();
-  const weather = data.current_weather;
-  bot.sendMessage(
-    chatId,
-    `🌤 Cuaca sekarang:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h ${weather.is_day}`
-  );
+  const location = match[1] ? match[1].trim() : null;
+
+  try {
+    let lat = -7.98; // Default Malang
+    let lon = 112.63;
+    let locationName = "Malang";
+
+    if (location) {
+      const coords = await getCoordinates(location);
+      if (!coords) {
+        return bot.sendMessage(chatId, `❌ Lokasi "${location}" tidak ditemukan. Coba dengan nama kota yang lebih spesifik.`);
+      }
+      lat = coords.lat;
+      lon = coords.lon;
+      locationName = location;
+    }
+
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+    );
+    const data = await res.json();
+    const weather = data.current_weather;
+    
+    bot.sendMessage(
+      chatId,
+      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${weather.is_day ? 'Siang' : 'Malam'}`
+    );
+  } catch (error) {
+    console.error('Weather fetch error:', error);
+    bot.sendMessage(chatId, '❌ Gagal mengambil data cuaca. Silakan coba lagi nanti.');
+  }
 });
 
 bot.onText(/\/berita/, async (msg) => {
@@ -300,7 +354,9 @@ Isya: ${data.Isha}`
 
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `/halo - Say Halo
+  bot.sendMessage(
+    chatId,
+    `/halo - Say Halo
 /gempa - Berita Gempa Terbaru
 /berita - Berita Terkini
 /quote - Quote of the day
@@ -308,7 +364,7 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota>)
 /anime - Cari Anime (Gunakan Format /anime <nama anime>)
 /lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
-    );
+  );
 });
 
 // General message handler
@@ -384,11 +440,7 @@ bot.on("message", (msg) => {
 
     if (isRandomText || isInsult) {
       // Send a random reply
-      const replies = [
-        "apalah",
-        "apacoba",
-        "gajelas"
-      ];
+      const replies = ["apalah", "apacoba", "gajelas"];
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
       bot.sendMessage(chatId, randomReply);
       // bot.sendMessage(chatId, "apalah");
