@@ -319,7 +319,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         q: text,
-        source: "auto",
+        source: "en",
         target: "id",
         format: "text",
       }),
