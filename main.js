@@ -37,7 +37,7 @@ bot.onText(/\/start/, async (msg) => {
 });
 
 bot.onText("halo" || "hai" || "hi", async (msg, match) => {
-  const text = match[1];
+  const text = match[0];
   const chatId = msg.chat.id;
   if (text === "halo") {
     bot.sendMessage(chatId, `Halo ${msg.from.first_name}, ada yang bisa saya bantu?`);
@@ -387,8 +387,7 @@ bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
     chatId,
-    `/halo - Say Halo
-/gempa - Berita Gempa Terbaru
+    `/gempa - Berita Gempa Terbaru
 /berita - Berita Terkini
 /quote - Quote of the day
 /cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
@@ -426,6 +425,7 @@ bot.on("message", (msg) => {
     /^\/anime$/, // /anime without title
     /^\/lirik$/, // /lirik without artist - title
     // /^\/cuaca$/, // /cuaca without location
+    /^\/translate$/
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
@@ -472,7 +472,9 @@ bot.on("message", (msg) => {
     if (isRandomText || isInsult) {
       // Send a random reply
       const replies = ["apalah", "apa coba", "gajelas"];
+      const stiker = './assets/stk1.webp'
       const randomReply = replies[Math.floor(Math.random() * replies.length)];
+      bot.sendSticker(chatId, {stiker})
       bot.sendMessage(chatId, randomReply);
       // bot.sendMessage(chatId, "apalah");
     }
