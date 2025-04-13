@@ -319,7 +319,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         q: text,
-        source: "en",
+        source: "auto",
         target: "id",
         format: "text",
       }),
@@ -345,7 +345,7 @@ bot.onText(/\/translate (.+)/, async (msg, match) => {
 //       "Content-Type": "application/json",
 //     },
 //     body: JSON.stringify({
-//       model: "openai/gpt-3.5-turbo",
+//       model: "deepseek/deepseek-r1:free",
 //       messages: [{ role: "user", content: prompt }],
 //     }),
 //   });
@@ -478,3 +478,5 @@ bot.on("message", (msg) => {
     }
   }
 });
+
+//* add new command (/lagu /topanime /movie /manga /jadwal)
