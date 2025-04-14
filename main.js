@@ -482,9 +482,9 @@ bot.on("message", (msg) => {
       const randomRespon = allRespon[Math.floor(Math.random() * allRespon.length)];
 
       // Cek apakah ini teks atau path file
-      if (typeof randomRespon === "string" && randomRespon.endsWith(".webp")) {
+      if (typeof randomRespon === "string" && randomRespon.endsWith(".webm ,.webp")) {
         // Kalau stiker
-        bot.sendVideoStikers(chatId, fs.createReadStream(randomRespon));
+        bot.sendSticker(chatId, fs.createReadStream(randomRespon));
       } else {
         // Kalau teks
         bot.sendMessage(chatId, randomRespon);
