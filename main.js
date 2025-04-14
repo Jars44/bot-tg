@@ -41,10 +41,10 @@ bot.onText("halo" || "hai" || "hi", async (msg, match) => {
   if (text === "halo") {
     bot.sendMessage(chatId, `Halo ${msg.from.first_name}, ada yang bisa saya bantu?`);
   }
-  if (text === "hi") {
+  else if (text === "hi") {
     bot.sendMessage(chatId, `Hi ${msg.from.first_name}, ada yang bisa saya bantu?`);
   }
-  if (text === "hai") {
+  else if (text === "hai") {
     bot.sendMessage(chatId, `Hai ${msg.from.first_name}, ada yang bisa saya bantu?`);
   }
 });
@@ -410,14 +410,14 @@ bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
     chatId,
-    `/gempa - Berita Gempa Terbaru
-/berita - Berita Terkini
-/quote - Quote of the day
-/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>) \nContoh: /cuaca Malang
-/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang
-/anime - Cari Anime (Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece 
-/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather
-/ingatkan - Set Pengingat (Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)`
+    `/gempa - Berita Gempa Terbaru \n
+/berita - Berita Terkini \n
+/quote - Quote of the day \n
+/cuaca - Cek Cuaca \n(Gunakan Format /cuaca <nama kota>) \nContoh: /cuaca Malang \n
+/sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
+/anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
+/lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)` 
   );
 });
 
@@ -527,4 +527,4 @@ bot.on("message", (msg) => {
   }
 });
 
-//* add new command (/lagu /topanime /movie /manga /jadwal /download /tanya )
+//* add new command (/lagu /topanime /movie /manga /download /tanya )
