@@ -40,11 +40,9 @@ bot.onText("halo" || "hai" || "hi", async (msg, match) => {
   const chatId = msg.chat.id;
   if (text === "halo") {
     bot.sendMessage(chatId, `Halo ${msg.from.first_name}, ada yang bisa saya bantu?`);
-  }
-  else if (text === "hi") {
+  } else if (text === "hi") {
     bot.sendMessage(chatId, `Hi ${msg.from.first_name}, ada yang bisa saya bantu?`);
-  }
-  else if (text === "hai") {
+  } else if (text === "hai") {
     bot.sendMessage(chatId, `Hai ${msg.from.first_name}, ada yang bisa saya bantu?`);
   }
 });
@@ -382,12 +380,11 @@ Isya: ${data.Isha}`
   }
 });
 
-
 bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
   const waktu = match[1]; // format HH:mm
   const pesan = match[2];
-  
+
   reminders.push({ chatId, waktu, pesan });
   bot.sendMessage(chatId, `⏰ Siap bro! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
 });
@@ -417,7 +414,7 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
 /anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)` 
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)`
   );
 });
 
@@ -425,7 +422,7 @@ bot.onText(/\/help/, async (msg) => {
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : "";
-  
+
   // List of all valid commands
   const validCommands = [
     /^\/lirik/,
@@ -493,34 +490,23 @@ bot.on("message", (msg) => {
       "dongok",
       "cok",
       "bodo",
-      "bodoh"
+      "bodoh",
     ];
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
       // Random response selection with more variety
       const randomNum = Math.floor(Math.random() * 7); // 0-7
-      
+
       if (randomNum < 4) {
         // Text response (0-3)
-        const replies = [
-          "apalah", 
-          "apa coba", 
-          "gajelas",
-          "stress!"
-        ];
+        const replies = ["apalah", "apa coba", "gajelas", "stress!"];
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
         // Sticker response (4-7)
-        const stickerOptions = [
-          'stk1.webp',
-          'stk2.webm',
-          'stk3.webm',
-        ];
+        const stickerOptions = ["stk1.webp", "stk2.webm", "stk3.webm"];
         const stickerIndex = randomNum - 3;
-        const stickerFile = fs.readFileSync(
-          path.join(__dirname, 'assets', stickerOptions[stickerIndex])
-        );
+        const stickerFile = fs.readFileSync(path.join(__dirname, "assets", stickerOptions[stickerIndex]));
         bot.sendSticker(chatId, stickerFile);
       }
     }
