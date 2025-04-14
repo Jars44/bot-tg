@@ -481,11 +481,11 @@ bot.on("message", (msg) => {
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
         // Sticker response (3-4)
-        const stickerPath = randomNum === 3 
-          ? path.join(__dirname, 'assets', 'stk2.webm') 
-          : path.join(__dirname, 'assets', 'stk3.webm');
+        const stickerFile = randomNum === 3 
+          ? fs.readFileSync(path.join(__dirname, 'assets', 'stk2.webm'))
+          : fs.readFileSync(path.join(__dirname, 'assets', 'stk3.webm'));
         
-        bot.sendDocument(chatId, stickerPath);
+        bot.sendSticker(chatId, stickerFile);
       }
     }
   }
