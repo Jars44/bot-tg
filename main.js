@@ -381,6 +381,7 @@ Isya: ${data.Isha}`
 });
 
 bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
+  reminders = []; // Array untuk menyimpan pengingat
   const chatId = msg.chat.id;
   const waktu = match[1]; // format HH:mm
   const pesan = match[2];
