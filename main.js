@@ -1,5 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 
+// Global reminders array
+let reminders = [];
+
 const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
@@ -381,13 +384,12 @@ Isya: ${data.Isha}`
 });
 
 bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
-  reminders = []; // Array untuk menyimpan pengingat
   const chatId = msg.chat.id;
   const waktu = match[1]; // format HH:mm
   const pesan = match[2];
 
   reminders.push({ chatId, waktu, pesan });
-  bot.sendMessage(chatId, `⏰ Siap bro! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
+  bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
 });
 
 // Cron yang jalan tiap menit
@@ -397,10 +399,13 @@ cron.schedule("* * * * *", () => {
   const menit = now.getMinutes().toString().padStart(2, "0");
   const sekarang = `${jam}:${menit}`;
 
-  reminders.forEach((reminder) => {
+  // Filter and process reminders
+  reminders = reminders.filter(reminder => {
     if (reminder.waktu === sekarang) {
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
+      return false; // Remove this reminder
     }
+    return true; // Keep other reminders
   });
 });
 
@@ -415,7 +420,7 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
 /anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)`
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang`
   );
 });
 
