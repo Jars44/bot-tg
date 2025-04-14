@@ -3,7 +3,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
-// var cron = require("node-cron"); // Import cron library
+var cron = require("node-cron"); // Import cron library
 const fs = require("fs");
 const path = require("path");
 
@@ -382,6 +382,30 @@ Isya: ${data.Isha}`
   }
 });
 
+
+bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const waktu = match[1]; // format HH:mm
+  const pesan = match[2];
+  
+  reminders.push({ chatId, waktu, pesan });
+  bot.sendMessage(chatId, `⏰ Siap bro! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
+});
+
+// Cron yang jalan tiap menit
+cron.schedule("* * * * *", () => {
+  const now = new Date();
+  const jam = now.getHours().toString().padStart(2, "0");
+  const menit = now.getMinutes().toString().padStart(2, "0");
+  const sekarang = `${jam}:${menit}`;
+
+  reminders.forEach((reminder) => {
+    if (reminder.waktu === sekarang) {
+      bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
+    }
+  });
+});
+
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
@@ -389,10 +413,11 @@ bot.onText(/\/help/, async (msg) => {
     `/gempa - Berita Gempa Terbaru
 /berita - Berita Terkini
 /quote - Quote of the day
-/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>)
-/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota>)
-/anime - Cari Anime (Gunakan Format /anime <nama anime>)
-/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>)`
+/cuaca - Cek Cuaca (Gunakan Format /cuaca <nama kota>) \nContoh: /cuaca Malang
+/sholat - Jadwal Sholat (Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang
+/anime - Cari Anime (Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece 
+/lirik - Cari Lirik Lagu (Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather
+/ingatkan - Set Pengingat (Gunakan Format /ingatkan <jam> <pesan> \nContoh: /ingatkan 12:00 Makan Siang)`
   );
 });
 
@@ -400,7 +425,7 @@ bot.onText(/\/help/, async (msg) => {
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : "";
-
+  
   // List of all valid commands
   const validCommands = [
     /^\/lirik/,
@@ -414,7 +439,7 @@ bot.on("message", (msg) => {
     /^\/gempa/,
     /^\/help/,
     /^\/start/,
-    /^\/halo/,
+    /^\/ingatkan/,
   ];
 
   // Check for incomplete commands
@@ -425,6 +450,7 @@ bot.on("message", (msg) => {
     /^\/lirik$/, // /lirik without artist - title
     // /^\/cuaca$/, // /cuaca without location
     /^\/translate$/,
+    /^\/ingatkan$/, // /ingatkan without time and message
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
@@ -433,7 +459,7 @@ bot.on("message", (msg) => {
   const isIncompleteCommand = incompleteCommands.some((cmd) => cmd.test(text));
 
   if (isInvalidCommand) {
-    bot.sendMessage(chatId, "saya tidak mengerti \nKetik /help untuk mendapatkan bantuan.");
+    bot.sendMessage(chatId, "Saya tidak mengerti \nKetik /help untuk mendapatkan bantuan.");
     return;
   } else if (isIncompleteCommand) {
     bot.sendMessage(chatId, "Format salah! \nKetik /help untuk mendapatkan bantuan.");
@@ -473,14 +499,15 @@ bot.on("message", (msg) => {
 
     if (isRandomText || isInsult) {
       // Random response selection with more variety
-      const randomNum = Math.floor(Math.random() * 6); // 0-7
+      const randomNum = Math.floor(Math.random() * 7); // 0-7
       
-      if (randomNum < 3) {
+      if (randomNum < 4) {
         // Text response (0-3)
         const replies = [
           "apalah", 
           "apa coba", 
           "gajelas",
+          "stress!"
         ];
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
