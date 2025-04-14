@@ -4,6 +4,8 @@ const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 // var cron = require("node-cron"); // Import cron library
+const fs = require("fs");
+const path = require("path");
 
 const token = "process.env.BOT_TOKEN";
 const options = {
@@ -30,10 +32,7 @@ bot.on("polling_error", (error) => {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(
-    chatId,
-    "Selamat datang di @Jars_Bot\n/help untuk selengkapnya"
-  );
+  bot.sendMessage(chatId, "Selamat datang di @Jars_Bot\n/help untuk selengkapnya");
 });
 
 bot.onText("halo" || "hai" || "hi", async (msg, match) => {
@@ -425,7 +424,7 @@ bot.on("message", (msg) => {
     /^\/anime$/, // /anime without title
     /^\/lirik$/, // /lirik without artist - title
     // /^\/cuaca$/, // /cuaca without location
-    /^\/translate$/
+    /^\/translate$/,
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
@@ -466,20 +465,32 @@ bot.on("message", (msg) => {
       "bajingan",
       "brengsek",
       "dongok",
+      "cok",
+      "bodoh",
+      "bodo"
     ];
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      // Send a random reply
+      const stickerFolder = path.join(__dirname, "stickers");
+      const stickerFiles = fs.readdirSync(stickerFolder).map((file) => path.join(stickerFolder, file));
       const replies = ["apalah", "apa coba", "gajelas"];
-      const stiker = './assets/stk1.webp'
-      const randomReply = replies[Math.floor(Math.random() * replies.length)];
-      bot.sendSticker(chatId, {stiker})
-      bot.sendSticker(chatId, './assets/stk1.webp')
-      bot.sendMessage(chatId, randomReply);
-      // bot.sendMessage(chatId, "apalah");
+
+      // Gabungkan teks & stiker jadi satu array
+      const allRespon = [...replies, ...stickerFiles];
+      // Pilih acak dari array
+      const randomRespon = allRespon[Math.floor(Math.random() * allRespon.length)];
+
+      // Cek apakah ini teks atau path file
+      if (typeof randomRespon === "string" && randomRespon.endsWith(".webp")) {
+        // Kalau stiker
+        bot.sendSticker(chatId, fs.createReadStream(randomRespon));
+      } else {
+        // Kalau teks
+        bot.sendMessage(chatId, randomRespon);
+      }
     }
   }
 });
 
-//* add new command (/lagu /topanime /movie /manga /jadwal)
+//* add new command (/lagu /topanime /movie /manga /jadwal /download /tanya )
