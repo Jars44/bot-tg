@@ -484,7 +484,7 @@ bot.on("message", (msg) => {
       // Cek apakah ini teks atau path file
       if (typeof randomRespon === "string" && randomRespon.endsWith(".webp")) {
         // Kalau stiker
-        bot.sendSticker(chatId, fs.createReadStream(randomRespon));
+        bot.sendVideoStikers(chatId, fs.createReadStream(randomRespon));
       } else {
         // Kalau teks
         bot.sendMessage(chatId, randomRespon);
