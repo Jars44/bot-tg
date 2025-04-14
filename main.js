@@ -472,7 +472,7 @@ bot.on("message", (msg) => {
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      const stickerFolder = path.join(__dirname, "stickers");
+      const stickerFolder = path.join(__dirname, "assets");
       const stickerFiles = fs.readdirSync(stickerFolder).map((file) => path.join(stickerFolder, file));
       const replies = ["apalah", "apa coba", "gajelas"];
 
