@@ -466,28 +466,26 @@ bot.on("message", (msg) => {
       "brengsek",
       "dongok",
       "cok",
-      "bodoh",
-      "bodo"
+      "bodo",
+      "bodoh"
     ];
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      const stickerFolder = path.join(__dirname, "assets");
-      const stickerFiles = fs.readdirSync(stickerFolder).map((file) => path.join(stickerFolder, file));
-      const replies = ["apalah", "apa coba", "gajelas"];
-
-      // Gabungkan teks & stiker jadi satu array
-      const allRespon = [...replies, ...stickerFiles];
-      // Pilih acak dari array
-      const randomRespon = allRespon[Math.floor(Math.random() * allRespon.length)];
-
-      // Cek apakah ini teks atau path file
-      if (typeof randomRespon === "string" && randomRespon.endsWith(".webm")) {
-        // Kalau stiker
-        bot.sendSticker(chatId, fs.createReadStream(randomRespon));
+      // Random response selection
+      const randomNum = Math.floor(Math.random() * 5); // 0-4
+      
+      if (randomNum < 3) {
+        // Text response (0-2)
+        const replies = ["apalah", "apa coba", "gajelas"];
+        bot.sendMessage(chatId, replies[randomNum]);
       } else {
-        // Kalau teks
-        bot.sendMessage(chatId, randomRespon);
+        // Sticker response (3-4)
+        const stickerPath = randomNum === 3 
+          ? path.join(__dirname, 'assets', 'stk2.webm') 
+          : path.join(__dirname, 'assets', 'stk3.webm');
+        
+        bot.sendDocument(chatId, stickerPath);
       }
     }
   }
