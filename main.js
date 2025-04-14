@@ -32,7 +32,7 @@ bot.on("polling_error", (error) => {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Selamat datang di @Jars_Bot\n/help untuk selengkapnya");
+  bot.sendMessage(chatId, "Selamat datang di @Jars_Bot \nKetik /help untuk selengkapnya");
 });
 
 bot.onText("halo" || "hai" || "hi", async (msg, match) => {
@@ -472,19 +472,28 @@ bot.on("message", (msg) => {
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      // Random response selection
-      const randomNum = Math.floor(Math.random() * 5); // 0-4
+      // Random response selection with more variety
+      const randomNum = Math.floor(Math.random() * 6); // 0-7
       
       if (randomNum < 3) {
-        // Text response (0-2)
-        const replies = ["apalah", "apa coba", "gajelas"];
+        // Text response (0-3)
+        const replies = [
+          "apalah", 
+          "apa coba", 
+          "gajelas",
+        ];
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
-        // Sticker response (3-4)
-        const stickerFile = randomNum === 3 
-          ? fs.readFileSync(path.join(__dirname, 'assets', 'stk2.webm'))
-          : fs.readFileSync(path.join(__dirname, 'assets', 'stk3.webm'));
-        
+        // Sticker response (4-7)
+        const stickerOptions = [
+          'stk1.webp',
+          'stk2.webm',
+          'stk3.webm',
+        ];
+        const stickerIndex = randomNum - 3;
+        const stickerFile = fs.readFileSync(
+          path.join(__dirname, 'assets', stickerOptions[stickerIndex])
+        );
         bot.sendSticker(chatId, stickerFile);
       }
     }
