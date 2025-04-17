@@ -35,6 +35,7 @@ bot.onText(/\/start/, async (msg) => {
 bot.onText(/\/stop/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Bye! Semoga harimu menyenangkan! \nKetik /start untuk memulai lagi");
+  bot.stopPolling();
 });
 
 bot.onText("tes", async (msg) => {
