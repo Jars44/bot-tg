@@ -1,7 +1,7 @@
 const TelegramBot = require("node-telegram-bot-api");
 
 // Global reminders array
-// let reminders = [];
+let reminders = [];
 
 const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
