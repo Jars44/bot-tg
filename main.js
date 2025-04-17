@@ -444,6 +444,7 @@ bot.on("message", (msg) => {
     /^\/gempa/,
     /^\/help/,
     /^\/start/,
+    /^\/stop/,
     /^\/ingatkan/,
   ];
 
