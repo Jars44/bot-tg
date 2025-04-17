@@ -380,14 +380,14 @@ Isya: ${data.Isha}`
   }
 });
 
-// bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const waktu = match[1]; // format HH:mm
-//   const pesan = match[2];
+bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const waktu = match[1]; // format HH:mm
+  const pesan = match[2];
 
-//   reminders.push({ chatId, waktu, pesan });
-//   bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
-// });
+  reminders.push({ chatId, waktu, pesan });
+  bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
+});
 
 console.log("Cron job started, checking reminders every minute...");
 // Cron yang jalan tiap menit
