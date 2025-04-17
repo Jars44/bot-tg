@@ -1,7 +1,7 @@
 const TelegramBot = require("node-telegram-bot-api");
 
 // Global reminders array
-let reminders = [];
+// let reminders = [];
 
 const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
@@ -380,14 +380,14 @@ Isya: ${data.Isha}`
   }
 });
 
-bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const waktu = match[1]; // format HH:mm
-  const pesan = match[2];
+// bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const waktu = match[1]; // format HH:mm
+//   const pesan = match[2];
 
-  reminders.push({ chatId, waktu, pesan });
-  bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
-});
+//   reminders.push({ chatId, waktu, pesan });
+//   bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
+// });
 
 console.log("Cron job started, checking reminders every minute...");
 // Cron yang jalan tiap menit
@@ -402,7 +402,7 @@ cron.schedule("* * * * *", () => {
   });
 
   // Filter and process reminders
-  reminders = reminders.filter((reminder) => {
+  reminders = reminders.filter(reminder => {
     if (reminder.waktu === sekarang) {
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
       return false; // Remove this reminder
