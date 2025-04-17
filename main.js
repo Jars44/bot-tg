@@ -4,7 +4,6 @@ const TelegramBot = require("node-telegram-bot-api");
 let reminders = [];
 
 const axios = require("axios"); // Import axios for HTTP requests
-const fetch = require("node-fetch"); // Import node-fetch for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
@@ -515,8 +514,8 @@ bot.on("message", (msg) => {
         // Sticker response (4-7)
         const stickerOptions = ["stk1.webm", "stk2.webm", "stk3.webm"];
         const stickerIndex = randomNum - 4;
-        const buffer = fs.readFileSync(path.join(__dirname, 'assets', stickerOptions[stickerIndex]));
-        bot.sendSticker(chatId, buffer);
+        const Sticker = fs.readFileSync(path.join(__dirname, "assets", stickerOptions[stickerIndex]));
+        bot.sendSticker(chatId, Sticker);
       }
     }
   }
