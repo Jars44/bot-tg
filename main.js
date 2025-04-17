@@ -306,30 +306,30 @@ bot.onText(/\/berita/, async (msg) => {
   }
 });
 
-bot.onText(/\/translate (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const text = match[1];
-  bot.sendMessage(chatId, "🔍 Menerjemahkan...");
-  try {
-    const res = await fetch("https://libretranslate.com/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        q: text,
-        source: "auto",
-        target: "id",
-        format: "text",
-      }),
-    });
-    if (!res.ok) throw new Error("Gagal menerjemahkan");
-    const data = await res.json();
-    if (!data.translatedText) throw new Error("Terjemahan gagal");
-    bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
-  } catch (error) {
-    console.error("Translate error:", error);
-    bot.sendMessage(chatId, "❌ Gagal menerjemahkan. Silakan coba lagi nanti.");
-  }
-});
+// bot.onText(/\/translate (.+)/, async (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const text = match[1];
+//   bot.sendMessage(chatId, "🔍 Menerjemahkan...");
+//   try {
+//     const res = await fetch("https://libretranslate.com/translate", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         q: text,
+//         source: "auto",
+//         target: "id",
+//         format: "text",
+//       }),
+//     });
+//     if (!res.ok) throw new Error("Gagal menerjemahkan");
+//     const data = await res.json();
+//     if (!data.translatedText) throw new Error("Terjemahan gagal");
+//     bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
+//   } catch (error) {
+//     console.error("Translate error:", error);
+//     bot.sendMessage(chatId, "❌ Gagal menerjemahkan. Silakan coba lagi nanti.");
+//   }
+// });
 
 // bot.onText(/\/tanya (.+)/, async (msg, match) => {
 //   const chatId = msg.chat.id;
@@ -396,6 +396,10 @@ cron.schedule("* * * * *", () => {
   const jam = now.getHours().toString().padStart(2, "0");
   const menit = now.getMinutes().toString().padStart(2, "0");
   const sekarang = `${jam}:${menit}`;
+
+  cron.schedule("0 7 * * *", () => {
+    bot.sendMessage(chatId, "Selamat pagi! Jangan lupa sarapan 🍳");
+  });
 
   // Filter and process reminders
   reminders = reminders.filter((reminder) => {
