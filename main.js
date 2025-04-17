@@ -4,9 +4,11 @@ const TelegramBot = require("node-telegram-bot-api");
 let reminders = [];
 
 const axios = require("axios"); // Import axios for HTTP requests
+// const fetch = require("node-fetch"); // Import node-fetch for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
+// const musixmatchApi = "process.env.MUSIXMATCH_API_KEY"; // Musixmatch API key
 const fs = require("fs");
 const path = require("path");
 
@@ -26,28 +28,19 @@ bot.on("polling_error", (error) => {
   });
 });
 
-// function capitalizeEachWord(text) {
-//  return text
-//    .split(" ") // pisahin teks per kata
-//    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // kapitalin huruf pertama tiap kata
-//    .join(" "); // gabungin lagi jadi kalimat
-//}
-
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Selamat datang di @Jars_Bot \nKetik /help untuk selengkapnya");
 });
 
-bot.onText("halo" || "hai" || "hi", async (msg, match) => {
-  const text = match[0];
+bot.onText(/\/stop/, async (msg) => {
   const chatId = msg.chat.id;
-  if (text === "halo") {
-    bot.sendMessage(chatId, `Halo ${msg.from.first_name}, ada yang bisa saya bantu?`);
-  } else if (text === "hi") {
-    bot.sendMessage(chatId, `Hi ${msg.from.first_name}, ada yang bisa saya bantu?`);
-  } else if (text === "hai") {
-    bot.sendMessage(chatId, `Hai ${msg.from.first_name}, ada yang bisa saya bantu?`);
-  }
+  bot.sendMessage(chatId, "Bye! Semoga harimu menyenangkan! \nKetik /start untuk memulai lagi");
+});
+
+bot.onText("tes", async (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Tes berhasil!");
 });
 
 bot.onText(/\/gempa/, async (msg) => {
@@ -86,6 +79,11 @@ Kedalaman: ${Kedalaman}
 Wilayah: ${Wilayah}
 Potensi: ${Potensi}
 `;
+
+    if (!image) {
+      console.error("Image URL is undefined.");
+      return bot.sendMessage(chatId, "❌ Gagal mengirim gambar. URL tidak valid.");
+    }
 
     bot.sendPhoto(chatId, image, {
       caption: resultText,
@@ -392,6 +390,7 @@ bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
   bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
 });
 
+console.log("Cron job started, checking reminders every minute...");
 // Cron yang jalan tiap menit
 cron.schedule("* * * * *", () => {
   const now = new Date();
@@ -400,7 +399,7 @@ cron.schedule("* * * * *", () => {
   const sekarang = `${jam}:${menit}`;
 
   // Filter and process reminders
-  reminders = reminders.filter(reminder => {
+  reminders = reminders.filter((reminder) => {
     if (reminder.waktu === sekarang) {
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
       return false; // Remove this reminder
@@ -497,6 +496,10 @@ bot.on("message", (msg) => {
       "cok",
       "bodo",
       "bodoh",
+      "gak jelas",
+      "gajelas",
+      "gaje",
+      "gk jelas",
     ];
     const isInsult = insults.some((word) => text.includes(word));
 
@@ -518,5 +521,3 @@ bot.on("message", (msg) => {
     }
   }
 });
-
-//* add new command (/lagu /topanime /movie /manga /download /tanya )
