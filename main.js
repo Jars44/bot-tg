@@ -521,17 +521,35 @@ bot.on("message", async (msg) => {
     console.log(`State: ${JSON.stringify(state)}`);
 
     try {
+      // Resolve shortened TikTok URL before calling API
+      let resolvedUrl = url;
+      if (source === "tiktok") {
+        try {
+          const headRes = await axios.head(url, { maxRedirects: 5 });
+          resolvedUrl = headRes.request.res.responseUrl || url;
+          console.log(`Resolved TikTok URL: ${resolvedUrl}`);
+        } catch (resolveErr) {
+          console.error("Error resolving TikTok URL:", resolveErr);
+          // fallback to original url
+          resolvedUrl = url;
+        }
+      }
+
       let apiUrl = "";
       if (source === "youtube") {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
-          url
+          resolvedUrl
         )}`;
       } else if (source === "tiktok") {
-        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(url)}&format=${format}`;
+        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(resolvedUrl)}&format=${format}`;
       }
+
+      console.log(`Calling download API: ${apiUrl}`);
 
       const res = await axios.get(apiUrl);
       const data = res.data;
+
+      // console.log("Download API response:", data);
 
       if (data && data.status === "success" && data.url) {
         if (format === "mp4") {
