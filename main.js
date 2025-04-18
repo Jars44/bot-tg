@@ -7,7 +7,7 @@ const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
-// const musixmatchApi = "process.env.MUSIXMATCH_API_KEY"; // Musixmatch API key
+const musixmatchApi = "process.env.MUSIXMATCH_API_KEY"; // Musixmatch API key
 const fs = require("fs");
 const path = require("path");
 
