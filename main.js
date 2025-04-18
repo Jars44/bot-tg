@@ -531,6 +531,7 @@ bot.on("message", async (msg) => {
       }
 
       const res = await axios.get(apiUrl);
+      console.log("API response:", res.data); // Log the API response for debugging
       const data = res.data;
 
       if (data && data.status === "success" && data.url) {
