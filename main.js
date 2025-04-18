@@ -571,7 +571,10 @@ bot.on("message", async (msg) => {
 
 bot.onText(/\/dltt, (.+)/, async (msg, match) => { 
   const chatId = msg.chat.id;
-  const url = match[1].trim();
+  const url = match[1];
+
+  console.log(`User ${chatId} requested download from TikTok: ${url}`);
+  console.log(url)
 
   if (!url.startsWith("https://")) {
     return bot.sendMessage(chatId, "Format salah! Kirim link TikTok yang valid.");
