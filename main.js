@@ -574,7 +574,8 @@ bot.on("message", (msg) => {
     /^\/stop/,
     /^\/ingatkan/,
     /^\/lagu/,
-    /^\/lirikm/
+    /^\/lirikm/,
+    /^\/download/
   ];
 
   // Check for incomplete commands
@@ -602,7 +603,7 @@ bot.on("message", (msg) => {
   }
 
   // Only check for random text/insults in non-command messages
-  if (!text.startsWith("/")) {
+  if (!text.startsWith("/") && !text.startsWith("https")) {
     // More lenient random text detection
     const isRandomText =
       text.length >= 4 &&
