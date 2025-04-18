@@ -462,7 +462,7 @@ bot.onText(/\/download/, (msg) => {
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
-  const state = userState.get(chatId) || {};
+  const state = userDownloadState.get(chatId) || {};
 
   const data = query.data;
 
@@ -471,7 +471,7 @@ bot.on("callback_query", async (query) => {
     const source = data.split("_")[1];
     state.source = source;
     state.step = "format";
-    userState.set(chatId, state);
+    userDownloadState.set(chatId, state);
 
     const options = {
       reply_markup: {
@@ -496,7 +496,7 @@ bot.on("callback_query", async (query) => {
     const format = data.split("_")[1];
     state.format = format;
     state.step = "link";
-    userState.set(chatId, state);
+    userDownloadState.set(chatId, state);
 
     bot.editMessageText(`✅ Format: ${format.toUpperCase()}\nSekarang kirim link-nya 🔗`, {
       chat_id: chatId,
@@ -507,7 +507,7 @@ bot.on("callback_query", async (query) => {
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  const state = userState.get(chatId);
+  const state = userDownloadState.get(chatId);
 
   // Step: Kirim Link
   if (state?.step === "link" && msg.text.startsWith("https")) {
@@ -545,7 +545,7 @@ bot.on("message", async (msg) => {
       bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
     }
 
-    userState.delete(chatId); // reset state
+    userDownloadState.delete(chatId); // reset state
   }
 });
 
