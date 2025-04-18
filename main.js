@@ -17,6 +17,8 @@ const options = {
 
 const bot = new TelegramBot(token, options);
 
+const userDownloadState = new Map(); // Map to track user download states
+
 bot.on("polling_error", (error) => {
   console.error("Polling Error:", {
     code: error.code,
@@ -36,7 +38,6 @@ bot.onText(/\/stop/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Bye! Semoga harimu menyenangkan! \nKetik /start untuk memulai lagi");
   bot.stopPolling();
-  bot.closeWebHook();
 });
 
 bot.onText("tes", async (msg) => {
@@ -127,73 +128,73 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
   }
 });
 
-bot.onText(/\/lirikm (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const query = match[1];
+// bot.onText(/\/lirikm (.+)/, async (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const query = match[1];
 
-  const searchRes = await fetch(
-    `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
-      query
-    )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
-  );
-  bot.sendMessage(chatId, "🔍 Mencari lirik...");
-  const searchData = await searchRes.json();
-  const track = searchData.message.body.track_list[0]?.track;
+//   const searchRes = await fetch(
+//     `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
+//       query
+//     )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
+//   );
+//   bot.sendMessage(chatId, "🔍 Mencari lirik...");
+//   const searchData = await searchRes.json();
+//   const track = searchData.message.body.track_list[0]?.track;
 
-  if (!track) return bot.sendMessage(chatId, "Lagu nggak ditemukan, bro 😢");
+//   if (!track) return bot.sendMessage(chatId, "Lagu nggak ditemukan, bro 😢");
 
-  const lyricsRes = await fetch(
-    `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track.track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
-  );
-  const lyricsData = await lyricsRes.json();
-  const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "Lirik nggak tersedia, bro 😓";
+//   const lyricsRes = await fetch(
+//     `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track.track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
+//   );
+//   const lyricsData = await lyricsRes.json();
+//   const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "Lirik nggak tersedia, bro 😓";
 
-  bot.sendMessage(chatId, `🎵 *${track.track_name}* - ${track.artist_name}\n\n${lyrics}`, {
-    parse_mode: "Markdown",
-  });
-});
+//   bot.sendMessage(chatId, `🎵 *${track.track_name}* - ${track.artist_name}\n\n${lyrics}`, {
+//     parse_mode: "Markdown",
+//   });
+// });
 
-bot.onText(/\/lagu (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const query = match[1];
+// bot.onText(/\/lagu (.+)/, async (msg, match) => {
+//   const chatId = msg.chat.id;
+//   const query = match[1];
 
-  try {
-    // 1. Cari lagu
-    const searchRes = await fetch(
-      `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
-        query
-      )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
-    );
-    const searchData = await searchRes.json();
-    const track = searchData.message.body.track_list[0]?.track;
+//   try {
+//     // 1. Cari lagu
+//     const searchRes = await fetch(
+//       `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
+//         query
+//       )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
+//     );
+//     const searchData = await searchRes.json();
+//     const track = searchData.message.body.track_list[0]?.track;
 
-    if (!track) return bot.sendMessage(chatId, "😔 Lagu gak ketemu, bro.");
+//     if (!track) return bot.sendMessage(chatId, "😔 Lagu gak ketemu, bro.");
 
-    const { track_id, track_name, artist_name, album_name } = track;
+//     const { track_id, track_name, artist_name, album_name } = track;
 
-    // 2. Ambil lirik
-    const lyricsRes = await fetch(
-      `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
-    );
-    const lyricsData = await lyricsRes.json();
-    const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "😢 Lirik gak tersedia.";
+//     // 2. Ambil lirik
+//     const lyricsRes = await fetch(
+//       `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
+//     );
+//     const lyricsData = await lyricsRes.json();
+//     const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "😢 Lirik gak tersedia.";
 
-    // 3. Kirim ke Telegram
-    const message = `
-🎵 *${track_name}*
-🎤 *${artist_name}*
-💿 *Album:* ${album_name}
+//     // 3. Kirim ke Telegram
+//     const message = `
+// 🎵 *${track_name}*
+// 🎤 *${artist_name}*
+// 💿 *Album:* ${album_name}
 
-📑 *Lirik:*
-${lyrics}
-`.trim();
+// 📑 *Lirik:*
+// ${lyrics}
+// `.trim();
 
-    bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-  } catch (err) {
-    console.error(err);
-    bot.sendMessage(chatId, "❌ Ada error bro, coba lagi nanti ya!");
-  }
-});
+//     bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+//   } catch (err) {
+//     console.error(err);
+//     bot.sendMessage(chatId, "❌ Ada error bro, coba lagi nanti ya!");
+//   }
+// });
 
 bot.onText(/\/quote/, async (msg) => {
   const chatId = msg.chat.id;
@@ -441,6 +442,102 @@ cron.schedule("* * * * *", () => {
   });
 });
 
+bot.onText(/\/download/, (msg) => {
+  const chatId = msg.chat.id;
+
+  bot.sendMessage(chatId, "Mau download dari mana bro?", {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "🎵 TikTok", callback_data: "source_tiktok" },
+          { text: "▶️ YouTube", callback_data: "source_youtube" },
+        ],
+      ],
+    },
+  });
+
+  userDownloadState.set(chatId, {}); // reset state
+});
+
+bot.on("callback_query", async (query) => {
+  const chatId = query.message.chat.id;
+  const data = query.data;
+
+  let state = userDownloadState.get(chatId) || {};
+
+  if (data.startsWith("source_")) {
+    state.source = data.split("_")[1]; // tiktok / youtube
+    userDownloadState.set(chatId, state);
+
+    bot.sendMessage(chatId, "Oke, formatnya mau apa bro?", {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "🎬 MP4 (video)", callback_data: "format_mp4" },
+            { text: "🎧 MP3 (audio)", callback_data: "format_mp3" },
+          ],
+        ],
+      },
+    });
+  }
+
+  if (data.startsWith("format_")) {
+    state.format = data.split("_")[1]; // mp4 / mp3
+    userDownloadState.set(chatId, state);
+
+    bot.sendMessage(chatId, "Oke, tempelin link yang mau didownload ya bro 🎯");
+  }
+
+  bot.answerCallbackQuery(query.id);
+});
+
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const state = userDownloadState.get(chatId);
+
+  if (state?.source && state?.format && msg.text.startsWith("https")) {
+    const link = msg.text;
+    bot.sendMessage(chatId, "⏳ Gua proses dulu ya bro...");
+
+    try {
+      // Panggil API OpsLinuxSec
+      const res = await axios.get(`https://ops.linuxsec.org/api/download`, {
+        params: {
+          url: link,
+          apikey: "guest", // default key, bisa custom kalo ada key sendiri
+        },
+      });
+
+      const data = res.data;
+
+      if (data.status === "success") {
+        // Contoh ambil berdasarkan format
+        let downloadUrl;
+
+        if (state.format === "mp4") {
+          downloadUrl = data.result.video_url || data.result.url; // tergantung platform
+        } else if (state.format === "mp3") {
+          downloadUrl = data.result.audio_url || data.result.url_audio;
+        }
+
+        if (downloadUrl) {
+          bot.sendMessage(chatId, "✅ Berhasil! Ini hasilnya bro👇");
+          bot.sendVideo(chatId, downloadUrl); // atau bot.sendAudio() sesuai format
+        } else {
+          bot.sendMessage(chatId, "⚠️ Gagal ambil link downloadnya bro");
+        }
+      } else {
+        bot.sendMessage(chatId, "❌ Link nggak valid atau gak didukung bro");
+      }
+    } catch (err) {
+      console.error(err);
+      bot.sendMessage(chatId, "🚨 Terjadi kesalahan pas download bro");
+    }
+
+    userDownloadState.delete(chatId); // reset state
+  }
+});
+
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
@@ -476,6 +573,8 @@ bot.on("message", (msg) => {
     /^\/start/,
     /^\/stop/,
     /^\/ingatkan/,
+    /^\/lagu/,
+    /^\/lirikm/
   ];
 
   // Check for incomplete commands
@@ -539,16 +638,16 @@ bot.on("message", (msg) => {
 
     if (isRandomText || isInsult) {
       // Random response selection with more variety
-      const randomNum = Math.floor(Math.random() * 7); // 0-7
+      const randomNum = Math.floor(Math.random() * 5); // 0-7
 
-      if (randomNum < 4) {
+      if (randomNum < 2) {
         // Text response (0-3)
-        const replies = ["apalah", "apa coba", "gajelas", "stress!"];
+        const replies = ["apalah", "apa coba"];
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
         // Sticker response (4-7)
         const stickerOptions = ["stk1.webm", "stk2.webm", "stk3.webm"];
-        const stickerIndex = randomNum - 4;
+        const stickerIndex = randomNum - 3;
         const Sticker = fs.readFileSync(path.join(__dirname, "assets", stickerOptions[stickerIndex]));
         bot.sendSticker(chatId, Sticker);
       }
