@@ -29,12 +29,14 @@ bot.on("polling_error", (error) => {
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Selamat datang di @Jars_Bot \nKetik /help untuk selengkapnya");
+  bot.startPolling();
 });
 
 bot.onText(/\/stop/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Bye! Semoga harimu menyenangkan! \nKetik /start untuk memulai lagi");
   bot.stopPolling();
+  bot.closeWebHook();
 });
 
 bot.onText("tes", async (msg) => {
@@ -125,7 +127,7 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
   }
 });
 
-bot.onText(/\/lirikg (.+)/, async (msg, match) => {
+bot.onText(/\/lirikm (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const query = match[1];
 
