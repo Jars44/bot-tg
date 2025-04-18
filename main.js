@@ -444,97 +444,108 @@ cron.schedule("* * * * *", () => {
 
 bot.onText(/\/download/, (msg) => {
   const chatId = msg.chat.id;
+  userDownloadState.set(chatId, { step: "source" });
 
-  bot.sendMessage(chatId, "Mau download dari mana bro?", {
+  const options = {
     reply_markup: {
       inline_keyboard: [
         [
-          { text: "🎵 TikTok", callback_data: "source_tiktok" },
-          { text: "▶️ YouTube", callback_data: "source_youtube" },
+          { text: "YouTube", callback_data: "source_youtube" },
+          { text: "TikTok", callback_data: "source_tiktok" },
         ],
       ],
     },
-  });
+  };
 
-  userDownloadState.set(chatId, {}); // reset state
+  bot.sendMessage(chatId, "Pilih sumber download ⬇️", options);
 });
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
+  const state = userState.get(chatId) || {};
+
   const data = query.data;
 
-  let state = userDownloadState.get(chatId) || {};
-
+  // Pilih sumber
   if (data.startsWith("source_")) {
-    state.source = data.split("_")[1]; // tiktok / youtube
-    userDownloadState.set(chatId, state);
+    const source = data.split("_")[1];
+    state.source = source;
+    state.step = "format";
+    userState.set(chatId, state);
 
-    bot.sendMessage(chatId, "Oke, formatnya mau apa bro?", {
+    const options = {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "🎬 MP4 (video)", callback_data: "format_mp4" },
-            { text: "🎧 MP3 (audio)", callback_data: "format_mp3" },
+            { text: "MP4 (Video)", callback_data: "format_mp4" },
+            { text: "MP3 (Audio)", callback_data: "format_mp3" },
           ],
         ],
       },
+    };
+
+    bot.editMessageText(`Sumber: ${source.toUpperCase()}\nSekarang pilih format`, {
+      chat_id: chatId,
+      message_id: query.message.message_id,
+      reply_markup: options.reply_markup,
     });
   }
 
+  // Pilih format
   if (data.startsWith("format_")) {
-    state.format = data.split("_")[1]; // mp4 / mp3
-    userDownloadState.set(chatId, state);
+    const format = data.split("_")[1];
+    state.format = format;
+    state.step = "link";
+    userState.set(chatId, state);
 
-    bot.sendMessage(chatId, "Oke, tempelin link yang mau didownload ya bro 🎯");
+    bot.editMessageText(`✅ Format: ${format.toUpperCase()}\nSekarang kirim link-nya 🔗`, {
+      chat_id: chatId,
+      message_id: query.message.message_id,
+    });
   }
-
-  bot.answerCallbackQuery(query.id);
 });
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  const state = userDownloadState.get(chatId);
+  const state = userState.get(chatId);
 
-  if (state?.source && state?.format && msg.text.startsWith("https")) {
-    const link = msg.text;
-    bot.sendMessage(chatId, "⏳ Gua proses dulu ya bro...");
+  // Step: Kirim Link
+  if (state?.step === "link" && msg.text.startsWith("https")) {
+    const { source, format } = state;
+    const url = msg.text;
+
+    bot.sendMessage(chatId, "⏳ Sedang proses, tunggu bentar ya...");
 
     try {
-      // Panggil API OpsLinuxSec
-      const res = await axios.get(`https://ops.linuxsec.org/api/download`, {
-        params: {
-          url: link,
-          apikey: "guest", // default key, bisa custom kalo ada key sendiri
-        },
-      });
+      let apiUrl = "";
+      if (source === "youtube") {
+        apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
+          url
+        )}`;
+      } else if (source === "tiktok") {
+        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?format=${format}&url=${encodeURIComponent(
+          url
+        )}`;
+      }
 
+      const res = await axios.get(apiUrl);
       const data = res.data;
 
-      if (data.status === "success") {
-        // Contoh ambil berdasarkan format
-        let downloadUrl;
-
-        if (state.format === "mp4") {
-          downloadUrl = data.result.video_url || data.result.url; // tergantung platform
-        } else if (state.format === "mp3") {
-          downloadUrl = data.result.audio_url || data.result.url_audio;
-        }
-
-        if (downloadUrl) {
-          bot.sendMessage(chatId, "✅ Berhasil! Ini hasilnya bro👇");
-          bot.sendVideo(chatId, downloadUrl); // atau bot.sendAudio() sesuai format
+      if (data && data.status === "success" && data.url) {
+        if (format === "mp4") {
+          bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
         } else {
-          bot.sendMessage(chatId, "⚠️ Gagal ambil link downloadnya bro");
+          bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
         }
       } else {
-        bot.sendMessage(chatId, "❌ Link nggak valid atau gak didukung bro");
+        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
       }
     } catch (err) {
       console.error(err);
-      bot.sendMessage(chatId, "🚨 Terjadi kesalahan pas download bro");
+      bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
     }
 
-    userDownloadState.delete(chatId); // reset state
+    userState.delete(chatId); // reset state
   }
 });
 
