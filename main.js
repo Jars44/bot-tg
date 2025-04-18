@@ -7,7 +7,6 @@ const axios = require("axios"); // Import axios for HTTP requests
 // const cheerio = require("cheerio"); // Import cheerio for web scraping
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
-const musixmatchApi = "process.env.MUSIXMATCH_API_KEY"; // Musixmatch API key
 const fs = require("fs");
 const path = require("path");
 
@@ -126,45 +125,30 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
   }
 });
 
-// Command untuk mencari lirik menggunakan Genius API
-// bot.onText(/\/lirikg (.+)/, async (msg, match) => {
-//   const input = match[1].trim();
-//   const [artist, title] = input.split(" - ");
-//   const chatId = msg.chat.id;
+bot.onText(/\/lirikg (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const query = match[1];
 
-//   if (!artist || !title) {
-//     return bot.sendMessage(chatId, "Format salah! Contoh: /lirikg Coldplay - Yellow");
-//   }
+  const searchRes = await fetch(
+    `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
+      query
+    )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
+  );
+  const searchData = await searchRes.json();
+  const track = searchData.message.body.track_list[0]?.track;
 
-//   bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist} di Genius...`);
+  if (!track) return bot.sendMessage(chatId, "Lagu nggak ditemukan, bro 😢");
 
-//   try {
-//     // Cari lagu di Genius
-//     const searchRes = await axios.get(`${GENIUS_API_URL}/search`, {
-//       params: { q: `${title} ${artist}` },
-//       headers: { Authorization: `Bearer ${GENIUS_API_KEY}` }
-//     });
+  const lyricsRes = await fetch(
+    `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track.track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
+  );
+  const lyricsData = await lyricsRes.json();
+  const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "Lirik nggak tersedia, bro 😓";
 
-//     const song = searchRes.data.response.hits[0]?.result;
-//     if (!song) {
-//       throw new Error('Lagu tidak ditemukan di Genius');
-//     }
-
-//     // Note: Diperlukan implementasi scraper untuk mengambil lirik dari Genius
-//     // Ini hanya contoh - perlu disesuaikan dengan implementasi aktual
-//     const lyricsRes = await axios.get(`https://example-lyrics-scraper.com/genius/${song.id}`);
-//     const lyrics = lyricsRes.data.lyrics
-//       .replace(/\r\n/g, "\n")
-//       .replace(/(\n{3,})/g, "\n\n");
-
-//     bot.sendMessage(chatId, `🎵 *${title}* - ${artist} (via Genius)\n\n${lyrics}`, {
-//       parse_mode: "Markdown",
-//     });
-//   } catch (error) {
-//     console.error("Genius lyrics search error:", error);
-//     bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}" di Genius\nCoba format: /lirikg <artist> - <title>`);
-//   }
-// });
+  bot.sendMessage(chatId, `🎵 *${track.track_name}* - ${track.artist_name}\n\n${lyrics}`, {
+    parse_mode: "Markdown",
+  });
+});
 
 bot.onText(/\/quote/, async (msg) => {
   const chatId = msg.chat.id;
@@ -403,7 +387,7 @@ cron.schedule("* * * * *", () => {
   });
 
   // Filter and process reminders
-  reminders = reminders.filter(reminder => {
+  reminders = reminders.filter((reminder) => {
     if (reminder.waktu === sekarang) {
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
       return false; // Remove this reminder
