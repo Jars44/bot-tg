@@ -516,6 +516,10 @@ bot.on("message", async (msg) => {
 
     bot.sendMessage(chatId, "⏳ Sedang proses, tunggu bentar ya...");
 
+    console.log(`User ${chatId} requested download from ${source} in ${format} format.`);
+    console.log(`URL: ${url}`);
+    console.log(`State: ${JSON.stringify(state)}`);
+
     try {
       let apiUrl = "";
       if (source === "youtube") {
