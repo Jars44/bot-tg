@@ -30,7 +30,7 @@ bot.on("polling_error", (error) => {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Selamat datang di @Jars_Bot \nKetik /help untuk selengkapnya");
+  bot.sendMessage(chatId, "Selamat datang di @Jars44_Bot \nKetik /help untuk selengkapnya");
   bot.startPolling();
 });
 
@@ -277,7 +277,7 @@ async function getCoordinates(cityName) {
 
 bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const location = match[1] ? match[1].trim() : null;
+  const location = match[1] ? match[1].trim() : "Malang";
 
   try {
     bot.sendMessage(chatId, `🔍 Mencari data cuaca di ${location}...`);
@@ -523,9 +523,7 @@ bot.on("message", async (msg) => {
           url
         )}`;
       } else if (source === "tiktok") {
-        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?format=${format}&url=${encodeURIComponent(
-          url
-        )}`;
+        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(url)}&format=${format}`;
       }
 
       const res = await axios.get(apiUrl);
