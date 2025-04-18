@@ -569,6 +569,28 @@ bot.on("message", async (msg) => {
   }
 });
 
+bot.onText(/\/dltt, (.+)/, async (msg, match) => { 
+  const chatId = msg.chat.id;
+  const url = match[1].trim();
+
+  if (!url.startsWith("https://")) {
+    return bot.sendMessage(chatId, "Format salah! Kirim link TikTok yang valid.");
+  }
+
+  bot.sendMessage(chatId, "⏳ Sedang proses, tunggu bentar ya...");
+
+  try {
+    if (url.includes("tiktok.com")) {
+      bot.sendVideo(chatId, url, { caption: "📽️ Nih videonya" });
+    } else {
+      bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+    }
+  } catch (err) {
+    console.error(err);
+    bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
+  }
+})
+
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
