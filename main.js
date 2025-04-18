@@ -628,7 +628,9 @@ bot.on("message", (msg) => {
     /^\/ingatkan/,
     /^\/lagu/,
     /^\/lirikm/,
-    /^\/download/
+    /^\/download/,
+    /^\/dltt/,
+    /^\/dl/
   ];
 
   // Check for incomplete commands
