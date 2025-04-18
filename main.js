@@ -136,6 +136,7 @@ bot.onText(/\/lirikm (.+)/, async (msg, match) => {
       query
     )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
   );
+  bot.sendMessage(chatId, "🔍 Mencari lirik...");
   const searchData = await searchRes.json();
   const track = searchData.message.body.track_list[0]?.track;
 
@@ -150,6 +151,48 @@ bot.onText(/\/lirikm (.+)/, async (msg, match) => {
   bot.sendMessage(chatId, `🎵 *${track.track_name}* - ${track.artist_name}\n\n${lyrics}`, {
     parse_mode: "Markdown",
   });
+});
+
+bot.onText(/\/lagu (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const query = match[1];
+
+  try {
+    // 1. Cari lagu
+    const searchRes = await fetch(
+      `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
+        query
+      )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
+    );
+    const searchData = await searchRes.json();
+    const track = searchData.message.body.track_list[0]?.track;
+
+    if (!track) return bot.sendMessage(chatId, "😔 Lagu gak ketemu, bro.");
+
+    const { track_id, track_name, artist_name, album_name } = track;
+
+    // 2. Ambil lirik
+    const lyricsRes = await fetch(
+      `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
+    );
+    const lyricsData = await lyricsRes.json();
+    const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "😢 Lirik gak tersedia.";
+
+    // 3. Kirim ke Telegram
+    const message = `
+🎵 *${track_name}*
+🎤 *${artist_name}*
+💿 *Album:* ${album_name}
+
+📑 *Lirik:*
+${lyrics}
+`.trim();
+
+    bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+  } catch (err) {
+    console.error(err);
+    bot.sendMessage(chatId, "❌ Ada error bro, coba lagi nanti ya!");
+  }
 });
 
 bot.onText(/\/quote/, async (msg) => {
