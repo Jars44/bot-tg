@@ -19,14 +19,14 @@ const bot = new TelegramBot(token, options);
 
 const userDownloadState = new Map(); // Map to track user download states
 
-bot.on("polling_error", (error) => {
-  console.error("Polling Error:", {
-    code: error.code,
-    message: error.message,
-    stack: error.stack,
-    fullError: error,
-  });
-});
+// bot.on("polling_error", (error) => {
+//   console.error("Polling Error:", {
+//     code: error.code,
+//     message: error.message,
+//     stack: error.stack,
+//     fullError: error,
+//   });
+// });
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
@@ -531,7 +531,6 @@ bot.on("message", async (msg) => {
       }
 
       const res = await axios.get(apiUrl);
-      console.log("API response:", res.data); // Log the API response for debugging
       const data = res.data;
 
       if (data && data.status === "success" && data.url) {
