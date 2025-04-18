@@ -576,22 +576,9 @@ bot.onText(/\/dltt, (.+)/, async (msg, match) => {
   console.log(`User ${chatId} requested download from TikTok: ${url}`);
   console.log(url)
 
-  if (!url.startsWith("https://")) {
-    return bot.sendMessage(chatId, "Format salah! Kirim link TikTok yang valid.");
-  }
-
-  bot.sendMessage(chatId, "⏳ Sedang proses, tunggu bentar ya...");
-
-  try {
-    if (url.includes("tiktok.com")) {
-      bot.sendVideo(chatId, url, { caption: "📽️ Nih videonya" });
-    } else {
-      bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
-    }
-  } catch (err) {
-    console.error(err);
-    bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
-  }
+  bot.sendVideo(chatId, url, {
+    caption: "📽️ Nih videonya",
+  });
 })
 
 bot.onText(/\/help/, async (msg) => {
@@ -629,10 +616,6 @@ bot.on("message", (msg) => {
     /^\/start/,
     /^\/stop/,
     /^\/ingatkan/,
-    /^\/lagu/,
-    /^\/lirikm/,
-    /^\/download/,
-    /^\/dltt/,
     /^\/dl/
   ];
 
@@ -645,6 +628,10 @@ bot.on("message", (msg) => {
     // /^\/cuaca$/, // /cuaca without location
     /^\/translate$/,
     /^\/ingatkan$/, // /ingatkan without time and message
+    /^\/lagu/,
+    /^\/lirikm/,
+    /^\/download/,
+    /^\/dltt/
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
