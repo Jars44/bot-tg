@@ -542,10 +542,20 @@ bot.on("message", async (msg) => {
       const data = res.data;
       console.log(apiUrl)
 
-      // console.log("Download API response:", data);
-      console.log("Download API response:", data.status);
+      // Improved logging of full response data for debugging
+      console.log("Download API full response:", data);
+
+      if (!data) {
+        console.error("Download API response is undefined or null");
+        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+        userDownloadState.delete(chatId);
+        return;
+      }
+
+      console.log("Download API response status:", data.status);
       console.log("Download API response url:", data.url);
-      if (data && data.status === "success" && data.url) {
+
+      if (data.status === "success" && data.url) {
         if (format === "mp4") {
           bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
         } else {
