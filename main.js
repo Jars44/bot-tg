@@ -544,6 +544,7 @@ bot.on("message", async (msg) => {
 
       // console.log("Download API response:", data);
       console.log("Download API response:", data.status);
+      console.log("Download API response url:", data.url);
       if (data && data.status === "success" && data.url) {
         if (format === "mp4") {
           bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
