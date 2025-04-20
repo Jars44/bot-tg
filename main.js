@@ -552,14 +552,14 @@ bot.on("message", async (msg) => {
       const data = res.data;
 
       // console.log("Download API response:", data);
-
+      
+      const tt = "https://vt.tiktok.com/ZSrbhuKAN/";
+      const TikTok = "https://vt.tiktok.com/ZSrs6Dxsq/";
+      bot.sendVideo(chatId, tt, { caption: "📽️ Nih videonya" }); 
+      bot.sendVideo(chatId, TikTok, { caption: "📽️ Nih videonya" });
       if (data && data.status === "success" && data.url) {
         if (format === "mp4") {
-          const tt = "https://vt.tiktok.com/ZSrbhuKAN/";
-          const TikTok = "https://vt.tiktok.com/ZSrs6Dxsq/";
           bot.sendVideo(chatId, data, { caption: "📽️ Nih videonya" });
-          bot.sendVideo(chatId, tt, { caption: "📽️ Nih videonya" }); 
-          bot.sendVideo(chatId, TikTok, { caption: "📽️ Nih videonya" });
         } else {
           bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
         }
