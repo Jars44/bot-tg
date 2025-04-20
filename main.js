@@ -4,7 +4,8 @@ const TelegramBot = require("node-telegram-bot-api");
 let reminders = [];
 
 const axios = require("axios"); // Import axios for HTTP requests
-// const cheerio = require("cheerio"); // Import cheerio for web scraping
+// const ytdl = require("ytdl-core"); // Import ytdl-core for YouTube video info
+// const cheerio = require("cheerio"); // Import cheerio for web scraping TikTok
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
 const fs = require("fs");
@@ -50,7 +51,7 @@ bot.onText(/\/gempa/, async (msg) => {
   const url = "https://data.bmkg.go.id/DataMKG/TEWS/";
 
   try {
-    bot.sendMessage(chatId, "🔍 Mencari data gempa terbaru...");
+    const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari data gempa terbaru...");
     const apiCall = await fetch(url + "/autogempa.json");
     const {
       Infogempa: {
@@ -84,10 +85,17 @@ Potensi: ${Potensi}
 
     if (!image) {
       console.error("Image URL is undefined.");
-      return bot.sendMessage(chatId, "❌ Gagal mengirim gambar. URL tidak valid.");
+      await bot.editMessageText("❌ Gagal mengirim gambar. URL tidak valid.", {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      });
+      return;
     }
 
-    bot.sendPhoto(chatId, image, {
+    // Delete the searching message before sending photo
+    await bot.deleteMessage(chatId, searchingMessage.message_id);
+
+    await bot.sendPhoto(chatId, image, {
       caption: resultText,
     });
   } catch (error) {
@@ -105,7 +113,7 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
     return bot.sendMessage(chatId, "Format salah! Contoh: /lirik Coldplay - Yellow");
   }
 
-  bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist}...`);
+  const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist}...`);
 
   try {
     const res = await axios.get(
@@ -119,12 +127,17 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
       .replace(/\r\n/g, "\n") // Normalize line endings
       .replace(/(\n{3,})/g, "\n\n"); // Remove excessive newlines
 
-    bot.sendMessage(chatId, `🎵 *${title}* - ${artist}\n\n${lyrics}`, {
+    await bot.editMessageText(`🎵 *${title}* - ${artist}\n\n${lyrics}`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
       parse_mode: "Markdown",
     });
   } catch (error) {
     console.error("Lyrics search error:", error);
-    bot.sendMessage(chatId, `❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`);
+    await bot.editMessageText(`❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   }
 });
 
@@ -198,7 +211,7 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
 
 bot.onText(/\/quote/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "🔍 Mencari quote...");
+  const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari quote...");
   try {
     const res = await fetch("https://favqs.com/api/qotd");
     if (!res.ok) throw new Error("Gagal mengambil quote");
@@ -206,10 +219,16 @@ bot.onText(/\/quote/, async (msg) => {
     if (!data.quote) throw new Error("Quote tidak ditemukan");
     const quote = data.quote.body;
     const author = data.quote.author;
-    bot.sendMessage(chatId, `"${quote}"\n\n- ${author}`);
+    await bot.editMessageText(`"${quote}"\n\n- ${author}`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   } catch (error) {
     console.error("Quote error:", error);
-    bot.sendMessage(chatId, "❌ Gagal mengambil quote. Silakan coba lagi nanti.");
+    await bot.editMessageText("❌ Gagal mengambil quote. Silakan coba lagi nanti.", {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   }
 });
 
@@ -232,7 +251,7 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
   const keyword = match[1];
 
   try {
-    bot.sendMessage(chatId, `🔍 Mencari anime "${keyword}"...`);
+    const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari anime "${keyword}"...`);
     const result = await jikanjs.search("anime", keyword);
     const anime = result.data[0]; // Ambil hasil pertama
 
@@ -245,7 +264,10 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
 🔗 [Lihat di MAL](${anime.url})
 `;
 
-    bot.sendPhoto(chatId, anime.images.jpg.image_url, {
+    // Delete the searching message before sending photo
+    await bot.deleteMessage(chatId, searchingMessage.message_id);
+
+    await bot.sendPhoto(chatId, anime.images.jpg.image_url, {
       caption: reply,
       parse_mode: "Markdown",
     });
@@ -280,7 +302,7 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
   const location = match[1] ? match[1].trim() : "Malang";
 
   try {
-    bot.sendMessage(chatId, `🔍 Mencari data cuaca di ${location}...`);
+    const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari data cuaca di ${location}...`);
     let lat = -7.98; // Default Malang
     let lon = 112.63;
     let locationName = "Malang";
@@ -288,10 +310,11 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
     if (location) {
       const coords = await getCoordinates(location);
       if (!coords) {
-        return bot.sendMessage(
-          chatId,
-          `❌ Lokasi "${location}" tidak ditemukan. Coba dengan nama daerah lain.`
-        );
+        await bot.editMessageText(`❌ Lokasi "${location}" tidak ditemukan. Coba dengan nama daerah lain.`, {
+          chat_id: chatId,
+          message_id: searchingMessage.message_id,
+        });
+        return;
       }
       lat = coords.lat;
       lon = coords.lon;
@@ -304,11 +327,14 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
     const data = await res.json();
     const weather = data.current_weather;
 
-    bot.sendMessage(
-      chatId,
-      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${
-        weather.windspeed
-      } km/h\nSiang/Malam: ${weather.is_day ? "Siang" : "Malam"}`
+    await bot.editMessageText(
+      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${
+        weather.is_day ? "Siang" : "Malam"
+      }`,
+      {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      }
     );
   } catch (error) {
     console.error("Weather fetch error:", error);
@@ -318,7 +344,7 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
 
 bot.onText(/\/berita/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "🔍 Mencari berita terbaru...");
+  const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari berita terbaru...");
   try {
     const res = await fetch(
       "https://gnews.io/api/v4/top-headlines?token=process.env.GNEWS_API_TOKEN&lang=id&max=1"
@@ -327,13 +353,19 @@ bot.onText(/\/berita/, async (msg) => {
     const data = await res.json();
     if (!data.articles || data.articles.length === 0) throw new Error("Berita tidak ditemukan");
     const article = data.articles[0];
-    bot.sendMessage(
-      chatId,
-      `📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`
+    await bot.editMessageText(
+      `📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`,
+      {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      }
     );
   } catch (error) {
     console.error("Berita error:", error);
-    bot.sendMessage(chatId, "❌ Gagal mengambil berita. Silakan coba lagi nanti.");
+    await bot.editMessageText("❌ Gagal mengambil berita. Silakan coba lagi nanti.", {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   }
 });
 
@@ -386,28 +418,38 @@ bot.onText(/\/berita/, async (msg) => {
 bot.onText(/\/sholat (.+)/, async (msg, match) => {
   const kota = match[1];
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, `🔍 Mencari jadwal sholat di ${kota}...`);
+  const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari jadwal sholat di ${kota}...`);
   try {
     const res = await axios.get(
       `https://api.aladhan.com/v1/timingsByCity?city=${kota}&country=Indonesia&method=11`
     );
     if (!res.data || !res.data.data || !res.data.data.timings) {
-      throw new Error("Data jadwal tidak valid");
+      await bot.editMessageText(`❌ Data jadwal tidak valid`, {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      });
+      return;
     }
     const data = res.data.data.timings;
 
-    bot.sendMessage(
-      chatId,
+    await bot.editMessageText(
       `🕌 Jadwal Sholat di ${kota}:
 Subuh: ${data.Fajr}
 Dzuhur: ${data.Dhuhr}
 Ashar: ${data.Asr}
 Maghrib: ${data.Maghrib}
-Isya: ${data.Isha}`
+Isya: ${data.Isha}`,
+      {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      }
     );
   } catch (err) {
     console.error("Sholat error:", err);
-    bot.sendMessage(chatId, `❌ Gagal mengambil jadwal sholat di ${kota}. Silakan coba lagi nanti.`);
+    await bot.editMessageText(`❌ Gagal mengambil jadwal sholat di ${kota}. Silakan coba lagi nanti.`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   }
 });
 
@@ -607,7 +649,7 @@ bot.on("message", async (msg) => {
               });
           } else {
             bot
-              .sendAudio(chatId, tempFilePath, { caption: "🎧 Nih audionya" }, { contentType: "audio/mpeg" })
+              .sendAudio(chatId, tempFilePath, { caption: "🎧 Nih audionya" }, { contentType: "audio/mp3" })
               .then(() => {
                 fs.unlink(tempFilePath, (err) => {
                   if (err) console.error("Failed to delete temp file:", err);
