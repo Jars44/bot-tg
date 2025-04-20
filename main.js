@@ -31,7 +31,7 @@ const userDownloadState = new Map(); // Map to track user download states
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Selamat datang di @Jars44_Bot \nKetik /help untuk selengkapnya");
+  bot.sendMessage(chatId, "Selamat datang di @Jars44_Bot \nKetik /help untuk panduan penggunaan bot ini.");
   bot.startPolling();
 });
 
@@ -134,10 +134,13 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
     });
   } catch (error) {
     console.error("Lyrics search error:", error);
-    await bot.editMessageText(`❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`, {
-      chat_id: chatId,
-      message_id: searchingMessage.message_id,
-    });
+    await bot.editMessageText(
+      `❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`,
+      {
+        chat_id: chatId,
+        message_id: searchingMessage.message_id,
+      }
+    );
   }
 });
 
@@ -328,9 +331,9 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
     const weather = data.current_weather;
 
     await bot.editMessageText(
-      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${
-        weather.is_day ? "Siang" : "Malam"
-      }`,
+      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${
+        weather.windspeed
+      } km/h\nSiang/Malam: ${weather.is_day ? "Siang" : "Malam"}`,
       {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
@@ -633,7 +636,7 @@ bot.on("message", async (msg) => {
         const ext = format === "mp4" ? ".mp4" : ".mp3";
         const timestamp = Date.now();
         const prefix = format === "mp4" ? "video" : "audio";
-        const tempFilePath = path.join(__dirname, `temp_download_${prefix}_${chatId}_${timestamp}${ext}`);
+        const tempFilePath = path.join(__dirname, `download_${prefix}-${timestamp}${ext}`);
         const writer = fs.createWriteStream(tempFilePath);
 
         res.data.pipe(writer);
@@ -676,18 +679,6 @@ bot.on("message", async (msg) => {
   }
 });
 
-bot.onText(/\/dltt, (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const url = match[1];
-
-  console.log(`User ${chatId} requested download from TikTok: ${url}`);
-  console.log(url);
-
-  bot.sendVideo(chatId, url, {
-    caption: "📽️ Nih videonya",
-  });
-});
-
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
@@ -699,7 +690,8 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
 /anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang`
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \n Experimental Feature! \n
+/download - Download Video/Audio \n(Youtube / TikTok) \nExperimental Feature!`
   );
 });
 
@@ -726,8 +718,6 @@ bot.on("message", (msg) => {
     /^\/lagu/,
     /^\/lirikm/,
     /^\/download/,
-    /^\/dltt/,
-    /^\/dl/,
   ];
 
   // Check for incomplete commands
@@ -741,8 +731,6 @@ bot.on("message", (msg) => {
     /^\/ingatkan$/, // /ingatkan without time and message
     /^\/lagu/,
     /^\/lirikm/,
-    /^\/download/,
-    /^\/dltt/,
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
