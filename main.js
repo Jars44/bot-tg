@@ -440,7 +440,7 @@ cron.schedule("* * * * *", () => {
     if (reminder.waktu === sekarang) {
       console.log(`Mengirim pengingat ke ${reminder.chatId}: ${reminder.pesan}`);
       console.log(`Waktu sekarang: ${sekarang}`);
-      console.log(reminders)
+      console.log(reminders);
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
       return false; // Remove this reminder
     }
@@ -527,7 +527,6 @@ bot.on("message", async (msg) => {
     console.log(`State: ${JSON.stringify(state)}`);
 
     try {
-      // Resolve shortened TikTok URL before calling API
       let apiUrl = "";
       if (source === "youtube") {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
@@ -552,9 +551,9 @@ bot.on("message", async (msg) => {
 
       const res = await axios.get(apiUrl, { responseType: "stream" });
       console.log(`Download API response status code: ${res.status}`);
-      console.log(`Download API response content-type: ${res.headers['content-type']}`);
+      console.log(`Download API response content-type: ${res.headers["content-type"]}`);
 
-      const contentType = res.headers['content-type'];
+      const contentType = res.headers["content-type"];
 
       if (contentType && contentType.includes("application/json")) {
         // Handle JSON response
@@ -582,7 +581,12 @@ bot.on("message", async (msg) => {
         } else {
           bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
         }
-      } else if (contentType && (contentType.includes("application/octet-stream") || contentType.includes("video") || contentType.includes("audio"))) {
+      } else if (
+        contentType &&
+        (contentType.includes("application/octet-stream") ||
+          contentType.includes("video") ||
+          contentType.includes("audio"))
+      ) {
         // Handle binary stream response
         const ext = format === "mp4" ? ".mp4" : ".mp3";
         const tempFilePath = path.join(__dirname, `temp_download_${chatId}${ext}`);
