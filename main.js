@@ -596,17 +596,21 @@ bot.on("message", async (msg) => {
 
         writer.on("finish", () => {
           if (format === "mp4") {
-            bot.sendVideo(chatId, tempFilePath, { caption: "📽️ Nih videonya" }).then(() => {
-              fs.unlink(tempFilePath, (err) => {
-                if (err) console.error("Failed to delete temp file:", err);
+            bot
+              .sendVideo(chatId, tempFilePath, { caption: "📽️ Nih videonya" }, { contentType: "video/mp4" })
+              .then(() => {
+                fs.unlink(tempFilePath, (err) => {
+                  if (err) console.error("Failed to delete temp file:", err);
+                });
               });
-            });
           } else {
-            bot.sendAudio(chatId, tempFilePath, { caption: "🎧 Nih audionya" }).then(() => {
-              fs.unlink(tempFilePath, (err) => {
-                if (err) console.error("Failed to delete temp file:", err);
+            bot
+              .sendAudio(chatId, tempFilePath, { caption: "🎧 Nih audionya" }, { contentType: "audio/mpeg" })
+              .then(() => {
+                fs.unlink(tempFilePath, (err) => {
+                  if (err) console.error("Failed to delete temp file:", err);
+                });
               });
-            });
           }
         });
 
