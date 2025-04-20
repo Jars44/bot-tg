@@ -416,11 +416,13 @@ bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
   const waktu = match[1]; // format HH:mm
   const pesan = match[2];
 
+  console.log(`Pengingat set untuk ${chatId} pada ${waktu}: ${pesan}`);
   reminders.push({ chatId, waktu, pesan });
   bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
 });
 
 console.log("Cron job started, checking reminders every minute...");
+console.log("Reminder list:", reminders);
 // Cron yang jalan tiap menit
 cron.schedule("* * * * *", () => {
   const now = new Date();
@@ -431,10 +433,14 @@ cron.schedule("* * * * *", () => {
   cron.schedule("0 7 * * *", () => {
     bot.sendMessage(chatId, "Selamat pagi! Jangan lupa sarapan 🍳");
   });
-
+  console.log(`Cron job running at ${sekarang}`);
+  console.log(reminder);
   // Filter and process reminders
   reminders = reminders.filter((reminder) => {
     if (reminder.waktu === sekarang) {
+      console.log(`Mengirim pengingat ke ${reminder.chatId}: ${reminder.pesan}`);
+      console.log(`Waktu sekarang: ${sekarang}`);
+      console.log(reminders)
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
       return false; // Remove this reminder
     }
@@ -523,7 +529,6 @@ bot.on("message", async (msg) => {
     try {
       // Resolve shortened TikTok URL before calling API
       let apiUrl = "";
-      console.log(`apiUrl: ${apiUrl}`);
       if (source === "youtube") {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
           url
@@ -536,14 +541,27 @@ bot.on("message", async (msg) => {
         console.log(`download tiktok apiUrl: ${apiUrl}`);
       }
 
+      if (!apiUrl) {
+        console.error("API URL is empty. Cannot proceed with download.");
+        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+        userDownloadState.delete(chatId);
+        return;
+      }
+
       console.log(`Calling download API: ${apiUrl}`);
 
-      const res = await axios.get(apiUrl);
-      const data = res.data;
-      console.log(apiUrl)
+      const res = await axios.get(apiUrl, { responseType: "json" });
+      console.log(`Download API response status code: ${res.status}`);
+      console.log(`Download API response content-type: ${res.headers['content-type']}`);
 
-      // Improved logging of full response data for debugging
-      console.log("Download API full response:", data);
+      if (!res.headers['content-type'] || !res.headers['content-type'].includes("application/json")) {
+        console.error("Download API response is not JSON.");
+        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+        userDownloadState.delete(chatId);
+        return;
+      }
+
+      const data = res.data;
 
       if (!data) {
         console.error("Download API response is undefined or null");
@@ -552,8 +570,7 @@ bot.on("message", async (msg) => {
         return;
       }
 
-      console.log("Download API response status:", data.status);
-      console.log("Download API response url:", data.url);
+      console.log("Download API full response:", data);
 
       if (data.status === "success" && data.url) {
         if (format === "mp4") {
@@ -565,7 +582,7 @@ bot.on("message", async (msg) => {
         bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error during download API call:", err);
       bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
     }
 
