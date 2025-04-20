@@ -589,7 +589,9 @@ bot.on("message", async (msg) => {
       ) {
         // Handle binary stream response
         const ext = format === "mp4" ? ".mp4" : ".mp3";
-        const tempFilePath = path.join(__dirname, `temp_download_${chatId}${ext}`);
+        const timestamp = Date.now();
+        const prefix = format === "mp4" ? "video" : "audio";
+        const tempFilePath = path.join(__dirname, `temp_download_${prefix}_${chatId}_${timestamp}${ext}`);
         const writer = fs.createWriteStream(tempFilePath);
 
         res.data.pipe(writer);
