@@ -523,6 +523,7 @@ bot.on("message", async (msg) => {
     try {
       // Resolve shortened TikTok URL before calling API
       let apiUrl = "";
+      console.log(`apiUrl: ${apiUrl}`);
       if (source === "youtube") {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
           url
