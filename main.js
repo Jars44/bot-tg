@@ -553,7 +553,7 @@ bot.on("message", async (msg) => {
 
       if (data && data.status === "success" && data.url) {
         if (format === "mp4") {
-          bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
+          bot.sendVideo(chatId, data, { caption: "📽️ Nih videonya" });
         } else {
           bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
         }
@@ -616,7 +616,11 @@ bot.on("message", (msg) => {
     /^\/start/,
     /^\/stop/,
     /^\/ingatkan/,
-    /^\/dl/
+    /^\/lagu/,
+    /^\/lirikm/,
+    /^\/download/,
+    /^\/dltt/,
+    /^\/dl/,
   ];
 
   // Check for incomplete commands
