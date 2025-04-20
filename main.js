@@ -541,7 +541,9 @@ bot.on("message", async (msg) => {
           resolvedUrl
         )}`;
       } else if (source === "tiktok") {
-        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(resolvedUrl)}&format=${format}`;
+        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(
+          resolvedUrl
+        )}&format=${format}`;
       }
 
       console.log(`Calling download API: ${apiUrl}`);
@@ -553,7 +555,11 @@ bot.on("message", async (msg) => {
 
       if (data && data.status === "success" && data.url) {
         if (format === "mp4") {
+          const tt = "https://vt.tiktok.com/ZSrbhuKAN/";
+          const TikTok = "https://vt.tiktok.com/ZSrs6Dxsq/";
           bot.sendVideo(chatId, data, { caption: "📽️ Nih videonya" });
+          bot.sendVideo(chatId, tt, { caption: "📽️ Nih videonya" }); 
+          bot.sendVideo(chatId, TikTok, { caption: "📽️ Nih videonya" });
         } else {
           bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
         }
@@ -569,17 +575,17 @@ bot.on("message", async (msg) => {
   }
 });
 
-bot.onText(/\/dltt, (.+)/, async (msg, match) => { 
+bot.onText(/\/dltt, (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const url = match[1];
 
   console.log(`User ${chatId} requested download from TikTok: ${url}`);
-  console.log(url)
+  console.log(url);
 
   bot.sendVideo(chatId, url, {
     caption: "📽️ Nih videonya",
   });
-})
+});
 
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
@@ -635,7 +641,7 @@ bot.on("message", (msg) => {
     /^\/lagu/,
     /^\/lirikm/,
     /^\/download/,
-    /^\/dltt/
+    /^\/dltt/,
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
