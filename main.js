@@ -522,27 +522,14 @@ bot.on("message", async (msg) => {
 
     try {
       // Resolve shortened TikTok URL before calling API
-      let resolvedUrl = url;
-      if (source === "tiktok") {
-        try {
-          const headRes = await axios.head(url, { maxRedirects: 5 });
-          resolvedUrl = headRes.request.res.responseUrl || url;
-          console.log(`Resolved TikTok URL: ${resolvedUrl}`);
-        } catch (resolveErr) {
-          console.error("Error resolving TikTok URL:", resolveErr);
-          // fallback to original url
-          resolvedUrl = url;
-        }
-      }
-
       let apiUrl = "";
       if (source === "youtube") {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
-          resolvedUrl
+          url
         )}`;
       } else if (source === "tiktok") {
         apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(
-          resolvedUrl
+          url
         )}&format=${format}`;
       }
 
