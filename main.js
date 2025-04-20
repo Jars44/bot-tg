@@ -679,6 +679,38 @@ bot.on("message", async (msg) => {
   }
 });
 
+bot.onText(/\/film (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const keyword = match[1];
+  const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari film "${keyword}"...`);
+  try {
+    const res = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
+      params: {
+        api_key: "process.env.TMDB_API_KEY",
+        query: keyword
+      },
+    });
+    const film = res.data.results[0]; // Ambil hasil pertama
+    const reply = `
+Film: ${film.title}
+Tahun: ${film.release_date}
+Rating: ${film.vote_average}
+Deskripsi: ${film.overview}`
+
+    await bot.deleteMessage(chatId, searchingMessage.message_id); // Hapus pesan pencarian
+    await bot.sendPhoto(chatId, `https://image.tmdb.org/t/p/w500${film.poster_path}`, {
+      caption: reply,
+      parse_mode: "Markdown",
+    });
+  } catch (err) {
+    console.error("Film search error:", err);
+    await bot.editMessageText("❌ Gagal mencari film. Silakan coba lagi nanti.", {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
+  }
+});
+
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
