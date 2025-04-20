@@ -528,10 +528,12 @@ bot.on("message", async (msg) => {
         apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
           url
         )}`;
+        console.log(`download youtube apiUrl: ${apiUrl}`);
       } else if (source === "tiktok") {
         apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(
           url
         )}&format=${format}`;
+        console.log(`download tiktok apiUrl: ${apiUrl}`);
       }
 
       console.log(`Calling download API: ${apiUrl}`);
