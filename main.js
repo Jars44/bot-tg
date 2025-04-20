@@ -550,35 +550,69 @@ bot.on("message", async (msg) => {
 
       console.log(`Calling download API: ${apiUrl}`);
 
-      const res = await axios.get(apiUrl, { responseType: "json" });
+      const res = await axios.get(apiUrl, { responseType: "stream" });
       console.log(`Download API response status code: ${res.status}`);
       console.log(`Download API response content-type: ${res.headers['content-type']}`);
 
-      if (!res.headers['content-type'] || !res.headers['content-type'].includes("application/json")) {
-        console.error("Download API response is not JSON.");
-        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
-        userDownloadState.delete(chatId);
-        return;
-      }
+      const contentType = res.headers['content-type'];
 
-      const data = res.data;
-
-      if (!data) {
-        console.error("Download API response is undefined or null");
-        bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
-        userDownloadState.delete(chatId);
-        return;
-      }
-
-      console.log("Download API full response:", data);
-
-      if (data.status === "success" && data.url) {
-        if (format === "mp4") {
-          bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
-        } else {
-          bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
+      if (contentType && contentType.includes("application/json")) {
+        // Handle JSON response
+        let data = "";
+        for await (const chunk of res.data) {
+          data += chunk;
         }
+        try {
+          data = JSON.parse(data);
+        } catch (parseErr) {
+          console.error("Failed to parse JSON response:", parseErr);
+          bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+          userDownloadState.delete(chatId);
+          return;
+        }
+
+        console.log("Download API full response:", data);
+
+        if (data.status === "success" && data.url) {
+          if (format === "mp4") {
+            bot.sendVideo(chatId, data.url, { caption: "📽️ Nih videonya" });
+          } else {
+            bot.sendAudio(chatId, data.url, { caption: "🎧 Nih audionya" });
+          }
+        } else {
+          bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
+        }
+      } else if (contentType && (contentType.includes("application/octet-stream") || contentType.includes("video") || contentType.includes("audio"))) {
+        // Handle binary stream response
+        const ext = format === "mp4" ? ".mp4" : ".mp3";
+        const tempFilePath = path.join(__dirname, `temp_download_${chatId}${ext}`);
+        const writer = fs.createWriteStream(tempFilePath);
+
+        res.data.pipe(writer);
+
+        writer.on("finish", () => {
+          if (format === "mp4") {
+            bot.sendVideo(chatId, tempFilePath, { caption: "📽️ Nih videonya" }).then(() => {
+              fs.unlink(tempFilePath, (err) => {
+                if (err) console.error("Failed to delete temp file:", err);
+              });
+            });
+          } else {
+            bot.sendAudio(chatId, tempFilePath, { caption: "🎧 Nih audionya" }).then(() => {
+              fs.unlink(tempFilePath, (err) => {
+                if (err) console.error("Failed to delete temp file:", err);
+              });
+            });
+          }
+        });
+
+        writer.on("error", (err) => {
+          console.error("Error writing temp file:", err);
+          bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
+          userDownloadState.delete(chatId);
+        });
       } else {
+        console.error("Unsupported content-type:", contentType);
         bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
       }
     } catch (err) {
