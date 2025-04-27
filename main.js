@@ -828,7 +828,7 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
                     ${svgTextLines}
                   </svg>`;
 
-    const webpPath = path.join(__dirname, "stiker.webp");
+    const webmPath = path.join(__dirname, "stiker.webm");
     await sharp({
       create: {
         width: 512,
@@ -844,17 +844,17 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
           left: 0,
         },
       ])
-      .webp()
-      .toFile(webpPath);
+      .webm()
+      .toFile(webmPath);
 
-    await bot.sendSticker(chatId, webpPath, {
+    await bot.sendSticker(chatId, webmPath, {
       caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
     });
 
     userLimit[sender].stiker++;
 
     await delay(3000); // Delay 3 detik untuk menghindari spam
-    fs.unlinkSync(webpPath); // Hapus file setelah digunakan
+    fs.unlinkSync(webmPath); // Hapus file setelah digunakan
     console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
 
     // Delete the "sedang membuat stiker" message
