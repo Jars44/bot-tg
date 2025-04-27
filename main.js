@@ -1,8 +1,5 @@
 const TelegramBot = require("node-telegram-bot-api");
 
-// Global reminders array
-let reminders = [];
-
 const axios = require("axios"); // Import axios for HTTP requests
 // const ytdl = require("ytdl-core"); // Import ytdl-core for YouTube video info
 // const cheerio = require("cheerio"); // Import cheerio for web scraping TikTok
@@ -10,6 +7,21 @@ const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp"); // Import sharp for image processing
+
+// Global reminders array
+let reminders = [];
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const stikerLimit = 5;
+const resetTime = 10 * 60 * 1000; // 10 menit
+
+let userLimit = {};
+
+function resetLimit() {
+  userLimit = {};
+  console.log("limit di reset");
+}
 
 const token = "process.env.BOT_TOKEN";
 const options = {
@@ -687,7 +699,7 @@ bot.onText(/\/film (.+)/, async (msg, match) => {
     const res = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
       params: {
         api_key: "process.env.TMDB_API_KEY",
-        query: keyword
+        query: keyword,
       },
     });
     const film = res.data.results[0]; // Ambil hasil pertama
@@ -695,7 +707,9 @@ bot.onText(/\/film (.+)/, async (msg, match) => {
 Film: ${film.title}
 Tahun: ${film.release_date}
 Rating: ${film.vote_average}
-Deskripsi: ${film.overview}`
+Deskripsi: ${film.overview}
+
+🔗 [Lihat di TMDB](${film.url})`;
 
     await bot.deleteMessage(chatId, searchingMessage.message_id); // Hapus pesan pencarian
     await bot.sendPhoto(chatId, `https://image.tmdb.org/t/p/w500${film.poster_path}`, {
@@ -711,6 +725,133 @@ Deskripsi: ${film.overview}`
   }
 });
 
+bot.onText(/\/stiker (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const sender = msg.from.id;
+  const text = match[1];
+
+  if (!userLimit[sender]) {
+    userLimit[sender] = { stiker: 0};
+  }
+  console.log(`pesan dari ${from}: ${text}`);
+
+    if (userLimit[sender].stiker >= stikerLimit) {
+      await sock.sendMessage(from, { text: `Limit .stiker tercapai! (maks ${stikerLimit})` });
+      return;
+    }
+
+    const maxCharsPerLine = 20;
+    const lines = [];
+    const content = text.replace(".stiker", "").trim();
+
+    // Split content by user-entered line breaks first
+    const inputLines = content.split(/\r?\n/);
+
+    inputLines.forEach((inputLine) => {
+      let currentLine = "";
+      inputLine.split(" ").forEach((word) => {
+        if ((currentLine + word).length > maxCharsPerLine) {
+          lines.push(currentLine.trim());
+          currentLine = "";
+        }
+        currentLine += word + " ";
+      });
+      if (currentLine.trim()) lines.push(currentLine.trim());
+    });
+
+    // Find the longest line length in characters
+    const longestLineLength = lines.reduce((max, line) => Math.max(max, line.length), 0);
+
+    // Mapping characters per line to font size
+    const charToFontSizeMap = {
+      1: 280,
+      3: 190,
+      4: 160,
+      5: 130,
+      6: 110,
+      7: 95,
+      8: 85,
+      9: 75,
+      10: 68,
+      11: 60,
+      12: 55,
+      13: 50,
+      14: 45,
+      15: 40,
+    };
+
+    // Determine font size based on longest line length
+    let fontSize;
+    if (longestLineLength <= 4) {
+      fontSize = 160;
+    } else if (longestLineLength >= 15) {
+      fontSize = 40;
+    } else {
+      fontSize = charToFontSizeMap[longestLineLength] || 40;
+    }
+
+    const svgTextLines = lines
+      .map((line, i) => {
+        // Adjust vertical position to better center text block
+        const lineHeight = fontSize * 1.2; // add some line spacing
+        const totalTextHeight = lineHeight * lines.length;
+        const startY = (512 - totalTextHeight) / 2 + lineHeight / 2;
+        const y = startY + i * lineHeight;
+        return `<text x="50%" y="${y}" text-anchor="middle">${line}</text>`;
+      })
+      .join("");
+
+    if (!content) {
+      await sock.sendMessage(from, { text: "Kirim teks setelah .stiker!" });
+      return;
+    }
+
+    const svg = `<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                      text {
+                        fill: black;
+                        font-family: "Helvetica", "Arial, sans-serif;
+                        font-size: ${fontSize}px;
+                        white-space: pre-wrap;
+                        dominant-baseline: middle;
+                      }
+                    </style>
+                    <rect width="100%" height="100%" fill="white" />
+                    ${svgTextLines}
+                  </svg>`;
+
+    const webpPath = path.join(__dirname, "stiker.webp");
+    await sharp({
+      create: {
+        width: 512,
+        height: 512,
+        channels: 4,
+        background: { r: 255, g: 255, b: 255, alpha: 0 },
+      },
+    })
+      .composite([
+        {
+          input: Buffer.from(svg),
+          top: 0,
+          left: 0,
+        },
+      ])
+      .webp()
+      .toFile(webpPath);
+
+    await sock.sendMessage(from, {
+      sticker: { url: webpPath },
+      caption: `Stiker dari ${sender} (${userLimit[sender].stiker}/${stikerLimit})`,
+    });
+
+    userLimit[sender].stiker++;
+
+    await delay(3000); // Delay 3 detik untuk menghindari spam
+    fs.unlinkSync(webpPath); // Hapus file setelah digunakan
+    console.log(`Stiker dikirim ke ${from} (${userLimit[sender].stiker}/${stikerLimit})`);
+  }
+);
+
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
@@ -722,7 +863,7 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
 /anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \n Experimental Feature! \n
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \n
 /download - Download Video/Audio \n(Youtube / TikTok) \nExperimental Feature!`
   );
 });

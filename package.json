@@ -16,6 +16,7 @@
     "dotenv": "^16.5.0",
     "fs": "^0.0.1-security",
     "node-cron": "^3.0.3",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "sharp": "^0.34.1"
   }
 }
