@@ -711,7 +711,7 @@ Tahun: ${film.release_date}
 Rating: ${film.vote_average}
 Deskripsi: ${film.overview}
 
-🔗 [Lihat di TMDB](${film.url})`;
+🔗 [Lihat di TMDB](${film.page})`;
 
     await bot.deleteMessage(chatId, searchingMessage.message_id); // Hapus pesan pencarian
     await bot.sendPhoto(chatId, `https://image.tmdb.org/t/p/w500${film.poster_path}`, {
@@ -885,7 +885,7 @@ bot.onText(/\/help/, async (msg) => {
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
 /film - Cari Film \n(Gunakan Format /film <judul film>) \nContoh: /film Avengers \n
 /download - Download Video/Audio \n(Youtube / TikTok) \n
-/stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \n
+/stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \nExperimental Feature! \n
 /ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature!`
   );
 });
