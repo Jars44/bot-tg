@@ -732,12 +732,11 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
   const sender = msg.from.id;
   const text = match[1];
   const from = msg.from.first_name || msg.from.username || "User";
-  const loadingMessage = await bot.sendMessage(chatId, "🔍 Mencari stiker...");
 
   if (!userLimit[sender]) {
     userLimit[sender] = { stiker: 0 };
   }
-  console.log(`pesan dari ${from}: ${text}`);
+  console.log(`stiker dari ${from}: ${text}`);
 
   if (userLimit[sender].stiker >= stikerLimit) {
     await bot.sendMessage(chatId, `Limit /stiker tercapai! (maks ${stikerLimit}) \nSilakan coba lagi nanti.`);
@@ -745,7 +744,7 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
   }
 
   const maxCharsPerLine = 20;
-  const lines = [];
+  let lines = [];
   const content = text.trim();
 
   if (!content) {
@@ -754,6 +753,7 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
   }
 
   // Send "sedang membuat stiker" message
+  let loadingMessage;
   try {
     loadingMessage = await bot.sendMessage(chatId, "sedang membuat stiker...");
 
@@ -846,19 +846,19 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       ])
       .webp()
       .toFile(webpPath);
-      
-      await bot.sendSticker(chatId, webpPath, {
-        caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
-      });
-      
-      userLimit[sender].stiker++;
-      
-      await delay(3000); // Delay 3 detik untuk menghindari spam
-      fs.unlinkSync(webpPath); // Hapus file setelah digunakan
-      console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
-      
-      // Delete the "sedang membuat stiker" message
-      await bot.deleteMessage(chatId, loadingMessage.message_id);
+
+    await bot.sendSticker(chatId, webpPath, {
+      caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
+    });
+
+    userLimit[sender].stiker++;
+
+    await delay(3000); // Delay 3 detik untuk menghindari spam
+    fs.unlinkSync(webpPath); // Hapus file setelah digunakan
+    console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
+
+    // Delete the "sedang membuat stiker" message
+    await bot.deleteMessage(chatId, loadingMessage.message_id);
   } catch (error) {
     console.error("Error membuat stiker:", error);
     if (loadingMessage) {
