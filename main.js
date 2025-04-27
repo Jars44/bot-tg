@@ -23,6 +23,8 @@ function resetLimit() {
   console.log("limit di reset");
 }
 
+setInterval(resetLimit, resetTime);
+
 const token = "process.env.BOT_TOKEN";
 const options = {
   polling: true,
@@ -729,20 +731,31 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const sender = msg.from.id;
   const text = match[1];
+  const from = msg.from.first_name || msg.from.username || "User";
+  const loadingMessage = await bot.sendMessage(chatId, "🔍 Mencari stiker...");
 
   if (!userLimit[sender]) {
-    userLimit[sender] = { stiker: 0};
+    userLimit[sender] = { stiker: 0 };
   }
   console.log(`pesan dari ${from}: ${text}`);
 
-    if (userLimit[sender].stiker >= stikerLimit) {
-      await sock.sendMessage(from, { text: `Limit .stiker tercapai! (maks ${stikerLimit})` });
-      return;
-    }
+  if (userLimit[sender].stiker >= stikerLimit) {
+    await bot.sendMessage(chatId, `Limit /stiker tercapai! (maks ${stikerLimit}) \nSilakan coba lagi nanti.`);
+    return;
+  }
 
-    const maxCharsPerLine = 20;
-    const lines = [];
-    const content = text.replace(".stiker", "").trim();
+  const maxCharsPerLine = 20;
+  const lines = [];
+  const content = text.trim();
+
+  if (!content) {
+    await bot.sendMessage(chatId, "Kirim teks setelah /stiker!");
+    return;
+  }
+
+  // Send "sedang membuat stiker" message
+  try {
+    loadingMessage = await bot.sendMessage(chatId, "sedang membuat stiker...");
 
     // Split content by user-entered line breaks first
     const inputLines = content.split(/\r?\n/);
@@ -801,16 +814,11 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       })
       .join("");
 
-    if (!content) {
-      await sock.sendMessage(from, { text: "Kirim teks setelah .stiker!" });
-      return;
-    }
-
     const svg = `<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
                     <style>
                       text {
                         fill: black;
-                        font-family: "Helvetica", "Arial, sans-serif;
+                        font-family: "Helvetica", "Arial", sans-serif;
                         font-size: ${fontSize}px;
                         white-space: pre-wrap;
                         dominant-baseline: middle;
@@ -838,19 +846,31 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       ])
       .webp()
       .toFile(webpPath);
-
-    await sock.sendMessage(from, {
-      sticker: { url: webpPath },
-      caption: `Stiker dari ${sender} (${userLimit[sender].stiker}/${stikerLimit})`,
+      
+    await bot.deleteMessage(chatId, loadingMessage.message_id);
+    await bot.sendSticker(chatId, webpPath, {
+      caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
     });
 
     userLimit[sender].stiker++;
 
     await delay(3000); // Delay 3 detik untuk menghindari spam
     fs.unlinkSync(webpPath); // Hapus file setelah digunakan
-    console.log(`Stiker dikirim ke ${from} (${userLimit[sender].stiker}/${stikerLimit})`);
+    console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
+
+    // Delete the "sedang membuat stiker" message
+  } catch (error) {
+    console.error("Error membuat stiker:", error);
+    if (loadingMessage) {
+      await bot.editMessageText("❌ Gagal membuat stiker. Silakan coba lagi nanti.", {
+        chat_id: chatId,
+        message_id: loadingMessage.message_id,
+      });
+    } else {
+      await bot.sendMessage(chatId, "❌ Gagal membuat stiker. Silakan coba lagi nanti.");
+    }
   }
-);
+});
 
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
