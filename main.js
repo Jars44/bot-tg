@@ -847,18 +847,18 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       .webp()
       .toFile(webpPath);
       
-    await bot.deleteMessage(chatId, loadingMessage.message_id);
-    await bot.sendSticker(chatId, webpPath, {
-      caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
-    });
-
-    userLimit[sender].stiker++;
-
-    await delay(3000); // Delay 3 detik untuk menghindari spam
-    fs.unlinkSync(webpPath); // Hapus file setelah digunakan
-    console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
-
-    // Delete the "sedang membuat stiker" message
+      await bot.sendSticker(chatId, webpPath, {
+        caption: `Stiker dari ${sender} (${userLimit[sender].stiker + 1}/${stikerLimit})`,
+      });
+      
+      userLimit[sender].stiker++;
+      
+      await delay(3000); // Delay 3 detik untuk menghindari spam
+      fs.unlinkSync(webpPath); // Hapus file setelah digunakan
+      console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
+      
+      // Delete the "sedang membuat stiker" message
+      await bot.deleteMessage(chatId, loadingMessage.message_id);
   } catch (error) {
     console.error("Error membuat stiker:", error);
     if (loadingMessage) {
@@ -883,8 +883,10 @@ bot.onText(/\/help/, async (msg) => {
 /sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
 /anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
 /lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \n
-/download - Download Video/Audio \n(Youtube / TikTok) \nExperimental Feature!`
+/film - Cari Film \n(Gunakan Format /film <judul film>) \nContoh: /film Avengers \n
+/download - Download Video/Audio \n(Youtube / TikTok) \n
+/stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \n
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature!`
   );
 });
 
@@ -911,6 +913,8 @@ bot.on("message", (msg) => {
     /^\/lagu/,
     /^\/lirikm/,
     /^\/download/,
+    /^\/film/,
+    /^\/stiker/
   ];
 
   // Check for incomplete commands
@@ -922,8 +926,10 @@ bot.on("message", (msg) => {
     // /^\/cuaca$/, // /cuaca without location
     /^\/translate$/,
     /^\/ingatkan$/, // /ingatkan without time and message
-    /^\/lagu/,
-    /^\/lirikm/,
+    /^\/lagu$/,
+    /^\/lirikm$/,
+    /^\/film$/,
+    /^\/stiker$/
   ];
 
   // Check if it's an invalid command (starts slash but not recognized)
