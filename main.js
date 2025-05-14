@@ -1,8 +1,6 @@
 const TelegramBot = require("node-telegram-bot-api");
 
-const axios = require("axios"); // Import axios for HTTP requests
-// const ytdl = require("ytdl-core"); // Import ytdl-core for YouTube video info
-// const cheerio = require("cheerio"); // Import cheerio for web scraping TikTok
+const axios = require("axios");
 const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
 var cron = require("node-cron"); // Import cron library
 const fs = require("fs");
