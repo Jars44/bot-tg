@@ -13,8 +13,6 @@ A Telegram BOT using node-telegram-bot-api
 - Search info about film
 - Download Video/Audio Youtube/TikTok
 - Create a stiker using text
-- Remind to do something
-
 
 ## Install
 
