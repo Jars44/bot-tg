@@ -1,36 +1,63 @@
+# tg-bot
 
-# Telegam BOT 
+Telegram Bot with various useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more.
 
-A Telegram BOT using node-telegram-bot-api
 ## Features
 
-- Check the latest earthquake info
-- Quote of the day
-- Check the latest weather
-- Check the schedule praying time
-- Search info about anime
-- Search song lyrics
-- Search info about film
-- Download Video/Audio Youtube/TikTok
-- Create a stiker using text
+- /start - Start the bot
+- /stop - Stop the bot
+- /help - Show help and list of commands
+- /gempa - Get latest earthquake information
+- /berita - Get latest news headlines
+- /quote - Get quote of the day
+- /cuaca <city> - Get weather information for a city (default: Malang)
+- /sholat <city> - Get prayer times for a city in Indonesia
+- /anime <title> - Search for anime information
+- /lirik <artist> - <title> - Search for song lyrics
+- /film <title> - Search for movie information
+- /download - Download video/audio from YouTube or TikTok
+- /stiker <text> - Create a sticker from text
+- /ingatkan <HH:mm> <message> - Set a reminder
 
-## Install
+## Installation
 
-To install this project run
+1. Clone the repository:
+
+   ```bash
+   git clone <repository-url>
+   cd tg-bot
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file in the project root with your Telegram bot token:
+
+   ```
+   BOT_TOKEN=your_telegram_bot_token_here
+   ```
+
+4. Update the code to use the `BOT_TOKEN` environment variable instead of hardcoding the token (recommended for security).
+
+## Usage
+
+Start the bot with:
 
 ```bash
-  npm install
+npm run bot
 ```
 
+Interact with the bot on Telegram by sending commands as listed in the Features section.
 
-## Documentation
+## Notes
 
-[Documentation](https://github.com/yagop/node-telegram-bot-api)
+- The bot token is currently hardcoded in the source code (`main.js` and `script.js`). It is highly recommended to use environment variables for security.
+- The bot uses polling to receive updates.
+- Some features rely on external APIs; ensure you have internet connectivity.
 
+## License
 
-## Environment Variables
-
-To run this project, you will need to add the following environment variables to your .env file
-
-`TMDB API Key`
-
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
