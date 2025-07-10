@@ -1,4 +1,4 @@
-# tg-bot
+# Telegram BOT
 
 Telegram Bot with various useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more.
 
