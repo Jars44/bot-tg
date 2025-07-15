@@ -31,7 +31,7 @@ The bot is built using Node.js and interacts with the Telegram Bot API using pol
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Jars44/bot-tg.git
    cd tg-bot
    ```
 
