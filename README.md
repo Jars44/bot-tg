@@ -24,7 +24,7 @@ Telegram Bot with various useful commands including earthquake info, lyrics sear
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Jars44/bot-tg.git
    cd tg-bot
    ```
 
