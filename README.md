@@ -1,6 +1,10 @@
 # Telegram BOT
 
-Telegram Bot with various useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/tg-bot.svg)](https://www.npmjs.com/package/tg-bot)
+
+## Project Description
+This Telegram Bot provides a wide range of useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more. It is designed to be a versatile assistant for Telegram users.
 
 ## Features
 
@@ -19,6 +23,9 @@ Telegram Bot with various useful commands including earthquake info, lyrics sear
 - /stiker <text> - Create a sticker from text
 - /ingatkan <HH:mm> <message> - Set a reminder
 
+## Architecture
+The bot is built using Node.js and interacts with the Telegram Bot API using polling. It handles commands by parsing user messages and responding accordingly. External APIs are used to fetch data for features like weather, news, and anime info. The bot's codebase is modular, separating command handlers and utility functions for maintainability.
+
 ## Installation
 
 1. Clone the repository:
@@ -34,13 +41,15 @@ Telegram Bot with various useful commands including earthquake info, lyrics sear
    npm install
    ```
 
-3. Create a `.env` file in the project root with your Telegram bot token:
+## Configuration
 
-   ```
-   BOT_TOKEN=your_telegram_bot_token_here
-   ```
+Create a `.env` file in the project root with the following content:
 
-4. Update the code to use the `BOT_TOKEN` environment variable instead of hardcoding the token (recommended for security).
+```
+BOT_TOKEN=your_telegram_bot_token_here
+```
+
+It is highly recommended to use environment variables for sensitive data like the bot token instead of hardcoding it in the source code.
 
 ## Usage
 
@@ -52,11 +61,37 @@ npm run bot
 
 Interact with the bot on Telegram by sending commands as listed in the Features section.
 
-## Notes
+## Commands Examples
 
-- The bot token is currently hardcoded in the source code (`main.js` and `script.js`). It is highly recommended to use environment variables for security.
-- The bot uses polling to receive updates.
-- Some features rely on external APIs; ensure you have internet connectivity.
+- `/start`  
+  Starts the bot and sends a welcome message.
+
+- `/gempa`  
+  Returns the latest earthquake information.
+
+- `/cuaca Jakarta`  
+  Provides weather information for Jakarta.
+
+- `/stiker Hello World`  
+  Creates a sticker with the text "Hello World".
+
+## Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+- Fork the repository and create your branch from `main`.
+- Ensure any install or build dependencies are removed before the end of the layer when doing a build.
+- Update the README.md with details of changes to the interface, including new environment variables, exposed ports, useful file locations, and container parameters.
+- Increase the version numbers in any example files and the README.md to the new version that this Pull Request would represent.
+- You may merge the Pull Request once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+
+## Troubleshooting
+
+- Verify that your Telegram bot token is correct and has the necessary permissions.
+- Ensure your internet connection is stable as some features rely on external APIs.
+- Check the console output for error messages.
+- If the bot does not respond, verify that the polling mechanism is running correctly.
+- For issues with specific commands, check the relevant API service status.
 
 ## License
 
