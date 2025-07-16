@@ -3,7 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/tg-bot.svg)](https://www.npmjs.com/package/tg-bot)
 
-## Project Description
 This Telegram Bot provides a wide range of useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more. It is designed to be a versatile assistant for Telegram users.
 
 ## Features
