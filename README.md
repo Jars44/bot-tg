@@ -13,16 +13,17 @@ This Telegram Bot provides a wide range of useful commands including earthquake 
 - /gempa - Get latest earthquake information
 - /berita - Get latest news headlines
 - /quote - Get quote of the day
-- /cuaca <city> - Get weather information for a city (default: Malang)
-- /sholat <city> - Get prayer times for a city in Indonesia
-- /anime <title> - Search for anime information
-- /lirik <artist> - <title> - Search for song lyrics
-- /film <title> - Search for movie information
+- /cuaca `city` - Get weather information for a city (default: Malang)
+- /sholat `city` - Get prayer times for a city in Indonesia
+- /anime `title` - Search for anime information
+- /lirik `artist` - `title` - Search for song lyrics
+- /film `title` - Search for movie information
 - /download - Download video/audio from YouTube or TikTok
-- /stiker <text> - Create a sticker from text
-- /ingatkan <HH:mm> <message> - Set a reminder
+- /stiker `text` - Create a sticker from text
+- /ingatkan `HH:mm` `message` - Set a reminder
 
 ## Architecture
+
 The bot is built using Node.js and interacts with the Telegram Bot API using polling. It handles commands by parsing user messages and responding accordingly. External APIs are used to fetch data for features like weather, news, and anime info. The bot's codebase is modular, separating command handlers and utility functions for maintainability.
 
 ## Installation
@@ -46,6 +47,12 @@ Create a `.env` file in the project root with the following content:
 
 ```
 BOT_TOKEN=your_telegram_bot_token_here
+```
+
+## Running the Bot
+
+```bash
+npm run bot
 ```
 
 It is highly recommended to use environment variables for sensitive data like the bot token instead of hardcoding it in the source code.

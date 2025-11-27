@@ -1,61 +1,43 @@
+require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
-
 const axios = require("axios");
-const jikanjs = require("@mateoaranda/jikanjs"); // Import JikanJS library
-var cron = require("node-cron"); // Import cron library
+const jikanjs = require("@mateoaranda/jikanjs");
+var cron = require("node-cron");
 const fs = require("fs");
 const path = require("path");
-const sharp = require("sharp"); // Import sharp for image processing
+const sharp = require("sharp");
 
-// Global reminders array
 let reminders = [];
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const stikerLimit = 5;
-const resetTime = 10 * 60 * 1000; // 10 menit
+const resetTime = 10 * 60 * 1000;
 
 let userLimit = {};
 
 function resetLimit() {
   userLimit = {};
-  console.log("limit di reset");
 }
 
 setInterval(resetLimit, resetTime);
 
-const token = "process.env.BOT_TOKEN";
+const token = process.env.BOT_TOKEN;
 const options = {
   polling: true,
 };
 
 const bot = new TelegramBot(token, options);
 
-const userDownloadState = new Map(); // Map to track user download states
-
-// bot.on("polling_error", (error) => {
-//   console.error("Polling Error:", {
-//     code: error.code,
-//     message: error.message,
-//     stack: error.stack,
-//     fullError: error,
-//   });
-// });
+const userDownloadState = new Map();
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Selamat datang di @Jars44_Bot \nKetik /help untuk panduan penggunaan bot ini.");
-  bot.startPolling();
 });
 
 bot.onText(/\/stop/, async (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, "Bye! Semoga harimu menyenangkan! \nKetik /start untuk memulai lagi");
-  bot.stopPolling();
-});
-
-bot.onText("tes", async (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Tes berhasil!");
 });
 
 bot.onText(/\/gempa/, async (msg) => {
@@ -67,18 +49,7 @@ bot.onText(/\/gempa/, async (msg) => {
     const apiCall = await fetch(url + "/autogempa.json");
     const {
       Infogempa: {
-        gempa: {
-          Tanggal,
-          Jam,
-          Magnitude,
-          Kedalaman,
-          Wilayah,
-          Potensi,
-          Coordinates,
-          Lintang,
-          Bujur,
-          Shakemap,
-        },
+        gempa: { Tanggal, Jam, Magnitude, Kedalaman, Wilayah, Potensi, Coordinates, Lintang, Bujur, Shakemap },
       },
     } = await apiCall.json();
 
@@ -96,7 +67,6 @@ Potensi: ${Potensi}
 `;
 
     if (!image) {
-      console.error("Image URL is undefined.");
       await bot.editMessageText("❌ Gagal mengirim gambar. URL tidak valid.", {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
@@ -104,14 +74,12 @@ Potensi: ${Potensi}
       return;
     }
 
-    // Delete the searching message before sending photo
     await bot.deleteMessage(chatId, searchingMessage.message_id);
 
     await bot.sendPhoto(chatId, image, {
       caption: resultText,
     });
   } catch (error) {
-    console.error("Error ambil data gempa:", error);
     bot.sendMessage(chatId, "Gagal mengambil data gempa. Silakan coba lagi nanti.");
   }
 });
@@ -128,16 +96,12 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
   const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari lirik "${title}" oleh ${artist}...`);
 
   try {
-    const res = await axios.get(
-      `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
-    );
+    const res = await axios.get(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
     if (!res.data.lyrics) {
       throw new Error("Lirik tidak ditemukan");
     }
 
-    const lyrics = res.data.lyrics
-      .replace(/\r\n/g, "\n") // Normalize line endings
-      .replace(/(\n{3,})/g, "\n\n"); // Remove excessive newlines
+    const lyrics = res.data.lyrics.replace(/\r\n/g, "\n").replace(/(\n{3,})/g, "\n\n");
 
     await bot.editMessageText(`🎵 *${title}* - ${artist}\n\n${lyrics}`, {
       chat_id: chatId,
@@ -145,84 +109,12 @@ bot.onText(/\/lirik (.+)/, async (msg, match) => {
       parse_mode: "Markdown",
     });
   } catch (error) {
-    console.error("Lyrics search error:", error);
-    await bot.editMessageText(
-      `❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`,
-      {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      }
-    );
+    await bot.editMessageText(`❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   }
 });
-
-// bot.onText(/\/lirikm (.+)/, async (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const query = match[1];
-
-//   const searchRes = await fetch(
-//     `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
-//       query
-//     )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
-//   );
-//   bot.sendMessage(chatId, "🔍 Mencari lirik...");
-//   const searchData = await searchRes.json();
-//   const track = searchData.message.body.track_list[0]?.track;
-
-//   if (!track) return bot.sendMessage(chatId, "Lagu nggak ditemukan, bro 😢");
-
-//   const lyricsRes = await fetch(
-//     `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track.track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
-//   );
-//   const lyricsData = await lyricsRes.json();
-//   const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "Lirik nggak tersedia, bro 😓";
-
-//   bot.sendMessage(chatId, `🎵 *${track.track_name}* - ${track.artist_name}\n\n${lyrics}`, {
-//     parse_mode: "Markdown",
-//   });
-// });
-
-// bot.onText(/\/lagu (.+)/, async (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const query = match[1];
-
-//   try {
-//     // 1. Cari lagu
-//     const searchRes = await fetch(
-//       `https://api.musixmatch.com/ws/1.1/track.search?q_track=${encodeURIComponent(
-//         query
-//       )}&page_size=1&s_track_rating=desc&apikey=process.env.MUSIXMATCH_API_KEY`
-//     );
-//     const searchData = await searchRes.json();
-//     const track = searchData.message.body.track_list[0]?.track;
-
-//     if (!track) return bot.sendMessage(chatId, "😔 Lagu gak ketemu, bro.");
-
-//     const { track_id, track_name, artist_name, album_name } = track;
-
-//     // 2. Ambil lirik
-//     const lyricsRes = await fetch(
-//       `https://api.musixmatch.com/ws/1.1/track.lyrics.get?track_id=${track_id}&apikey=process.env.MUSIXMATCH_API_KEY`
-//     );
-//     const lyricsData = await lyricsRes.json();
-//     const lyrics = lyricsData.message.body.lyrics?.lyrics_body || "😢 Lirik gak tersedia.";
-
-//     // 3. Kirim ke Telegram
-//     const message = `
-// 🎵 *${track_name}*
-// 🎤 *${artist_name}*
-// 💿 *Album:* ${album_name}
-
-// 📑 *Lirik:*
-// ${lyrics}
-// `.trim();
-
-//     bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-//   } catch (err) {
-//     console.error(err);
-//     bot.sendMessage(chatId, "❌ Ada error bro, coba lagi nanti ya!");
-//   }
-// });
 
 bot.onText(/\/quote/, async (msg) => {
   const chatId = msg.chat.id;
@@ -239,27 +131,12 @@ bot.onText(/\/quote/, async (msg) => {
       message_id: searchingMessage.message_id,
     });
   } catch (error) {
-    console.error("Quote error:", error);
     await bot.editMessageText("❌ Gagal mengambil quote. Silakan coba lagi nanti.", {
       chat_id: chatId,
       message_id: searchingMessage.message_id,
     });
   }
 });
-
-// bot.onText(/\/quote|\/bijak/, async (msg) => {
-//   const chatId = msg.chat.id;
-//   try {
-//     const res = await axios.get("https://jagokata.com/kata-bijak/acak.html");
-//     const $ = cheerio.load(res.data);
-//     const quote = $(".quote").first().text().trim();
-//     const author = $(".author").first().text().trim();
-
-//     bot.sendMessage(chatId, `💬 *"${quote}"*\n\n— ${author}`, { parse_mode: "Markdown" });
-//   } catch (err) {
-//     bot.sendMessage(chatId, "Gagal ambil quote bro 😢");
-//   }
-// });
 
 bot.onText(/\/anime (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -268,7 +145,7 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
   try {
     const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari anime "${keyword}"...`);
     const result = await jikanjs.search("anime", keyword);
-    const anime = result.data[0]; // Ambil hasil pertama
+    const anime = result.data[0];
 
     const reply = `
 🎥 *${anime.title}* (${anime.type})
@@ -279,7 +156,6 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
 🔗 [Lihat di MAL](${anime.url})
 `;
 
-    // Delete the searching message before sending photo
     await bot.deleteMessage(chatId, searchingMessage.message_id);
 
     await bot.sendPhoto(chatId, anime.images.jpg.image_url, {
@@ -287,12 +163,10 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
       parse_mode: "Markdown",
     });
   } catch (err) {
-    console.error(err);
     bot.sendMessage(chatId, "Gagal mencari anime, Silakan coba lagi nanti.");
   }
 });
 
-// Fungsi untuk mendapatkan koordinat dari nama kota
 async function getCoordinates(cityName) {
   try {
     const response = await fetch(
@@ -307,7 +181,6 @@ async function getCoordinates(cityName) {
     }
     return null;
   } catch (error) {
-    console.error("Geocoding error:", error);
     return null;
   }
 }
@@ -318,7 +191,7 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
 
   try {
     const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari data cuaca di ${location}...`);
-    let lat = -7.98; // Default Malang
+    let lat = -7.98;
     let lon = 112.63;
     let locationName = "Malang";
 
@@ -343,16 +216,15 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
     const weather = data.current_weather;
 
     await bot.editMessageText(
-      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${
-        weather.windspeed
-      } km/h\nSiang/Malam: ${weather.is_day ? "Siang" : "Malam"}`,
+      `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${
+        weather.is_day ? "Siang" : "Malam"
+      }`,
       {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
       }
     );
   } catch (error) {
-    console.error("Weather fetch error:", error);
     bot.sendMessage(chatId, "❌ Gagal mengambil data cuaca. Silakan coba lagi nanti.");
   }
 });
@@ -368,15 +240,11 @@ bot.onText(/\/berita/, async (msg) => {
     const data = await res.json();
     if (!data.articles || data.articles.length === 0) throw new Error("Berita tidak ditemukan");
     const article = data.articles[0];
-    await bot.editMessageText(
-      `📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`,
-      {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      }
-    );
+    await bot.editMessageText(`📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`, {
+      chat_id: chatId,
+      message_id: searchingMessage.message_id,
+    });
   } catch (error) {
-    console.error("Berita error:", error);
     await bot.editMessageText("❌ Gagal mengambil berita. Silakan coba lagi nanti.", {
       chat_id: chatId,
       message_id: searchingMessage.message_id,
@@ -384,60 +252,12 @@ bot.onText(/\/berita/, async (msg) => {
   }
 });
 
-// bot.onText(/\/translate (.+)/, async (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const text = match[1];
-//   bot.sendMessage(chatId, "🔍 Menerjemahkan...");
-//   try {
-//     const res = await fetch("https://libretranslate.com/translate", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         q: text,
-//         source: "auto",
-//         target: "id",
-//         format: "text",
-//       }),
-//     });
-//     if (!res.ok) throw new Error("Gagal menerjemahkan");
-//     const data = await res.json();
-//     if (!data.translatedText) throw new Error("Terjemahan gagal");
-//     bot.sendMessage(chatId, `🈯 Hasil terjemahan:\n${data.translatedText}`);
-//   } catch (error) {
-//     console.error("Translate error:", error);
-//     bot.sendMessage(chatId, "❌ Gagal menerjemahkan. Silakan coba lagi nanti.");
-//   }
-// });
-
-// bot.onText(/\/tanya (.+)/, async (msg, match) => {
-//   const chatId = msg.chat.id;
-//   const prompt = match[1];
-
-//   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-//     method: "POST",
-//     headers: {
-//       Authorization: `Bearer YOUR_OPENROUTER_KEY`,
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       model: "deepseek/deepseek-r1:free",
-//       messages: [{ role: "user", content: prompt }],
-//     }),
-//   });
-
-//   const data = await res.json();
-//   const reply = data.choices[0].message.content;
-//   bot.sendMessage(chatId, reply);
-// });
-
 bot.onText(/\/sholat (.+)/, async (msg, match) => {
   const kota = match[1];
   const chatId = msg.chat.id;
   const searchingMessage = await bot.sendMessage(chatId, `🔍 Mencari jadwal sholat di ${kota}...`);
   try {
-    const res = await axios.get(
-      `https://api.aladhan.com/v1/timingsByCity?city=${kota}&country=Indonesia&method=11`
-    );
+    const res = await axios.get(`https://api.aladhan.com/v1/timingsByCity?city=${kota}&country=Indonesia&method=11`);
     if (!res.data || !res.data.data || !res.data.data.timings) {
       await bot.editMessageText(`❌ Data jadwal tidak valid`, {
         chat_id: chatId,
@@ -460,7 +280,6 @@ Isya: ${data.Isha}`,
       }
     );
   } catch (err) {
-    console.error("Sholat error:", err);
     await bot.editMessageText(`❌ Gagal mengambil jadwal sholat di ${kota}. Silakan coba lagi nanti.`, {
       chat_id: chatId,
       message_id: searchingMessage.message_id,
@@ -470,38 +289,31 @@ Isya: ${data.Isha}`,
 
 bot.onText(/\/ingatkan (\d{1,2}:\d{2}) (.+)/, (msg, match) => {
   const chatId = msg.chat.id;
-  const waktu = match[1]; // format HH:mm
+  const waktu = match[1];
   const pesan = match[2];
 
-  console.log(`Pengingat set untuk ${chatId} pada ${waktu}: ${pesan}`);
   reminders.push({ chatId, waktu, pesan });
   bot.sendMessage(chatId, `⏰ Siap! Gue bakal ingetin jam ${waktu} buat: "${pesan}"`);
 });
 
-console.log("Cron job started, checking reminders every minute...");
-console.log("Reminder list:", reminders);
-// Cron yang jalan tiap menit
 cron.schedule("* * * * *", () => {
   const now = new Date();
   const jam = now.getHours().toString().padStart(2, "0");
   const menit = now.getMinutes().toString().padStart(2, "0");
   const sekarang = `${jam}:${menit}`;
 
-  cron.schedule("0 7 * * *", () => {
-    bot.sendMessage(chatId, "Selamat pagi! Jangan lupa sarapan 🍳");
-  });
-  console.log(`Cron job running at ${sekarang}`);
-  console.log(reminder);
-  // Filter and process reminders
   reminders = reminders.filter((reminder) => {
     if (reminder.waktu === sekarang) {
-      console.log(`Mengirim pengingat ke ${reminder.chatId}: ${reminder.pesan}`);
-      console.log(`Waktu sekarang: ${sekarang}`);
-      console.log(reminders);
       bot.sendMessage(reminder.chatId, `🔔 Pengingat: ${reminder.pesan}`);
-      return false; // Remove this reminder
+      return false;
     }
-    return true; // Keep other reminders
+    return true;
+  });
+});
+
+cron.schedule("0 7 * * *", () => {
+  reminders.forEach((reminder) => {
+    bot.sendMessage(reminder.chatId, "Selamat pagi! Jangan lupa sarapan 🍳");
   });
 });
 
@@ -529,7 +341,6 @@ bot.on("callback_query", async (query) => {
 
   const data = query.data;
 
-  // Pilih sumber
   if (data.startsWith("source_")) {
     const source = data.split("_")[1];
     state.source = source;
@@ -554,7 +365,6 @@ bot.on("callback_query", async (query) => {
     });
   }
 
-  // Pilih format
   if (data.startsWith("format_")) {
     const format = data.split("_")[1];
     state.format = format;
@@ -572,48 +382,30 @@ bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const state = userDownloadState.get(chatId);
 
-  // Step: Kirim Link
   if (state?.step === "link" && msg.text.startsWith("https")) {
     const { source, format } = state;
     const url = msg.text;
 
     bot.sendMessage(chatId, "⏳ Sedang proses, tunggu bentar ya...");
 
-    console.log(`User ${chatId} requested download from ${source} in ${format} format.`);
-    console.log(`URL: ${url}`);
-    console.log(`State: ${JSON.stringify(state)}`);
-
     try {
       let apiUrl = "";
       if (source === "youtube") {
-        apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(
-          url
-        )}`;
-        console.log(`download youtube apiUrl: ${apiUrl}`);
+        apiUrl = `https://tools.opslinuxsec.com/ytdl/download.php?format=${format}&url=${encodeURIComponent(url)}`;
       } else if (source === "tiktok") {
-        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(
-          url
-        )}&format=${format}`;
-        console.log(`download tiktok apiUrl: ${apiUrl}`);
+        apiUrl = `https://tools.opslinuxsec.com/ttdl/download.php?url=${encodeURIComponent(url)}&format=${format}`;
       }
 
       if (!apiUrl) {
-        console.error("API URL is empty. Cannot proceed with download.");
         bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
         userDownloadState.delete(chatId);
         return;
       }
 
-      console.log(`Calling download API: ${apiUrl}`);
-
       const res = await axios.get(apiUrl, { responseType: "stream" });
-      console.log(`Download API response status code: ${res.status}`);
-      console.log(`Download API response content-type: ${res.headers["content-type"]}`);
-
       const contentType = res.headers["content-type"];
 
       if (contentType && contentType.includes("application/json")) {
-        // Handle JSON response
         let data = "";
         for await (const chunk of res.data) {
           data += chunk;
@@ -621,13 +413,10 @@ bot.on("message", async (msg) => {
         try {
           data = JSON.parse(data);
         } catch (parseErr) {
-          console.error("Failed to parse JSON response:", parseErr);
           bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
           userDownloadState.delete(chatId);
           return;
         }
-
-        console.log("Download API full response:", data);
 
         if (data.status === "success" && data.url) {
           if (format === "mp4") {
@@ -644,11 +433,10 @@ bot.on("message", async (msg) => {
           contentType.includes("video") ||
           contentType.includes("audio"))
       ) {
-        // Handle binary stream response
         const ext = format === "mp4" ? ".mp4" : ".mp3";
         const timestamp = Date.now();
         const prefix = format === "mp4" ? "video" : "audio";
-        const tempFilePath = path.join(__dirname, `download_${prefix}-${timestamp}${ext}`);
+        const tempFilePath = path.join(__dirname, "..", "temp", `${prefix}-${timestamp}${ext}`);
         const writer = fs.createWriteStream(tempFilePath);
 
         res.data.pipe(writer);
@@ -674,20 +462,17 @@ bot.on("message", async (msg) => {
         });
 
         writer.on("error", (err) => {
-          console.error("Error writing temp file:", err);
           bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
           userDownloadState.delete(chatId);
         });
       } else {
-        console.error("Unsupported content-type:", contentType);
         bot.sendMessage(chatId, "⚠️ Gagal ambil file. Coba cek link-nya lagi.");
       }
     } catch (err) {
-      console.error("Error during download API call:", err);
       bot.sendMessage(chatId, "🚨 Ada error pas ngambil file!");
     }
 
-    userDownloadState.delete(chatId); // reset state
+    userDownloadState.delete(chatId);
   }
 });
 
@@ -702,7 +487,7 @@ bot.onText(/\/film (.+)/, async (msg, match) => {
         query: keyword,
       },
     });
-    const film = res.data.results[0]; // Ambil hasil pertama
+    const film = res.data.results[0];
     const reply = `
 Film: ${film.title}
 Tahun: ${film.release_date}
@@ -711,13 +496,12 @@ Deskripsi: ${film.overview}
 
 🔗 [Lihat di TMDB](${film.page})`;
 
-    await bot.deleteMessage(chatId, searchingMessage.message_id); // Hapus pesan pencarian
+    await bot.deleteMessage(chatId, searchingMessage.message_id);
     await bot.sendPhoto(chatId, `https://image.tmdb.org/t/p/w500${film.poster_path}`, {
       caption: reply,
       parse_mode: "Markdown",
     });
   } catch (err) {
-    console.error("Film search error:", err);
     await bot.editMessageText("❌ Gagal mencari film. Silakan coba lagi nanti.", {
       chat_id: chatId,
       message_id: searchingMessage.message_id,
@@ -734,7 +518,6 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
   if (!userLimit[sender]) {
     userLimit[sender] = { stiker: 0 };
   }
-  console.log(`stiker dari ${from}: ${text}`);
 
   if (userLimit[sender].stiker >= stikerLimit) {
     await bot.sendMessage(chatId, `Limit /stiker tercapai! (maks ${stikerLimit}) \nSilakan coba lagi nanti.`);
@@ -750,12 +533,10 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
     return;
   }
 
-  // Send "sedang membuat stiker" message
   let loadingMessage;
   try {
     loadingMessage = await bot.sendMessage(chatId, "sedang membuat stiker...");
 
-    // Split content by user-entered line breaks first
     const inputLines = content.split(/\r?\n/);
 
     inputLines.forEach((inputLine) => {
@@ -770,10 +551,8 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       if (currentLine.trim()) lines.push(currentLine.trim());
     });
 
-    // Find the longest line length in characters
     const longestLineLength = lines.reduce((max, line) => Math.max(max, line.length), 0);
 
-    // Mapping characters per line to font size
     const charToFontSizeMap = {
       1: 280,
       3: 190,
@@ -791,7 +570,6 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
       15: 40,
     };
 
-    // Determine font size based on longest line length
     let fontSize;
     if (longestLineLength <= 4) {
       fontSize = 160;
@@ -803,8 +581,7 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
 
     const svgTextLines = lines
       .map((line, i) => {
-        // Adjust vertical position to better center text block
-        const lineHeight = fontSize * 1.2; // add some line spacing
+        const lineHeight = fontSize * 1.2;
         const totalTextHeight = lineHeight * lines.length;
         const startY = (512 - totalTextHeight) / 2 + lineHeight / 2;
         const y = startY + i * lineHeight;
@@ -826,7 +603,7 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
                     ${svgTextLines}
                   </svg>`;
 
-    const webpPath = path.join(__dirname, "stiker.webp");
+    const webpPath = path.join(__dirname, "..", "temp", "stiker.webp");
     await sharp({
       create: {
         width: 512,
@@ -851,14 +628,10 @@ bot.onText(/\/stiker (.+)/, async (msg, match) => {
 
     userLimit[sender].stiker++;
 
-    await delay(3000); // Delay 3 detik untuk menghindari spam
-    fs.unlinkSync(webpPath); // Hapus file setelah digunakan
-    console.log(`Stiker dikirim ke ${chatId} (${userLimit[sender].stiker}/${stikerLimit})`);
-
-    // Delete the "sedang membuat stiker" message
+    await delay(3000);
+    fs.unlinkSync(webpPath);
     await bot.deleteMessage(chatId, loadingMessage.message_id);
   } catch (error) {
-    console.error("Error membuat stiker:", error);
     if (loadingMessage) {
       await bot.editMessageText("❌ Gagal membuat stiker. Silakan coba lagi nanti.", {
         chat_id: chatId,
@@ -888,49 +661,29 @@ bot.onText(/\/help/, async (msg) => {
   );
 });
 
-// General message handler
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text ? msg.text.toLowerCase() : "";
 
-  // List of all valid commands
   const validCommands = [
     /^\/lirik/,
     /^\/quote/,
     /^\/anime/,
     /^\/cuaca/,
     /^\/berita/,
-    /^\/translate/,
     /^\/sholat/,
-    /^\/tanya/,
     /^\/gempa/,
     /^\/help/,
     /^\/start/,
     /^\/stop/,
     /^\/ingatkan/,
-    /^\/lagu/,
-    /^\/lirikm/,
     /^\/download/,
     /^\/film/,
-    /^\/stiker/
+    /^\/stiker/,
   ];
 
-  // Check for incomplete commands
-  const incompleteCommands = [
-    /^\/sholat$/, // /shalat without city
-    /^\/tanya$/, // /tanya without question
-    /^\/anime$/, // /anime without title
-    /^\/lirik$/, // /lirik without artist - title
-    // /^\/cuaca$/, // /cuaca without location
-    /^\/translate$/,
-    /^\/ingatkan$/, // /ingatkan without time and message
-    /^\/lagu$/,
-    /^\/lirikm$/,
-    /^\/film$/,
-    /^\/stiker$/
-  ];
+  const incompleteCommands = [/^\/sholat$/, /^\/anime$/, /^\/lirik$/, /^\/ingatkan$/, /^\/film$/, /^\/stiker$/];
 
-  // Check if it's an invalid command (starts slash but not recognized)
   const isInvalidCommand = text.startsWith("/") && !validCommands.some((cmd) => cmd.test(text));
 
   const isIncompleteCommand = incompleteCommands.some((cmd) => cmd.test(text));
@@ -943,16 +696,13 @@ bot.on("message", (msg) => {
     return;
   }
 
-  // Only check for random text/insults in non-command messages
   if (!text.startsWith("/") && !text.startsWith("https")) {
-    // More lenient random text detection
     const isRandomText =
       text.length >= 4 &&
       !text.includes(" ") &&
-      !text.match(/^[0-9]+$/) && // Exclude pure numbers
-      (/[a-z]{6,}/i.test(text) || /(.)\1{3,}/.test(text)); // Either 6+ letters or 4+ repeating chars
+      !text.match(/^[0-9]+$/) &&
+      (/[a-z]{6,}/i.test(text) || /(.)\1{3,}/.test(text));
 
-    // Check for insults
     const insults = [
       "bego",
       "goblok",
@@ -979,18 +729,15 @@ bot.on("message", (msg) => {
     const isInsult = insults.some((word) => text.includes(word));
 
     if (isRandomText || isInsult) {
-      // Random response selection with more variety
-      const randomNum = Math.floor(Math.random() * 5); // 0-7
+      const randomNum = Math.floor(Math.random() * 5);
 
       if (randomNum < 2) {
-        // Text response (0-3)
         const replies = ["apalah", "apa coba"];
         bot.sendMessage(chatId, replies[randomNum]);
       } else {
-        // Sticker response (4-7)
         const stickerOptions = ["stk1.webm", "stk2.webm", "stk3.webm"];
         const stickerIndex = randomNum - 3;
-        const Sticker = fs.readFileSync(path.join(__dirname, "assets", stickerOptions[stickerIndex]));
+        const Sticker = fs.readFileSync(path.join(__dirname, "..", "assets", stickerOptions[stickerIndex]));
         bot.sendSticker(chatId, Sticker);
       }
     }
