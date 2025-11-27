@@ -1,63 +1,96 @@
-# Telegram BOT
+# Telegram Bot
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
 [![npm version](https://img.shields.io/npm/v/tg-bot.svg)](https://www.npmjs.com/package/tg-bot)
 
-This Telegram Bot provides a wide range of useful commands including earthquake info, lyrics search, quotes, anime info, weather, news, prayer times, reminders, downloads from YouTube/TikTok, movie search, sticker creation from text, and more. It is designed to be a versatile assistant for Telegram users.
+A versatile Telegram bot built with Node.js that provides a wide range of useful features including earthquake information, lyrics search, quotes, anime details, weather updates, news, prayer times, reminders, media downloads, movie search, and custom sticker creation. Designed as an all-in-one assistant for Telegram users.
 
-## Features
+## ✨ Features
 
-- /start - Start the bot
-- /stop - Stop the bot
-- /help - Show help and list of commands
-- /gempa - Get latest earthquake information
-- /berita - Get latest news headlines
-- /quote - Get quote of the day
-- /cuaca `city` - Get weather information for a city (default: Malang)
-- /sholat `city` - Get prayer times for a city in Indonesia
-- /anime `title` - Search for anime information
-- /lirik `artist` - `title` - Search for song lyrics
-- /film `title` - Search for movie information
-- /download - Download video/audio from YouTube or TikTok
-- /stiker `text` - Create a sticker from text
-- /ingatkan `HH:mm` `message` - Set a reminder
+| Command                       | Description                                            | Example                      |
+| ----------------------------- | ------------------------------------------------------ | ---------------------------- |
+| `/start`                      | Start the bot and receive a welcome message            | `/start`                     |
+| `/stop`                       | Stop the bot                                           | `/stop`                      |
+| `/help`                       | Display help and list of available commands            | `/help`                      |
+| `/gempa`                      | Get the latest earthquake information from BMKG        | `/gempa`                     |
+| `/berita`                     | Fetch the latest news headlines                        | `/berita`                    |
+| `/quote`                      | Get a random quote of the day                          | `/quote`                     |
+| `/cuaca [city]`               | Get weather information (default: Malang)              | `/cuaca Jakarta`             |
+| `/sholat <city>`              | Get prayer times for Indonesian cities                 | `/sholat Jakarta`            |
+| `/anime <title>`              | Search for anime information                           | `/anime One Piece`           |
+| `/lirik <artist - title>`     | Search for song lyrics                                 | `/lirik Coldplay - Yellow`   |
+| `/film <title>`               | Search for movie details                               | `/film Avengers`             |
+| `/download`                   | Interactive download from YouTube/TikTok (video/audio) | `/download`                  |
+| `/stiker <text>`              | Create a custom sticker from text                      | `/stiker Hello!`             |
+| `/ingatkan <HH:mm> <message>` | Set a reminder                                         | `/ingatkan 12:00 Lunch time` |
 
-## Architecture
+## 🏗️ Architecture
 
-The bot is built using Node.js and interacts with the Telegram Bot API using polling. It handles commands by parsing user messages and responding accordingly. External APIs are used to fetch data for features like weather, news, and anime info. The bot's codebase is modular, separating command handlers and utility functions for maintainability.
+The bot is built using **Node.js** and leverages the Telegram Bot API with polling for real-time message handling. It features:
 
-## Installation
+- **Modular Design**: Command handlers are separated for maintainability.
+- **External APIs**: Integrates with various APIs for data fetching (weather, news, anime, etc.).
+- **Error Handling**: Robust error management with user-friendly messages.
+- **Asynchronous Operations**: Uses async/await for efficient API calls.
+- **File Management**: Temporary files are handled securely and cleaned up automatically.
 
-1. Clone the repository:
+## 📁 Project Structure
+
+```
+bot-tg/
+├── src/
+│   └── bot.js          # Main bot logic and command handlers
+├── assets/
+│   ├── stk1.webm       # Sticker assets for responses
+│   ├── stk2.webm
+│   └── stk3.webm
+├── temp/               # Temporary files (downloads, generated stickers)
+├── .env                # Environment variables (not committed)
+├── .gitignore          # Git ignore rules
+├── package.json        # Dependencies and scripts
+├── README.md           # This file
+└── LICENSE             # MIT License
+```
+
+## 🚀 Installation
+
+1. **Clone the repository**:
 
    ```bash
    git clone https://github.com/Jars44/bot-tg.git
-   cd tg-bot
+   cd bot-tg
    ```
 
-2. Install dependencies:
+2. **Install dependencies**:
 
    ```bash
    npm install
    ```
 
-## Configuration
+## ⚙️ Configuration
 
-Create a `.env` file in the project root with the following content:
+### Environment Variables
 
-```
+Create a `.env` file in the project root:
+
+```env
 BOT_TOKEN=your_telegram_bot_token_here
 ```
 
-## Running the Bot
+### API Keys (Optional)
 
-```bash
-npm run bot
+Some features require external API keys. Add them to your `.env` file:
+
+```env
+TMDB_API_KEY=your_tmdb_api_key_here
+GNEWS_API_TOKEN=your_gnews_token_here
 ```
 
-It is highly recommended to use environment variables for sensitive data like the bot token instead of hardcoding it in the source code.
+- **TMDB API Key**: Required for `/film` command. Get it from [The Movie Database](https://www.themoviedb.org/settings/api).
+- **GNews Token**: Required for `/berita` command. Get it from [GNews](https://gnews.io/).
 
-## Usage
+## ▶️ Running the Bot
 
 Start the bot with:
 
@@ -65,40 +98,33 @@ Start the bot with:
 npm run bot
 ```
 
-Interact with the bot on Telegram by sending commands as listed in the Features section.
+The bot will start polling for messages. Interact with it on Telegram using the commands listed above.
 
-## Commands Examples
+## 📖 Usage Examples
 
-- `/start`  
-  Starts the bot and sends a welcome message.
+- **Weather**: `/cuaca Surabaya` → Returns current weather for Surabaya.
+- **Lyrics**: `/lirik Taylor Swift - Blank Space` → Fetches lyrics for the song.
+- **Reminder**: `/ingatkan 15:30 Meeting with team` → Sets a reminder at 3:30 PM.
+- **Sticker**: `/stiker Welcome!` → Generates a sticker with "Welcome!" text.
 
-- `/gempa`  
-  Returns the latest earthquake information.
+## 🤝 Contributing
 
-- `/cuaca Jakarta`  
-  Provides weather information for Jakarta.
+We welcome contributions! Please:
 
-- `/stiker Hello World`  
-  Creates a sticker with the text "Hello World".
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/amazing-feature`.
+3. Commit your changes: `git commit -m 'Add amazing feature'`.
+4. Push to the branch: `git push origin feature/amazing-feature`.
+5. Open a Pull Request.
 
-## Contributing
+## 🐛 Troubleshooting
 
-Contributions are welcome! Please follow these guidelines:
+- **Bot not responding**: Check your bot token and ensure it's valid.
+- **API errors**: Verify internet connection and API service status.
+- **Download issues**: Ensure the provided URLs are valid and supported.
+- **Sticker limits**: The bot has rate limits for sticker creation (5 per 10 minutes).
+- **Console logs**: Check terminal output for detailed error messages.
 
-- Fork the repository and create your branch from `main`.
-- Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-- Update the README.md with details of changes to the interface, including new environment variables, exposed ports, useful file locations, and container parameters.
-- Increase the version numbers in any example files and the README.md to the new version that this Pull Request would represent.
-- You may merge the Pull Request once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+## 📄 License
 
-## Troubleshooting
-
-- Verify that your Telegram bot token is correct and has the necessary permissions.
-- Ensure your internet connection is stable as some features rely on external APIs.
-- Check the console output for error messages.
-- If the bot does not respond, verify that the polling mechanism is running correctly.
-- For issues with specific commands, check the relevant API service status.
-
-## License
-
-This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
