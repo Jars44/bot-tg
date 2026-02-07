@@ -233,8 +233,9 @@ bot.onText(/\/berita/, async (msg) => {
   const chatId = msg.chat.id;
   const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari berita terbaru...");
   try {
+    const gnewsToken = process.env.GNEWS_API_TOKEN;
     const res = await fetch(
-      "https://gnews.io/api/v4/top-headlines?token=process.env.GNEWS_API_TOKEN&lang=id&max=1"
+      `https://gnews.io/api/v4/top-headlines?token=${gnewsToken}&lang=id&max=1`
     );
     if (!res.ok) throw new Error("Gagal mengambil berita");
     const data = await res.json();
@@ -483,7 +484,7 @@ bot.onText(/\/film (.+)/, async (msg, match) => {
   try {
     const res = await axios.get(`https://api.themoviedb.org/3/search/movie`, {
       params: {
-        api_key: "process.env.TMDB_API_KEY",
+        api_key: process.env.TMDB_API_KEY,
         query: keyword,
       },
     });
