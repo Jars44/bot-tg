@@ -170,7 +170,7 @@ bot.onText(/\/anime (.+)/, async (msg, match) => {
 async function getCoordinates(cityName) {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}`,
     );
     const data = await response.json();
     if (data.length > 0) {
@@ -210,7 +210,7 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
     }
 
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`,
     );
     const data = await res.json();
     const weather = data.current_weather;
@@ -222,7 +222,7 @@ bot.onText(/\/cuaca(?:\s+(.+))?/, async (msg, match) => {
       {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
-      }
+      },
     );
   } catch (error) {
     bot.sendMessage(chatId, "❌ Gagal mengambil data cuaca. Silakan coba lagi nanti.");
@@ -234,9 +234,7 @@ bot.onText(/\/berita/, async (msg) => {
   const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari berita terbaru...");
   try {
     const gnewsToken = process.env.GNEWS_API_TOKEN;
-    const res = await fetch(
-      `https://gnews.io/api/v4/top-headlines?token=${gnewsToken}&lang=id&max=1`
-    );
+    const res = await fetch(`https://gnews.io/api/v4/top-headlines?token=${gnewsToken}&lang=id&max=1`);
     if (!res.ok) throw new Error("Gagal mengambil berita");
     const data = await res.json();
     if (!data.articles || data.articles.length === 0) throw new Error("Berita tidak ditemukan");
@@ -278,7 +276,7 @@ Isya: ${data.Isha}`,
       {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
-      }
+      },
     );
   } catch (err) {
     await bot.editMessageText(`❌ Gagal mengambil jadwal sholat di ${kota}. Silakan coba lagi nanti.`, {
@@ -658,7 +656,7 @@ bot.onText(/\/help/, async (msg) => {
 /film - Cari Film \n(Gunakan Format /film <judul film>) \nContoh: /film Avengers \n
 /download - Download Video/Audio \n(Youtube / TikTok) \n
 /stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \nExperimental Feature! \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature!`
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature!`,
   );
 });
 
