@@ -36,13 +36,13 @@ import { AlertScheduler } from "./services/AlertScheduler.js";
 
 // Commands
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
-import { StartCommand, StopCommand } from "./commands/StartCommand.js";
+import { StopCommand } from "./commands/StartCommand.js";
 import { HelpCommand } from "./commands/HelpCommand.js";
 import { WeatherCommand } from "./commands/WeatherCommand.js";
 import { ReminderCommand } from "./commands/ReminderCommand.js";
 import { RandomReplyHandler } from "./commands/RandomReplyHandler.js";
 import { StickerCommand } from "./commands/StickerCommand.js";
-import { AnimeCommand } from "./commands/AnimeCommand.js";
+import { AnimeCommand, AnimeSelectionHandler } from "./commands/AnimeCommand.js";
 import { MovieCommand } from "./commands/MovieCommand.js";
 import { QuoteCommand } from "./commands/QuoteCommand.js";
 import { NewsCommand } from "./commands/NewsCommand.js";
@@ -51,10 +51,11 @@ import { PrayerCommand } from "./commands/PrayerCommand.js";
 import { LyricsCommand } from "./commands/LyricsCommand.js";
 import { DownloadCommand } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
+import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/MenuCommand.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
-import { PortfolioCommand, BuyCommand, SellCommand } from "./commands/TradeCommand.js";
+import { PortfolioCommand, BuyCommand, SellCommand, TradeConfirmHandler } from "./commands/TradeCommand.js";
 import { RiskCommand, RiskHelpCommand } from "./commands/RiskCommand.js";
 import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
 import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
@@ -110,10 +111,11 @@ async function main(): Promise<void> {
   const reminderCommand = new ReminderCommand(db);
   const downloadCommand = new DownloadCommand(downloadService, tempCleaner);
   const expenseCommand = new ExpenseCommand(db);
+  const menuCommand = new MenuCommand();
 
   const commands: Command[] = [
-    // Core commands
-    new StartCommand(),
+    // Core commands - MenuCommand handles /start and /menu
+    menuCommand,
     new StopCommand(),
     new HelpCommand(),
     new WeatherCommand(weatherService),
@@ -166,9 +168,21 @@ async function main(): Promise<void> {
 
   // Callback handlers (for inline buttons)
   const callbackHandlers: CallbackHandler[] = [
-    expenseCommand.getCallbackHandler(), // Expense type selection
+    // Menu navigation
+    menuCommand, // menu_ prefix
+    new FinanceMenuHandler(), // fin_ prefix
+    new TradingMenuHandler(), // trade_ menu prefix (different from tconf_)
+
+    // Financial commands
+    expenseCommand.getCallbackHandler(), // exp_ prefix
+    new RekapCommand(db), // rekap_ prefix
+    new TradeConfirmHandler(tradingEngine), // tconf_ prefix
+
+    // Search selection
+    new AnimeSelectionHandler(), // anime_sel_ prefix
+
+    // Download
     downloadCommand.getCallbackHandler(),
-    new RekapCommand(db), // Rekap period selection
   ];
 
   // Start cron jobs

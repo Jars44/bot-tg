@@ -73,6 +73,60 @@ export class ExpenseCommand implements Command, MessageHandler {
           });
         }
 
+        // Handle category selection
+        if (data.startsWith("exp_cat_")) {
+          const stateData = state.data as { type: TransactionType; amount: number };
+          const categoryMap: Record<string, string> = {
+            food: "🍔 Makanan",
+            transport: "🚗 Transport",
+            bills: "🏠 Tagihan",
+            shopping: "🛍️ Belanja",
+            entertainment: "🎮 Hiburan",
+            custom: "custom",
+          };
+
+          const categoryKey = data.replace("exp_cat_", "");
+          const category = categoryMap[categoryKey];
+
+          if (categoryKey === "custom") {
+            // Prompt for custom description
+            await this.db.setConversationState(chatId, "expense", "description", {
+              type: stateData.type,
+              amount: stateData.amount,
+            });
+
+            await bot.editMessageText("✏️ Masukkan deskripsi kategori:", {
+              chat_id: chatId,
+              message_id: query.message.message_id,
+              parse_mode: "Markdown",
+            });
+          } else {
+            // Save transaction with selected category
+            await this.db.addTransaction(chatId, stateData.type, stateData.amount, category);
+            await this.db.clearConversationState(chatId);
+
+            // Get updated summary
+            const summary = await this.db.getTransactionSummary(chatId);
+            const typeEmoji = stateData.type === "expense" ? "📉" : "📈";
+            const typeLabel = stateData.type === "expense" ? "Pengeluaran" : "Pemasukan";
+
+            const message =
+              `✅ *${typeLabel} Tercatat!*\n\n` +
+              `${typeEmoji} *Jumlah:* Rp${stateData.amount.toLocaleString("id-ID")}\n` +
+              `📝 *Kategori:* ${category}\n\n` +
+              `📊 *Ringkasan:*\n` +
+              `├ Total Pemasukan: Rp${summary.totalIncome.toLocaleString("id-ID")}\n` +
+              `├ Total Pengeluaran: Rp${summary.totalExpense.toLocaleString("id-ID")}\n` +
+              `└ Saldo: Rp${summary.balance.toLocaleString("id-ID")}`;
+
+            await bot.editMessageText(message, {
+              chat_id: chatId,
+              message_id: query.message.message_id,
+              parse_mode: "Markdown",
+            });
+          }
+        }
+
         await bot.answerCallbackQuery(query.id);
       },
     };
@@ -110,16 +164,31 @@ export class ExpenseCommand implements Command, MessageHandler {
       }
 
       const stateData = state.data as { type: TransactionType };
-      await this.db.setConversationState(chatId, "expense", "description", {
+      await this.db.setConversationState(chatId, "expense", "category", {
         type: stateData.type,
         amount,
       });
 
-      await bot.sendMessage(
-        chatId,
-        `💵 Jumlah: Rp${amount.toLocaleString("id-ID")}\n\nSekarang masukkan deskripsi/kategori:`,
-        { parse_mode: "Markdown" },
-      );
+      // Show category buttons instead of text prompt
+      await bot.sendMessage(chatId, `💵 Jumlah: Rp${amount.toLocaleString("id-ID")}\n\n📂 Pilih kategori:`, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "🍔 Makanan", callback_data: "exp_cat_food" },
+              { text: "🚗 Transport", callback_data: "exp_cat_transport" },
+            ],
+            [
+              { text: "🏠 Tagihan", callback_data: "exp_cat_bills" },
+              { text: "🛍️ Belanja", callback_data: "exp_cat_shopping" },
+            ],
+            [
+              { text: "🎮 Hiburan", callback_data: "exp_cat_entertainment" },
+              { text: "✏️ Lainnya", callback_data: "exp_cat_custom" },
+            ],
+          ],
+        },
+      });
       return;
     }
 

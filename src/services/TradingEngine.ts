@@ -18,6 +18,13 @@ export class TradingEngine {
   }
 
   /**
+   * Get price for a symbol (delegated to finance service)
+   */
+  async getPrice(symbol: string) {
+    return this.financeService.getPrice(symbol);
+  }
+
+  /**
    * Execute a buy order
    */
   async executeBuy(chatId: number, symbol: string, quantity: number): Promise<TradeResult> {

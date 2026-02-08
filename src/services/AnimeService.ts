@@ -40,18 +40,25 @@ interface JikanSearchResult {
 
 export class AnimeService {
   /**
-   * Search for anime by keyword
+   * Search for anime by keyword - returns first result
    */
   async search(keyword: string): Promise<AnimeResult | null> {
+    const results = await this.searchMultiple(keyword, 1);
+    return results.length > 0 ? results[0] : null;
+  }
+
+  /**
+   * Search for multiple anime by keyword - returns top N results
+   */
+  async searchMultiple(keyword: string, limit: number = 5): Promise<AnimeResult[]> {
     try {
       const result = (await jikanjs.search("anime", keyword)) as JikanSearchResult;
 
       if (!result.data || result.data.length === 0) {
-        return null;
+        return [];
       }
 
-      const anime = result.data[0];
-      return {
+      return result.data.slice(0, limit).map((anime) => ({
         title: anime.title,
         type: anime.type,
         year: anime.aired?.prop?.from?.year ?? null,
@@ -59,9 +66,9 @@ export class AnimeService {
         synopsis: anime.synopsis?.substring(0, 500) ?? "",
         url: anime.url,
         imageUrl: anime.images.jpg.image_url,
-      };
+      }));
     } catch {
-      return null;
+      return [];
     }
   }
 }
