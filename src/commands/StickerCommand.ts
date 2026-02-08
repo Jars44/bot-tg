@@ -55,8 +55,15 @@ export class StickerCommand implements Command {
       // Generate sticker
       const webpPath = await this.stickerService.createSticker(text);
 
-      // Send sticker
-      await bot.sendSticker(chatId, webpPath);
+      // Send sticker with explicit content type to avoid deprecation warning
+      await bot.sendSticker(
+        chatId,
+        webpPath,
+        {},
+        {
+          contentType: "image/webp",
+        },
+      );
 
       // Increment rate limit counter in database
       await this.db.incrementStickerCount(userId);

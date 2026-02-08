@@ -43,4 +43,30 @@ export class NewsService {
       return null;
     }
   }
+
+  /**
+   * Search news by keyword
+   */
+  async searchNews(keyword: string, maxResults: number = 10): Promise<NewsArticle[]> {
+    try {
+      const token = getEnvVar(ENV_KEYS.GNEWS_API_TOKEN);
+
+      const response = await this.http.get<GNewsResponse>(`${CONFIG.API.GNEWS}/search`, {
+        params: {
+          token,
+          q: keyword,
+          lang: "en",
+          max: maxResults,
+        },
+      });
+
+      if (!response.articles || response.articles.length === 0) {
+        return [];
+      }
+
+      return response.articles;
+    } catch {
+      return [];
+    }
+  }
 }

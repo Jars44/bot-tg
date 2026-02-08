@@ -42,6 +42,7 @@ export const CONFIG = {
     TMDB_IMAGE: "https://image.tmdb.org/t/p/w500",
     YOUTUBE_DL: "https://tools.opslinuxsec.com/ytdl/download.php",
     TIKTOK_DL: "https://tools.opslinuxsec.com/ttdl/download.php",
+    FOREX_FACTORY: "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
   },
 
   /** User-Agent header for APIs that require it (especially Nominatim) */
@@ -70,6 +71,32 @@ export const CONFIG = {
 
   /** Maximum font size for short text */
   MAX_FONT_SIZE: 160,
+
+  /** Paper Trading Configuration */
+  PAPER_TRADING: {
+    /** Starting virtual USD balance */
+    INITIAL_BALANCE: 10000,
+    /** Commission rate per trade (0.1%) */
+    COMMISSION_RATE: 0.001,
+  },
+
+  /** Alert & Monitoring Thresholds */
+  ALERTS: {
+    /** Whale alert threshold in USD */
+    WHALE_THRESHOLD_USD: 500000,
+    /** Arbitrage opportunity threshold percentage */
+    ARBITRAGE_THRESHOLD_PCT: 1.5,
+    /** Price check interval in milliseconds (1 minute) */
+    CHECK_INTERVAL_MS: 60 * 1000,
+    /** Conversation state expiry in milliseconds (10 minutes) */
+    STATE_EXPIRY_MS: 10 * 60 * 1000,
+  },
+
+  /** Sentiment Analysis Keywords */
+  SENTIMENT: {
+    BEARISH: ["crash", "plunge", "crisis", "dump", "sell-off", "bearish", "decline", "drop", "fall", "recession"],
+    BULLISH: ["surge", "record", "bull", "rally", "breakout", "bullish", "gain", "rise", "soar", "moon"],
+  },
 } as const;
 
 /** Environment variable keys */

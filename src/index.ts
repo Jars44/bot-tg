@@ -1,6 +1,7 @@
 /**
  * Main entry point for the Telegram Bot
  * Production-grade modular TypeScript application
+ * Extended with Financial Suite features
  */
 
 import "dotenv/config";
@@ -26,6 +27,13 @@ import { EarthquakeService } from "./services/EarthquakeService.js";
 import { DownloadService } from "./services/DownloadService.js";
 import { StickerService } from "./services/StickerService.js";
 
+// Financial Services
+import { FinanceDataService } from "./services/FinanceDataService.js";
+import { TradingEngine } from "./services/TradingEngine.js";
+import { SentimentAnalyzer } from "./services/SentimentAnalyzer.js";
+import { EconomicCalendarService } from "./services/EconomicCalendarService.js";
+import { AlertScheduler } from "./services/AlertScheduler.js";
+
 // Commands
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
 import { StartCommand, StopCommand } from "./commands/StartCommand.js";
@@ -43,6 +51,14 @@ import { PrayerCommand } from "./commands/PrayerCommand.js";
 import { LyricsCommand } from "./commands/LyricsCommand.js";
 import { DownloadCommand } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
+
+// Financial Commands
+import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
+import { PortfolioCommand, BuyCommand, SellCommand } from "./commands/TradeCommand.js";
+import { RiskCommand, RiskHelpCommand } from "./commands/RiskCommand.js";
+import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
+import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
+import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.js";
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
@@ -77,6 +93,14 @@ async function main(): Promise<void> {
   const downloadService = new DownloadService(httpClient, tempCleaner);
   const stickerService = new StickerService(tempCleaner);
 
+  // Financial Services
+  const financeDataService = new FinanceDataService();
+  const tradingEngine = new TradingEngine(db, financeDataService);
+  const sentimentAnalyzer = new SentimentAnalyzer(newsService);
+  const economicCalendarService = new EconomicCalendarService(httpClient);
+  const alertScheduler = new AlertScheduler(db, financeDataService, economicCalendarService);
+  console.log("[Bot] Financial services initialized");
+
   // Initialize bot
   const token = getEnvVar(ENV_KEYS.BOT_TOKEN);
   const bot = new TelegramBot(token, { polling: true });
@@ -85,8 +109,10 @@ async function main(): Promise<void> {
   // Initialize commands with DI
   const reminderCommand = new ReminderCommand(db);
   const downloadCommand = new DownloadCommand(downloadService, tempCleaner);
+  const expenseCommand = new ExpenseCommand(db);
 
   const commands: Command[] = [
+    // Core commands
     new StartCommand(),
     new StopCommand(),
     new HelpCommand(),
@@ -101,20 +127,54 @@ async function main(): Promise<void> {
     new PrayerCommand(prayerService),
     new LyricsCommand(lyricsService),
     downloadCommand,
+
+    // Financial Suite Commands
+    expenseCommand, // /catat
+    new LaporanCommand(db), // /laporan
+    new RekapCommand(db), // /rekap
+
+    // Paper Trading
+    new PortfolioCommand(tradingEngine), // /portfolio
+    new BuyCommand(tradingEngine), // /buy [symbol] [qty]
+    new SellCommand(tradingEngine), // /sell [symbol] [qty]
+
+    // Risk Calculator
+    new RiskHelpCommand(), // /risk (help)
+    new RiskCommand(), // /risk [capital] [%] [pips]
+
+    // Price Alerts
+    new AlertHelpCommand(), // /alert (help)
+    new AlertCommand(db), // /alert [symbol] [price] [cond]
+    new MyAlertsCommand(db), // /alerts
+
+    // Sentiment Analysis
+    new SentimentHelpCommand(), // /sentimen (help)
+    new SentimentCommand(sentimentAnalyzer), // /sentimen [keyword]
+
+    // Economic Calendar
+    new CalendarCommand(economicCalendarService), // /calendar
+    new HighImpactCommand(economicCalendarService), // /highimpact
   ];
 
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
+    expenseCommand, // Handle expense flow text input
     downloadCommand, // Handle download links
     new RandomReplyHandler(stickerService),
     new InvalidCommandHandler(),
   ];
 
   // Callback handlers (for inline buttons)
-  const callbackHandlers: CallbackHandler[] = [downloadCommand.getCallbackHandler()];
+  const callbackHandlers: CallbackHandler[] = [
+    expenseCommand.getCallbackHandler(), // Expense type selection
+    downloadCommand.getCallbackHandler(),
+    new RekapCommand(db), // Rekap period selection
+  ];
 
-  // Start reminder cron job
+  // Start cron jobs
   reminderCommand.startCron(bot);
+  alertScheduler.startAll(bot);
+  console.log("[Bot] All schedulers started (reminders, alerts, whale monitor, arbitrage)");
 
   // Register command handlers
   for (const command of commands) {
@@ -161,6 +221,9 @@ async function main(): Promise<void> {
   });
 
   console.log("[Bot] All handlers registered");
+  console.log(
+    "[Bot] Financial Suite: Portfolio (/portfolio), Trading (/buy, /sell), Expense (/catat), Alerts (/alert)",
+  );
   console.log("[Bot] Bot is running! Press Ctrl+C to stop.");
 }
 

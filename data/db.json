@@ -1,0 +1,53 @@
+{
+  "reminders": [
+    {
+      "id": "7b3a4234-9f49-4a90-9264-cc45774b7485",
+      "chatId": 7071360105,
+      "time": "11:35",
+      "message": "cek cronjobs",
+      "createdAt": 1770481982672
+    },
+    {
+      "id": "f348d8cf-4670-4793-880d-7aa6b777ec55",
+      "chatId": 7071360105,
+      "time": "11:37",
+      "message": "tes lagi",
+      "createdAt": 1770482148258
+    },
+    {
+      "id": "e6fb984f-8d8f-48b2-ae7d-d7108dec2659",
+      "chatId": 7071360105,
+      "time": "23:51",
+      "message": "tes lagi 2",
+      "createdAt": 1770483063005
+    }
+  ],
+  "rateLimits": [
+    {
+      "userId": 7071360105,
+      "stickerCount": 2,
+      "lastReset": 1770483443734
+    }
+  ],
+  "transactions": [
+    {
+      "id": "8411ef33-e5c1-479f-95cb-a1ef069bd903",
+      "chatId": 7071360105,
+      "type": "income",
+      "amount": 50000,
+      "description": "adalah pokoknya",
+      "createdAt": 1770526465039
+    }
+  ],
+  "portfolios": [
+    {
+      "chatId": 7071360105,
+      "cashBalance": 10000,
+      "positions": [],
+      "tradeHistory": [],
+      "createdAt": 1770526500875
+    }
+  ],
+  "alerts": [],
+  "conversationStates": []
+}

@@ -4,7 +4,7 @@
  */
 
 import TelegramBot from "node-telegram-bot-api";
-import fs from "fs";
+
 import type { MessageHandler } from "./types.js";
 import { StickerService } from "../services/StickerService.js";
 import { MESSAGES, INSULT_WORDS } from "../config/messages.js";
@@ -69,8 +69,8 @@ export class RandomReplyHandler implements MessageHandler {
       const stickerPath = this.stickerService.getStickerAssetPath(STICKER_OPTIONS[stickerIndex]);
 
       try {
-        const sticker = fs.readFileSync(stickerPath);
-        await bot.sendSticker(chatId, sticker);
+        // Send sticker using file path instead of buffer to avoid deprecation warnings
+        await bot.sendSticker(chatId, stickerPath);
       } catch (err) {
         console.error("[RandomReplyHandler] Failed to send sticker:", err);
       }

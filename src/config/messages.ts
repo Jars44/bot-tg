@@ -26,7 +26,7 @@ export const MESSAGES = {
   ERROR_EARTHQUAKE: "Gagal mengambil data gempa. Silakan coba lagi nanti.",
   ERROR_LYRICS: (title: string, artist: string) =>
     `❌ Gagal menemukan lirik "${title}" oleh ${artist}. \nSilakan coba lagi nanti.`,
-  ERROR_LYRICS_FORMAT: "Format salah! Contoh: /lirik Coldplay - Yellow",
+  ERROR_LYRICS_FORMAT: "Format salah! Contoh: /lirik Lana Del Rey - Brooklyn Baby",
   ERROR_QUOTE: "❌ Gagal mengambil quote. Silakan coba lagi nanti.",
   ERROR_ANIME: "Gagal mencari anime, Silakan coba lagi nanti.",
   ERROR_WEATHER: "❌ Gagal mengambil data cuaca. Silakan coba lagi nanti.",
@@ -49,7 +49,7 @@ export const MESSAGES = {
   STICKER_CREATING: "sedang membuat stiker...",
 
   // Reminder
-  REMINDER_SET: (time: string, message: string) => `⏰ Siap! Gue bakal ingetin jam ${time} buat: "${message}"`,
+  REMINDER_SET: (time: string, message: string) => `⏰ Siap! Gua bakal ingetin jam ${time} buat: "${message}"`,
   REMINDER_TRIGGER: (message: string) => `🔔 Pengingat: ${message}`,
   GOOD_MORNING: "Selamat pagi! Jangan lupa sarapan 🍳",
 
@@ -75,7 +75,18 @@ export const MESSAGES = {
 /film - Cari Film \n(Gunakan Format /film <judul film>) \nContoh: /film Avengers \n
 /download - Download Video/Audio \n(Youtube / TikTok) \n
 /stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \nExperimental Feature! \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature!`,
+/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature! \n
+============
+💰 *Finansial & Trading* \n
+/catat - Catat Keuangan \n(Interactive Mode) \n
+/rekap - Laporan Keuangan \n(Harian/Bulanan/All Time) \n
+/portfolio - Cek Portfolio Virtual \n(Lihat aset dan PnL) \n
+/buy - Beli Aset \n(Gunakan Format /buy <symbol> <qty>) \nContoh: /buy BTC 0.01 \n
+/sell - Jual Aset \n(Gunakan Format /sell <symbol> <qty>) \nContoh: /sell ETH 0.5 \n
+/alert - Pasang Alert Harga \n(Gunakan Format /alert <symbol> <harga> <kondisi>) \nContoh: /alert BTC 100000 > \n
+/sentimen - Analisis Sentimen \n(Gunakan Format /sentimen <keyword>) \nContoh: /sentimen Bitcoin \n
+/calendar - Kalender Ekonomi \n(Cek event forex hari ini) \n
+/risk - Kalkulator Risiko \n(Gunakan Format /risk <modal> <risiko%> <sl>) \nContoh: /risk 1000 2 50`,
 } as const;
 
 /** Insult words for random reply detection */
@@ -102,5 +113,5 @@ export const INSULT_WORDS = [
   "gaje",
   "gk jelas",
   "dongo",
-  "dongok"
+  "dongok",
 ] as const;
