@@ -46,7 +46,7 @@ export const MESSAGES = {
   RATE_LIMIT_REACHED: (limit: number) => `Limit /stiker tercapai! (maks ${limit}) \nSilakan coba lagi nanti.`,
 
   // Sticker
-  STICKER_CREATING: "sedang membuat stiker...",
+  STICKER_CREATING: "Sedang membuat stiker...",
 
   // Reminder
   REMINDER_SET: (time: string, message: string) => `⏰ Siap! Gua bakal ingetin jam ${time} buat: "${message}"`,
@@ -62,26 +62,41 @@ export const MESSAGES = {
   DOWNLOAD_AUDIO_CAPTION: "🎧 Nih audionya",
 
   // Help text
-  HELP_TEXT: `/gempa - Berita Gempa Terbaru \n
-/berita - Berita Terkini \n
-/quote - Quote of the day \n
-/cuaca - Cek Cuaca \n(Gunakan Format /cuaca <nama kota>) \nContoh: /cuaca Malang \n
-/sholat - Jadwal Sholat \n(Gunakan Format /sholat <nama kota>) \nContoh: /sholat Malang \n
-/anime - Cari Anime \n(Gunakan Format /anime <nama anime>) \nContoh: /anime One Piece \n
-/lirik - Cari Lirik Lagu \n(Gunakan Format /lirik <penyanyi> - <judul>) \nContoh: /lirik Neigbourhood - Sweater Weather \n
-/film - Cari Film \n(Gunakan Format /film <judul film>) \nContoh: /film Avengers \n
-/download - Download Video/Audio \n(Youtube / TikTok) \n
-/stiker - Buat Stiker dari Teks \n(Gunakan Format /stiker <teks>) \nContoh: /stiker Halo! \nExperimental Feature! \n
-/ingatkan - Set Pengingat \n(Gunakan Format /ingatkan <jam> <pesan>) \nContoh: /ingatkan 12:00 Makan Siang \nExperimental Feature! \n
-============
-💰 *Finansial & Trading* \n
-/catat - Catat Keuangan \n(Interactive Mode) \n
-/rekap - Laporan Keuangan \n(Harian/Bulanan/All Time) \n
-/portfolio - Cek Portfolio Virtual \n(Lihat aset dan PnL) \n
-/buy - Beli Aset \n(Gunakan Format /buy <symbol> <qty>) \nContoh: /buy BTC 0.01 \n
-/sell - Jual Aset \n(Gunakan Format /sell <symbol> <qty>) \nContoh: /sell ETH 0.5 \n
-/alert - Pasang Alert Harga \n(Gunakan Format /alert <symbol> <harga> <kondisi>) \nContoh: /alert BTC 100000 > \n
-/sentimen - Analisis Sentimen \n(Gunakan Format /sentimen <keyword>) \nContoh: /sentimen Bitcoin \n
-/calendar - Kalender Ekonomi \n(Cek event forex hari ini) \n
-/risk - Kalkulator Risiko \n(Gunakan Format /risk <modal> <risiko%> <sl>) \nContoh: /risk 1000 2 50`,
+  HELP_TEXT: `📖 Panduan Perintah Bot
+
+🏠 Navigasi Utama
+/menu - Pusat navigasi utama untuk melihat semua fitur bot
+/chart - Melihat grafik candlestick aset crypto/forex secara visual
+/portfolio - Mengecek saldo, aset yang dimiliki, dan profit/loss terkini
+
+🕌 Ibadah & Lokasi
+/sholat - Mengecek jadwal sholat harian sesuai lokasi pengguna
+/cuaca - Info cuaca terkini dan prediksi hari ini
+
+💰 Finansial & Trading
+/catat - Mencatat pengeluaran harian untuk tracking keuangan pribadi
+/buy - Melakukan simulasi pembelian aset (crypto/saham/forex)
+/sell - Melakukan simulasi penjualan aset untuk mengambil profit
+/alert - Memasang alarm notifikasi jika harga aset menyentuh target
+/risk - Kalkulator manajemen risiko sebelum entry trading
+/rekap - Melihat ringkasan total pengeluaran keuangan
+/laporan - Laporan keuangan mendetail (biasanya dicek bulanan)
+
+🎯 Utilitas
+/ingatkan - Membuat pengingat waktu personal (alarm sederhana)
+/stiker - Membuat stiker Telegram instan dari teks yang dikirim
+/quote - Mendapatkan kutipan kata-kata bijak acak
+/gempa - Informasi gempa bumi terkini dari BMKG
+
+🎬 Hiburan
+/anime - Mencari informasi dan sinopsis anime
+/lirik - Mencari teks lirik lagu lengkap
+
+━━━━━━━━━━━━━━
+🧪 Experimental (Butuh API/Tidak Stabil)
+/download - Unduh video TikTok/YouTube _(Sering tidak stabil)_
+/film - Cari info film _(Butuh TMDB\\_API\\_KEY)_
+/berita - Berita terkini _(Butuh GNEWS\\_API\\_TOKEN)_
+/sentimen - Analisis sentimen pasar
+/calendar - Kalender ekonomi`,
 } as const;

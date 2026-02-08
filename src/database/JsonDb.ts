@@ -333,6 +333,42 @@ export class JsonDb {
     return tradeRecord;
   }
 
+  /**
+   * Update position TP/SL levels
+   */
+  async updatePositionTpSl(positionId: string, takeProfit?: number, stopLoss?: number): Promise<void> {
+    this.ensureInit();
+
+    for (const portfolio of this.db.data.portfolios) {
+      const position = portfolio.positions.find((p) => p.id === positionId);
+      if (position) {
+        if (takeProfit !== undefined) position.takeProfit = takeProfit;
+        if (stopLoss !== undefined) position.stopLoss = stopLoss;
+        await this.db.write();
+        return;
+      }
+    }
+  }
+
+  /**
+   * Get all positions with TP/SL set (for monitoring)
+   */
+  async getAllPositionsWithTpSl(): Promise<Array<{ chatId: number; position: Position }>> {
+    this.ensureInit();
+
+    const result: Array<{ chatId: number; position: Position }> = [];
+
+    for (const portfolio of this.db.data.portfolios) {
+      for (const position of portfolio.positions) {
+        if (position.takeProfit || position.stopLoss) {
+          result.push({ chatId: portfolio.chatId, position });
+        }
+      }
+    }
+
+    return result;
+  }
+
   async addTradeRecord(chatId: number, trade: Omit<TradeRecord, "id">): Promise<TradeRecord> {
     this.ensureInit();
 

@@ -20,9 +20,18 @@ export class LyricsCommand implements Command {
     const input = match?.[1]?.trim();
 
     if (!input) {
-      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/lirik Lana Del Rey - Brooklyn Baby`", {
-        parse_mode: "Markdown",
-      });
+      await bot.sendMessage(
+        chatId,
+        `🎵 *Cari Lirik Lagu*\n\n` +
+          `Mencari teks lirik lagu lengkap dari berbagai artis.\n\n` +
+          `*Gunakan:* \`/lirik [Artis] - [Judul]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/lirik Lana Del Rey - Brooklyn Baby\`\n` +
+          `\`/lirik Coldplay - Yellow\`\n` +
+          `\`/lirik Taylor Swift - Anti-Hero\`\n\n` +
+          `_Pastikan format [Artis] - [Judul] dengan tanda strip._`,
+        { parse_mode: "Markdown" },
+      );
       return;
     }
 

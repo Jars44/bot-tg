@@ -33,6 +33,7 @@ import { TradingEngine } from "./services/TradingEngine.js";
 import { SentimentAnalyzer } from "./services/SentimentAnalyzer.js";
 import { EconomicCalendarService } from "./services/EconomicCalendarService.js";
 import { AlertScheduler } from "./services/AlertScheduler.js";
+import { ChartService } from "./services/ChartService.js";
 
 // Commands
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
@@ -61,6 +62,8 @@ import { RiskCommand, RiskHelpCommand } from "./commands/RiskCommand.js";
 import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
 import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
 import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.js";
+import { ChartCommand, ChartCallbackHandler } from "./commands/ChartCommand.js";
+import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js";
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
@@ -106,6 +109,7 @@ async function main(): Promise<void> {
   const sentimentAnalyzer = new SentimentAnalyzer(newsService);
   const economicCalendarService = new EconomicCalendarService(httpClient);
   const alertScheduler = new AlertScheduler(db, financeDataService, economicCalendarService);
+  const chartService = new ChartService(financeDataService);
   console.log("[Bot] Financial services initialized");
 
   // Initialize bot
@@ -169,6 +173,9 @@ async function main(): Promise<void> {
     // Economic Calendar
     new CalendarCommand(economicCalendarService), // /calendar
     new HighImpactCommand(economicCalendarService), // /highimpact
+
+    // Charting
+    new ChartCommand(chartService), // /chart [symbol] [timeframe]
   ];
 
   // Message handlers (for non-command messages)
@@ -178,6 +185,7 @@ async function main(): Promise<void> {
     new WeatherLocationHandler(weatherCommand), // Handle location input for weather
     new PrayerLocationHandler(prayerCommand), // Handle location input for prayer
     downloadCommand, // Handle download links
+    new TpSlInputHandler(db), // Handle TP/SL input
     new RandomReplyHandler(stickerService),
     new InvalidCommandHandler(),
   ];
@@ -199,6 +207,12 @@ async function main(): Promise<void> {
 
     // Download
     downloadCommand.getCallbackHandler(),
+
+    // TP/SL
+    new TpSlCallbackHandler(), // tpsl_ prefix
+
+    // Charting
+    new ChartCallbackHandler(chartService), // chart_ prefix
   ];
 
   // Start cron jobs

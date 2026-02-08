@@ -56,7 +56,14 @@ export class BuyCommand implements Command {
     if (!match || !match[1] || !match[2]) {
       await bot.sendMessage(
         chatId,
-        "❌ Format salah!\n\nGunakan: `/buy [symbol] [quantity]`\nContoh: `/buy BTC 0.01`",
+        `🛒 *Beli Aset (Paper Trading)*\n\n` +
+          `Melakukan simulasi pembelian aset crypto, saham, atau forex.\n\n` +
+          `*Gunakan:* \`/buy [symbol] [quantity]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/buy BTC 0.01\` - Beli 0.01 Bitcoin\n` +
+          `\`/buy ETH 0.5\` - Beli 0.5 Ethereum\n` +
+          `\`/buy AAPL 10\` - Beli 10 saham Apple\n\n` +
+          `_Gunakan /portfolio untuk melihat aset yang dimiliki._`,
         { parse_mode: "Markdown" },
       );
       return;
@@ -128,7 +135,14 @@ export class SellCommand implements Command {
     if (!match || !match[1] || !match[2]) {
       await bot.sendMessage(
         chatId,
-        "❌ Format salah!\n\nGunakan: `/sell [symbol] [quantity]`\nContoh: `/sell BTC 0.01`",
+        `💰 *Jual Aset (Paper Trading)*\n\n` +
+          `Melakukan simulasi penjualan aset untuk mengambil profit.\n\n` +
+          `*Gunakan:* \`/sell [symbol] [quantity]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/sell BTC 0.01\` - Jual 0.01 Bitcoin\n` +
+          `\`/sell ETH 0.5\` - Jual 0.5 Ethereum\n` +
+          `\`/sell AAPL 10\` - Jual 10 saham Apple\n\n` +
+          `_Gunakan /portfolio untuk melihat aset yang dimiliki._`,
         { parse_mode: "Markdown" },
       );
       return;
@@ -240,6 +254,30 @@ export class TradeConfirmHandler implements CallbackHandler {
         });
 
         await bot.answerCallbackQuery(query.id, { text: "✅ Order berhasil!" });
+
+        // For BUY orders, offer TP/SL protection
+        if (action === "buy" && result.success && result.position) {
+          const protectionMessage =
+            `🛡️ *Set Protection?*\n\n` +
+            `Entry: $${tradeData.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
+            `Protect your position with Take Profit / Stop Loss.`;
+
+          await bot.sendMessage(chatId, protectionMessage, {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🛡️ Set TP/SL",
+                    callback_data: `tpsl:set:${result.position.id}:${tradeData.symbol}:${tradeData.price}`,
+                  },
+                  { text: "📊 See Chart", callback_data: `chart:${tradeData.symbol}` },
+                ],
+                [{ text: "⏩ Skip", callback_data: "tpsl:skip" }],
+              ],
+            },
+          });
+        }
       } catch (error) {
         console.error("[TradeConfirmHandler] Error:", error);
         sessionManager.clearState(chatId);

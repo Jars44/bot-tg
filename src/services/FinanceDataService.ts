@@ -100,10 +100,13 @@ export class FinanceDataService {
       return `${upper}-USD`;
     }
 
-    // Forex pairs
+    // Forex pairs / Commodities
     if (this.isForex(symbol)) {
-      if (upper.startsWith("XAU") || upper.startsWith("XAG")) {
-        return `${upper}=X`;
+      if (upper.startsWith("XAU")) {
+        return "GC=F"; // Gold Futures
+      }
+      if (upper.startsWith("XAG")) {
+        return "SI=F"; // Silver Futures
       }
       return `${upper}=X`;
     }

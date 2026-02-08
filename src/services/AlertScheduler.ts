@@ -19,6 +19,7 @@ export class AlertScheduler {
   private whaleJob: cron.ScheduledTask | null = null;
   private arbitrageJob: cron.ScheduledTask | null = null;
   private calendarJob: cron.ScheduledTask | null = null;
+  private positionMonitorJob: cron.ScheduledTask | null = null;
   private subscribedChats: Set<number> = new Set();
 
   constructor(db: JsonDb, financeService: FinanceDataService, economicCalendarService: EconomicCalendarService) {
@@ -37,6 +38,7 @@ export class AlertScheduler {
     this.startWhaleMonitor();
     this.startArbitrageMonitor();
     this.startEconomicCalendarNotifier();
+    this.startPositionMonitor();
 
     console.log("[AlertScheduler] All monitoring jobs started");
   }
@@ -333,6 +335,107 @@ export class AlertScheduler {
   }
 
   /**
+   * Position TP/SL monitor - runs every minute
+   * Auto-closes positions when Take Profit or Stop Loss is hit
+   */
+  private startPositionMonitor(): void {
+    this.positionMonitorJob = cron.schedule("* * * * *", async () => {
+      await this.checkPositionTpSl();
+    });
+
+    console.log("[AlertScheduler] Position TP/SL monitor started");
+  }
+
+  /**
+   * Check all positions with TP/SL set
+   */
+  private async checkPositionTpSl(): Promise<void> {
+    if (!this.bot) return;
+
+    try {
+      const positions = await this.db.getAllPositionsWithTpSl();
+
+      if (positions.length === 0) return;
+
+      // Group by symbol for efficient price fetching
+      const symbolPositions = new Map<string, typeof positions>();
+      for (const item of positions) {
+        const existing = symbolPositions.get(item.position.symbol) || [];
+        existing.push(item);
+        symbolPositions.set(item.position.symbol, existing);
+      }
+
+      // Check each symbol
+      for (const [symbol, items] of symbolPositions) {
+        try {
+          const priceData = await this.financeService.getPrice(symbol);
+          const currentPrice = priceData.price;
+
+          for (const { chatId, position } of items) {
+            let triggered: "tp" | "sl" | null = null;
+
+            // Check Take Profit (price >= TP)
+            if (position.takeProfit && currentPrice >= position.takeProfit) {
+              triggered = "tp";
+            }
+            // Check Stop Loss (price <= SL)
+            else if (position.stopLoss && currentPrice <= position.stopLoss) {
+              triggered = "sl";
+            }
+
+            if (triggered) {
+              await this.executePositionClose(chatId, position.id, symbol, currentPrice, triggered);
+            }
+          }
+        } catch (error) {
+          console.error(`[AlertScheduler] Error checking TP/SL for ${symbol}:`, error);
+        }
+      }
+    } catch (error) {
+      console.error("[AlertScheduler] Error in position TP/SL check:", error);
+    }
+  }
+
+  /**
+   * Execute position close for TP/SL hit
+   */
+  private async executePositionClose(
+    chatId: number,
+    positionId: string,
+    symbol: string,
+    price: number,
+    type: "tp" | "sl",
+  ): Promise<void> {
+    if (!this.bot) return;
+
+    try {
+      const tradeRecord = await this.db.closePosition(chatId, positionId, price);
+
+      if (!tradeRecord) {
+        console.error(`[AlertScheduler] Failed to close position ${positionId}`);
+        return;
+      }
+
+      const emoji = type === "tp" ? "✅" : "🛑";
+      const label = type === "tp" ? "Take Profit" : "Stop Loss";
+      const pnl = tradeRecord.pnl ?? 0;
+      const pnlEmoji = pnl >= 0 ? "🟢" : "🔴";
+
+      const message =
+        `${emoji} *${label} Hit!*\n\n` +
+        `📊 ${symbol}\n` +
+        `💰 Exit Price: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
+        `📦 Quantity: ${tradeRecord.quantity}\n` +
+        `${pnlEmoji} P&L: ${pnl >= 0 ? "+" : ""}$${pnl.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+        `_Position closed automatically._`;
+
+      await this.bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+    } catch (error) {
+      console.error(`[AlertScheduler] Failed to execute TP/SL close for ${positionId}:`, error);
+    }
+  }
+
+  /**
    * Stop all jobs
    */
   stopAll(): void {
@@ -340,6 +443,7 @@ export class AlertScheduler {
     this.whaleJob?.stop();
     this.arbitrageJob?.stop();
     this.calendarJob?.stop();
+    this.positionMonitorJob?.stop();
 
     console.log("[AlertScheduler] All monitoring jobs stopped");
   }

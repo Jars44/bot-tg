@@ -83,9 +83,18 @@ export class ReminderCommand implements Command {
     const message = match?.[2]?.trim();
 
     if (!time) {
-      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/ingatkan 12:00 Makan siang`", {
-        parse_mode: "Markdown",
-      });
+      await bot.sendMessage(
+        chatId,
+        `⏰ *Pengingat Waktu*\n\n` +
+          `Membuat pengingat waktu personal yang akan dikirimkan pada jam yang ditentukan.\n\n` +
+          `*Gunakan:* \`/ingatkan [HH:MM] [pesan]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/ingatkan 12:00 Makan siang\`\n` +
+          `\`/ingatkan 08:30 Meeting pagi\`\n` +
+          `\`/ingatkan 17:00 Pulang kerja\`\n\n` +
+          `_Format waktu: 24 jam (contoh: 14:30 untuk jam 2:30 siang)_`,
+        { parse_mode: "Markdown" },
+      );
       return;
     }
 

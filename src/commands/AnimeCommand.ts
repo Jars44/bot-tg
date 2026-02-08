@@ -23,7 +23,19 @@ export class AnimeCommand implements Command {
     const keyword = match?.[1]?.trim();
 
     if (!keyword) {
-      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/anime Naruto`", { parse_mode: "Markdown" });
+      await bot.sendMessage(
+        chatId,
+        `🎥 *Cari Anime*\n\n` +
+          `Mencari informasi dan sinopsis anime dari MyAnimeList.\n\n` +
+          `*Gunakan:* \`/anime [judul anime]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/anime Naruto\`\n` +
+          `\`/anime Attack on Titan\`\n` +
+          `\`/anime One Piece\`\n` +
+          `\`/anime Jujutsu Kaisen\`\n\n` +
+          `_Hasil pencarian akan menampilkan daftar pilihan jika ada lebih dari satu hasil._`,
+        { parse_mode: "Markdown" },
+      );
       return;
     }
 
