@@ -74,6 +74,7 @@ export const MESSAGES = {
 /cuaca - Info cuaca terkini dan prediksi hari ini
 
 💰 Finansial & Trading
+/market - Market Hub: Dashboard aset dengan chart, sentimen, dan aksi trading
 /catat - Mencatat pengeluaran harian untuk tracking keuangan pribadi
 /buy - Melakukan simulasi pembelian aset (crypto/saham/forex)
 /sell - Melakukan simulasi penjualan aset untuk mengambil profit
@@ -92,11 +93,10 @@ export const MESSAGES = {
 /anime - Mencari informasi dan sinopsis anime
 /lirik - Mencari teks lirik lagu lengkap
 
-━━━━━━━━━━━━━━
 🧪 Experimental (Butuh API/Tidak Stabil)
-/download - Unduh video TikTok/YouTube _(Sering tidak stabil)_
-/film - Cari info film _(Butuh TMDB\\_API\\_KEY)_
-/berita - Berita terkini _(Butuh GNEWS\\_API\\_TOKEN)_
+/download - Unduh video TikTok/YouTube (Sering tidak stabil)
+/film - Cari info film (Butuh TMDB_API_KEY)
+/berita - Berita terkini (Butuh GNEWS_API_TOKEN)
 /sentimen - Analisis sentimen pasar
 /calendar - Kalender ekonomi`,
 } as const;

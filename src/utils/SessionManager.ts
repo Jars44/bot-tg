@@ -53,6 +53,21 @@ export interface TpSlSessionData {
   takeProfit?: number;
 }
 
+/** Market Hub session data - Asset-centric dashboard */
+export interface MarketHubSessionData {
+  symbol: string;
+  messageId: number;
+  previousView?: "chart" | "sentiment" | "risk" | "alert";
+}
+
+/** Risk Wizard session data - Interactive position sizing calculator */
+export interface RiskSessionData {
+  capital?: number;
+  riskPercent?: number;
+  stopLossPips?: number;
+  messageId?: number;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
@@ -61,6 +76,8 @@ export type SessionState =
   | { flow: "lyrics"; step: "search"; data: LyricsSessionData }
   | { flow: "location"; step: "waiting"; data: LocationSessionData }
   | { flow: "tpsl"; step: "tp" | "sl"; data: TpSlSessionData }
+  | { flow: "market_hub"; step: "symbol_input" | "dashboard"; data: MarketHubSessionData }
+  | { flow: "risk"; step: "capital" | "risk_percent" | "stop_loss" | "result"; data: RiskSessionData }
   | null;
 
 /** Session with metadata */
@@ -307,4 +324,14 @@ export function isAnimeSession(state: SessionState): state is Extract<SessionSta
 /** Type guard for location session */
 export function isLocationSession(state: SessionState): state is Extract<SessionState, { flow: "location" }> {
   return state !== null && state.flow === "location";
+}
+
+/** Type guard for market hub session */
+export function isMarketHubSession(state: SessionState): state is Extract<SessionState, { flow: "market_hub" }> {
+  return state !== null && state.flow === "market_hub";
+}
+
+/** Type guard for risk session */
+export function isRiskSession(state: SessionState): state is Extract<SessionState, { flow: "risk" }> {
+  return state !== null && state.flow === "risk";
 }

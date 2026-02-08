@@ -39,7 +39,7 @@ import { ChartService } from "./services/ChartService.js";
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
 import { StopCommand } from "./commands/StartCommand.js";
 import { HelpCommand } from "./commands/HelpCommand.js";
-import { WeatherCommand, WeatherLocationHandler } from "./commands/WeatherCommand.js";
+import { WeatherCommand } from "./commands/WeatherCommand.js";
 import { ReminderCommand } from "./commands/ReminderCommand.js";
 import { RandomReplyHandler } from "./commands/RandomReplyHandler.js";
 import { StickerCommand } from "./commands/StickerCommand.js";
@@ -48,7 +48,7 @@ import { MovieCommand } from "./commands/MovieCommand.js";
 import { QuoteCommand } from "./commands/QuoteCommand.js";
 import { NewsCommand } from "./commands/NewsCommand.js";
 import { EarthquakeCommand } from "./commands/EarthquakeCommand.js";
-import { PrayerCommand, PrayerLocationHandler } from "./commands/PrayerCommand.js";
+import { PrayerCommand } from "./commands/PrayerCommand.js";
 import { LyricsCommand } from "./commands/LyricsCommand.js";
 import { DownloadCommand } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
@@ -58,7 +58,8 @@ import { SessionInputHandler } from "./commands/SessionInputHandler.js";
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
 import { PortfolioCommand, BuyCommand, SellCommand, TradeConfirmHandler } from "./commands/TradeCommand.js";
-import { RiskCommand, RiskHelpCommand } from "./commands/RiskCommand.js";
+import { RiskCommand, RiskCallbackHandler, RiskInputHandler } from "./commands/RiskCommand.js";
+import { MarketCommand, MarketCallbackHandler } from "./commands/MarketCommand.js";
 import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
 import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
 import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.js";
@@ -127,8 +128,23 @@ async function main(): Promise<void> {
   const animeCommand = new AnimeCommand(animeService);
   const lyricsCommand = new LyricsCommand(lyricsService);
 
+  // Market Hub Command (with DI)
+  const marketCommand = new MarketCommand(tradingEngine);
+
+  // Risk Wizard (with handlers)
+  const riskCommand = new RiskCommand();
+  const riskCallbackHandler = new RiskCallbackHandler();
+  const riskInputHandler = new RiskInputHandler();
+
   // Session handler for interactive flows
-  const sessionInputHandler = new SessionInputHandler(weatherCommand, prayerCommand, animeCommand, lyricsCommand);
+  const sessionInputHandler = new SessionInputHandler(
+    weatherCommand,
+    prayerCommand,
+    animeCommand,
+    lyricsCommand,
+    marketCommand,
+    riskInputHandler,
+  );
 
   const commands: Command[] = [
     // Core commands - MenuCommand handles /start and /menu
@@ -157,9 +173,11 @@ async function main(): Promise<void> {
     new BuyCommand(tradingEngine), // /buy [symbol] [qty]
     new SellCommand(tradingEngine), // /sell [symbol] [qty]
 
-    // Risk Calculator
-    new RiskHelpCommand(), // /risk (help)
-    new RiskCommand(), // /risk [capital] [%] [pips]
+    // Risk Calculator (Hybrid: Regex + Wizard)
+    riskCommand, // /risk or /risk [capital] [%] [pips]
+
+    // Market Hub
+    marketCommand, // /market [symbol] or /m [symbol]
 
     // Price Alerts
     new AlertHelpCommand(), // /alert (help)
@@ -181,9 +199,7 @@ async function main(): Promise<void> {
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
     expenseCommand, // Handle expense flow text input
-    sessionInputHandler, // Handle general session input (weather, lyrics, anime)
-    new WeatherLocationHandler(weatherCommand), // Handle location input for weather
-    new PrayerLocationHandler(prayerCommand), // Handle location input for prayer
+    sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
     downloadCommand, // Handle download links
     new TpSlInputHandler(db), // Handle TP/SL input
     new RandomReplyHandler(stickerService),
@@ -196,6 +212,12 @@ async function main(): Promise<void> {
     menuCommand, // menu_ prefix
     new FinanceMenuHandler(), // fin_ prefix
     new TradingMenuHandler(), // trade_ menu prefix (different from tconf_)
+
+    // Market Hub
+    new MarketCallbackHandler(marketCommand, tradingEngine, chartService, sentimentAnalyzer), // mkt_ prefix
+
+    // Risk Wizard
+    riskCallbackHandler, // risk_ prefix
 
     // Financial commands
     expenseCommand.getCallbackHandler(), // exp_ prefix

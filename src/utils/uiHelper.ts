@@ -214,3 +214,150 @@ export function formatUSD(amount: number): string {
 export function escapeMarkdown(text: string): string {
   return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
 }
+
+/**
+ * Create pagination buttons for lists
+ * UX Improvement: Navigate long lists without re-sending messages
+ */
+export function createPaginationButtons(
+  current: number,
+  total: number,
+  prefix: string,
+): TelegramBot.InlineKeyboardButton[][] {
+  if (total <= 1) return [];
+
+  const buttons: TelegramBot.InlineKeyboardButton[] = [];
+
+  if (current > 1) {
+    buttons.push({ text: "◀️ Prev", callback_data: `${prefix}page_${current - 1}` });
+  }
+
+  buttons.push({ text: `${current}/${total}`, callback_data: `${prefix}page_current` });
+
+  if (current < total) {
+    buttons.push({ text: "Next ▶️", callback_data: `${prefix}page_${current + 1}` });
+  }
+
+  return [buttons];
+}
+
+/**
+ * Create Market Hub dashboard keyboard
+ * UX Improvement: Centralized asset dashboard with all actions in one place
+ */
+export function createMarketDashboard(symbol: string): TelegramBot.InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "📊 Chart", callback_data: `mkt_chart_${symbol}` },
+      { text: "🧠 Sentiment", callback_data: `mkt_sent_${symbol}` },
+    ],
+    [
+      { text: "🧮 Calc Risk", callback_data: `mkt_risk_${symbol}` },
+      { text: "🔔 Set Alert", callback_data: `mkt_alert_${symbol}` },
+    ],
+    [
+      { text: "📉 SELL", callback_data: `mkt_sell_${symbol}` },
+      { text: "📈 BUY", callback_data: `mkt_buy_${symbol}` },
+    ],
+    [{ text: "🔙 Back to Menu", callback_data: "menu_back" }],
+  ];
+}
+
+/**
+ * Create Risk Wizard capital selection keyboard
+ * UX Improvement: Quick presets + custom input option
+ */
+export function createCapitalButtons(): TelegramBot.InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "$100", callback_data: "risk_cap_100" },
+      { text: "$500", callback_data: "risk_cap_500" },
+      { text: "$1,000", callback_data: "risk_cap_1000" },
+    ],
+    [
+      { text: "$5,000", callback_data: "risk_cap_5000" },
+      { text: "$10,000", callback_data: "risk_cap_10000" },
+    ],
+    [{ text: "✏️ Custom", callback_data: "risk_cap_custom" }],
+    [{ text: "❌ Batal", callback_data: "risk_cancel" }],
+  ];
+}
+
+/**
+ * Create Risk Wizard risk percentage keyboard
+ * UX Improvement: Standard risk percentages used by traders
+ */
+export function createRiskPercentButtons(): TelegramBot.InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "0.5%", callback_data: "risk_pct_0.5" },
+      { text: "1%", callback_data: "risk_pct_1" },
+      { text: "2%", callback_data: "risk_pct_2" },
+    ],
+    [
+      { text: "3%", callback_data: "risk_pct_3" },
+      { text: "5%", callback_data: "risk_pct_5" },
+    ],
+    [{ text: "✏️ Custom", callback_data: "risk_pct_custom" }],
+    [{ text: "⬅️ Kembali", callback_data: "risk_back_capital" }],
+  ];
+}
+
+/**
+ * Create Risk Wizard stop loss keyboard
+ * UX Improvement: Common SL pip values for forex
+ */
+export function createStopLossButtons(): TelegramBot.InlineKeyboardButton[][] {
+  return [
+    [
+      { text: "10 pips", callback_data: "risk_sl_10" },
+      { text: "20 pips", callback_data: "risk_sl_20" },
+      { text: "30 pips", callback_data: "risk_sl_30" },
+    ],
+    [
+      { text: "50 pips", callback_data: "risk_sl_50" },
+      { text: "100 pips", callback_data: "risk_sl_100" },
+    ],
+    [{ text: "✏️ Custom", callback_data: "risk_sl_custom" }],
+    [{ text: "⬅️ Kembali", callback_data: "risk_back_percent" }],
+  ];
+}
+
+/**
+ * Create Risk Wizard result keyboard
+ * UX Improvement: Allow recalculation or return to menu
+ */
+export function createRiskResultButtons(): TelegramBot.InlineKeyboardButton[][] {
+  return [
+    [{ text: "🔄 Hitung Ulang", callback_data: "risk_restart" }],
+    [{ text: "🏠 Menu Utama", callback_data: "menu_back" }],
+  ];
+}
+
+/**
+ * Safe edit message wrapper - handles stale message errors gracefully
+ * UX Improvement: Anti-spam by editing instead of sending new messages
+ */
+export async function safeEditMessage(
+  bot: TelegramBot,
+  chatId: number,
+  messageId: number,
+  text: string,
+  options?: TelegramBot.EditMessageTextOptions,
+): Promise<boolean> {
+  try {
+    await bot.editMessageText(text, {
+      chat_id: chatId,
+      message_id: messageId,
+      ...options,
+    });
+    return true;
+  } catch (error) {
+    // Message was deleted or is stale - need to send new message
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("message to edit not found") || errorMessage.includes("message is not modified")) {
+      return false;
+    }
+    throw error;
+  }
+}
