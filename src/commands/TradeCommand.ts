@@ -43,7 +43,7 @@ export class PortfolioCommand implements Command {
  * Usage: /buy [symbol] [quantity]
  */
 export class BuyCommand implements Command {
-  pattern = /^\/buy\s+(\w+)\s+([\d.]+)$/;
+  pattern = /^\/buy(?:\s+(\w+)(?:\s+([\d.]+))?)?$/;
   private tradingEngine: TradingEngine;
 
   constructor(tradingEngine: TradingEngine) {
@@ -115,7 +115,7 @@ export class BuyCommand implements Command {
  * Usage: /sell [symbol] [quantity]
  */
 export class SellCommand implements Command {
-  pattern = /^\/sell\s+(\w+)\s+([\d.]+)$/;
+  pattern = /^\/sell(?:\s+(\w+)(?:\s+([\d.]+))?)?$/;
   private tradingEngine: TradingEngine;
 
   constructor(tradingEngine: TradingEngine) {

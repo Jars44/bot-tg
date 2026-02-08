@@ -11,7 +11,7 @@ import { sessionManager } from "../utils/SessionManager.js";
 import { createNumberedButtons, withLoading } from "../utils/uiHelper.js";
 
 export class AnimeCommand implements Command {
-  pattern = /^\/anime\s+(.+)$/;
+  pattern = /^\/anime(?:\s+(.+))?$/;
   private animeService: AnimeService;
 
   constructor(animeService: AnimeService) {
@@ -23,7 +23,7 @@ export class AnimeCommand implements Command {
     const keyword = match?.[1]?.trim();
 
     if (!keyword) {
-      await bot.sendMessage(chatId, MESSAGES.INVALID_FORMAT);
+      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/anime Naruto`", { parse_mode: "Markdown" });
       return;
     }
 

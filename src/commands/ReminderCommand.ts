@@ -10,7 +10,7 @@ import { MESSAGES } from "../config/messages.js";
 import { getCurrentTimeString } from "../utils/helpers.js";
 
 export class ReminderCommand implements Command {
-  pattern = /^\/ingatkan\s+(\d{1,2}:\d{2})\s+(.+)$/;
+  pattern = /^\/ingatkan(?:\s+(\d{1,2}:\d{2})(?:\s+(.+))?)?$/;
   private db: JsonDb;
   private bot: TelegramBot | null = null;
   private cronJob: cron.ScheduledTask | null = null;
@@ -49,24 +49,18 @@ export class ReminderCommand implements Command {
 
     if (dueReminders.length === 0) return;
 
-    const idsToRemove: string[] = [];
-
     for (const reminder of dueReminders) {
       try {
         await this.bot.sendMessage(reminder.chatId, MESSAGES.REMINDER_TRIGGER(reminder.message));
-        idsToRemove.push(reminder.id);
+        await this.db.removeReminders([reminder.id]);
       } catch (err) {
-        console.error(`[ReminderCommand] Failed to send reminder ${reminder.id}:`, err);
+        console.error(`[ReminderCommand] Failed to send reminder:`, err);
       }
-    }
-
-    if (idsToRemove.length > 0) {
-      await this.db.removeReminders(idsToRemove);
     }
   }
 
   /**
-   * Send morning greeting to all users with reminders
+   * Send morning greeting to active users
    */
   private async sendMorningGreeting(): Promise<void> {
     if (!this.bot) return;
@@ -85,14 +79,24 @@ export class ReminderCommand implements Command {
 
   async execute(bot: TelegramBot, msg: TelegramBot.Message, match: RegExpMatchArray | null): Promise<void> {
     const chatId = msg.chat.id;
+    const time = match?.[1];
+    const message = match?.[2]?.trim();
 
-    if (!match || !match[1] || !match[2]) {
-      await bot.sendMessage(chatId, MESSAGES.INVALID_FORMAT);
+    if (!time) {
+      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/ingatkan 12:00 Makan siang`", {
+        parse_mode: "Markdown",
+      });
       return;
     }
 
-    const time = match[1];
-    const message = match[2];
+    if (!message) {
+      await bot.sendMessage(
+        chatId,
+        "❌ Format salah! Pesan tidak boleh kosong.\nContoh: `/ingatkan 12:00 Makan siang`",
+        { parse_mode: "Markdown" },
+      );
+      return;
+    }
 
     // Store reminder in database (persists across restarts)
     await this.db.addReminder(chatId, time, message);

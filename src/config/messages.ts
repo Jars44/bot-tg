@@ -61,9 +61,6 @@ export const MESSAGES = {
   DOWNLOAD_VIDEO_CAPTION: "📽️ Nih videonya",
   DOWNLOAD_AUDIO_CAPTION: "🎧 Nih audionya",
 
-  // Random replies for insults/gibberish
-  RANDOM_REPLIES: ["apalah", "apa coba"],
-
   // Help text
   HELP_TEXT: `/gempa - Berita Gempa Terbaru \n
 /berita - Berita Terkini \n
@@ -88,30 +85,3 @@ export const MESSAGES = {
 /calendar - Kalender Ekonomi \n(Cek event forex hari ini) \n
 /risk - Kalkulator Risiko \n(Gunakan Format /risk <modal> <risiko%> <sl>) \nContoh: /risk 1000 2 50`,
 } as const;
-
-/** Insult words for random reply detection */
-export const INSULT_WORDS = [
-  "bego",
-  "goblok",
-  "tolol",
-  "anjing",
-  "bangsat",
-  "babi",
-  "kontol",
-  "memek",
-  "asu",
-  "jancok",
-  "pukimak",
-  "bajingan",
-  "brengsek",
-  "dongok",
-  "cok",
-  "bodo",
-  "bodoh",
-  "gak jelas",
-  "gajelas",
-  "gaje",
-  "gk jelas",
-  "dongo",
-  "dongok",
-] as const;

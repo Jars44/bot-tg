@@ -426,19 +426,17 @@ export class JsonDb {
   }
 
   async getConversationState(chatId: number): Promise<ConversationState | null> {
-    this.ensureInit();
-
+    await this.ensureInit();
     const state = this.db.data.conversationStates.find((s) => s.chatId === chatId);
+    return state || null;
+  }
 
-    if (!state) return null;
-
-    // Check if expired
-    if (Date.now() > state.expiresAt) {
-      await this.clearConversationState(chatId);
-      return null;
-    }
-
-    return state;
+  /**
+   * Get all conversation states (for session manager initialization)
+   */
+  async getAllConversationStates(): Promise<ConversationState[]> {
+    await this.ensureInit();
+    return this.db.data.conversationStates;
   }
 
   async clearConversationState(chatId: number): Promise<void> {

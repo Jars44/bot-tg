@@ -9,7 +9,7 @@ import { createMenuKeyboard, createTradingKeyboard, createFinanceKeyboard } from
 import { sessionManager } from "../utils/SessionManager.js";
 
 const MENU_MESSAGE = `
-🤖 *Jars44 Bot*
+Jarvis
 
 Pilih menu di bawah untuk memulai:
 `;

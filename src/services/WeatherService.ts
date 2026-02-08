@@ -102,4 +102,24 @@ export class WeatherService {
     const weather = await this.getWeather(lat, lon);
     return { weather, locationName };
   }
+
+  /**
+   * Get weather directly from coordinates (for GPS location)
+   */
+  async getWeatherByCoords(
+    lat: number,
+    lon: number,
+  ): Promise<{
+    weather: WeatherData;
+    locationName: string;
+  } | null> {
+    try {
+      const weather = await this.getWeather(lat, lon);
+      // Use coordinates as location name when we don't have a city name
+      const locationName = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+      return { weather, locationName };
+    } catch {
+      return null;
+    }
+  }
 }

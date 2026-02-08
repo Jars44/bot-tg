@@ -38,7 +38,7 @@ import { AlertScheduler } from "./services/AlertScheduler.js";
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
 import { StopCommand } from "./commands/StartCommand.js";
 import { HelpCommand } from "./commands/HelpCommand.js";
-import { WeatherCommand } from "./commands/WeatherCommand.js";
+import { WeatherCommand, WeatherLocationHandler } from "./commands/WeatherCommand.js";
 import { ReminderCommand } from "./commands/ReminderCommand.js";
 import { RandomReplyHandler } from "./commands/RandomReplyHandler.js";
 import { StickerCommand } from "./commands/StickerCommand.js";
@@ -47,11 +47,12 @@ import { MovieCommand } from "./commands/MovieCommand.js";
 import { QuoteCommand } from "./commands/QuoteCommand.js";
 import { NewsCommand } from "./commands/NewsCommand.js";
 import { EarthquakeCommand } from "./commands/EarthquakeCommand.js";
-import { PrayerCommand } from "./commands/PrayerCommand.js";
+import { PrayerCommand, PrayerLocationHandler } from "./commands/PrayerCommand.js";
 import { LyricsCommand } from "./commands/LyricsCommand.js";
 import { DownloadCommand } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
 import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/MenuCommand.js";
+import { SessionInputHandler } from "./commands/SessionInputHandler.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
@@ -63,6 +64,7 @@ import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.j
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
+import { sessionManager } from "./utils/SessionManager.js";
 
 async function main(): Promise<void> {
   console.log("[Bot] Starting initialization...");
@@ -74,6 +76,10 @@ async function main(): Promise<void> {
   const db = new JsonDb();
   await db.init();
   console.log("[Bot] Database initialized");
+
+  // Initialize session manager persistence
+  await sessionManager.initialize(db);
+  console.log("[Bot] Session persistence initialized");
 
   // Initialize HTTP client
   const httpClient = new HttpClient();
@@ -112,22 +118,29 @@ async function main(): Promise<void> {
   const downloadCommand = new DownloadCommand(downloadService, tempCleaner);
   const expenseCommand = new ExpenseCommand(db);
   const menuCommand = new MenuCommand();
+  const weatherCommand = new WeatherCommand(weatherService);
+  const prayerCommand = new PrayerCommand(prayerService);
+  const animeCommand = new AnimeCommand(animeService);
+  const lyricsCommand = new LyricsCommand(lyricsService);
+
+  // Session handler for interactive flows
+  const sessionInputHandler = new SessionInputHandler(weatherCommand, prayerCommand, animeCommand, lyricsCommand);
 
   const commands: Command[] = [
     // Core commands - MenuCommand handles /start and /menu
     menuCommand,
     new StopCommand(),
     new HelpCommand(),
-    new WeatherCommand(weatherService),
+    weatherCommand,
     reminderCommand,
     new StickerCommand(stickerService, tempCleaner, db),
-    new AnimeCommand(animeService),
+    animeCommand,
     new MovieCommand(movieService),
     new QuoteCommand(quoteService),
     new NewsCommand(newsService),
     new EarthquakeCommand(earthquakeService),
-    new PrayerCommand(prayerService),
-    new LyricsCommand(lyricsService),
+    prayerCommand,
+    lyricsCommand,
     downloadCommand,
 
     // Financial Suite Commands
@@ -161,6 +174,9 @@ async function main(): Promise<void> {
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
     expenseCommand, // Handle expense flow text input
+    sessionInputHandler, // Handle general session input (weather, lyrics, anime)
+    new WeatherLocationHandler(weatherCommand), // Handle location input for weather
+    new PrayerLocationHandler(prayerCommand), // Handle location input for prayer
     downloadCommand, // Handle download links
     new RandomReplyHandler(stickerService),
     new InvalidCommandHandler(),

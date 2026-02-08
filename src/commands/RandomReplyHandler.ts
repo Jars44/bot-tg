@@ -7,10 +7,36 @@ import TelegramBot from "node-telegram-bot-api";
 
 import type { MessageHandler } from "./types.js";
 import { StickerService } from "../services/StickerService.js";
-import { MESSAGES, INSULT_WORDS } from "../config/messages.js";
 
 /** Sticker asset filenames */
 const STICKER_OPTIONS = ["stk1.webm", "stk2.webm", "stk3.webm"] as const;
+
+/** Insult words for random reply detection */
+const INSULT_WORDS = [
+  "bego",
+  "goblok",
+  "tolol",
+  "anjing",
+  "bangsat",
+  "babi",
+  "kontol",
+  "memek",
+  "asu",
+  "jancok",
+  "pukimak",
+  "bajingan",
+  "brengsek",
+  "dongok",
+  "cok",
+  "bodo",
+  "bodoh",
+  "gak jelas",
+  "gajelas",
+  "gaje",
+  "gk jelas",
+  "dongo",
+  "dongok",
+] as const;
 
 export class RandomReplyHandler implements MessageHandler {
   private stickerService: StickerService;
@@ -39,6 +65,15 @@ export class RandomReplyHandler implements MessageHandler {
     return INSULT_WORDS.some((word) => lowerText.includes(word));
   }
 
+  /**
+   * Check if text contains compliments/slang
+   */
+  private isCompliment(text: string): boolean {
+    const lowerText = text.toLowerCase();
+    const SLANG_WORDS = ["anjay", "keren", "gokil", "mantap", "gas", "menyala", "kelaz", "gg"];
+    return SLANG_WORDS.some((word) => lowerText.includes(word));
+  }
+
   shouldHandle(msg: TelegramBot.Message): boolean {
     const text = msg.text?.toLowerCase() ?? "";
 
@@ -47,25 +82,41 @@ export class RandomReplyHandler implements MessageHandler {
       return false;
     }
 
-    return this.isRandomText(text) || this.containsInsult(text);
+    return this.isRandomText(text) || this.containsInsult(text) || this.isCompliment(text);
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
+    const text = msg.text?.toLowerCase() ?? "";
+
+    // Handle compliments
+    if (this.isCompliment(text)) {
+      const RESPONSES = [
+        "Makasih, jadi malu deh 🤭",
+        "Iya dong, jelas! 🥰",
+        "Aww makasih ya 😝",
+        "Hehe makasih bang! 😹",
+        "Kelazz! 🥶",
+        "Menyala abangkuh 🔥",
+      ];
+      const randomResponse = RESPONSES[Math.floor(Math.random() * RESPONSES.length)];
+      await bot.sendMessage(chatId, randomResponse);
+      return;
+    }
 
     // Generate random number 0-4
     const randomNum = Math.floor(Math.random() * 5);
 
     if (randomNum < 2) {
-      // Text reply (index 0 or 1)
-      await bot.sendMessage(chatId, MESSAGES.RANDOM_REPLIES[randomNum]);
+      // Text reply (index 0 or 1) - Replace with insults/gibberish + angry emojis
+      const INSULT_RESPONSES = ["lah kocak", "apalah 😐", "apacoba", "😐", "😡", "😾"];
+      // Override default messages with these custom ones for this specific user request context
+      // Or mix them with existing ones. Let's start fresh with these as requested.
+      const response = INSULT_RESPONSES[Math.floor(Math.random() * INSULT_RESPONSES.length)];
+      await bot.sendMessage(chatId, response);
     } else {
       // Sticker reply (index 2, 3, or 4)
-      // BUG FIX: Changed from `randomNum - 3` to `randomNum - 2`
-      // Old: randomNum=2 → index=-1 (INVALID, causes crash!)
-      // New: randomNum=2 → index=0, randomNum=3 → index=1, randomNum=4 → index=2
-      const stickerIndex = randomNum - 2; // FIXED!
-
+      const stickerIndex = randomNum - 2;
       const stickerPath = this.stickerService.getStickerAssetPath(STICKER_OPTIONS[stickerIndex]);
 
       try {
@@ -73,6 +124,10 @@ export class RandomReplyHandler implements MessageHandler {
         await bot.sendSticker(chatId, stickerPath);
       } catch (err) {
         console.error("[RandomReplyHandler] Failed to send sticker:", err);
+        // Fallback to text reply if sticker fails
+        const INSULT_RESPONSES = ["lah kocak", "apalah 😐", "apacoba", "😐", "😡", "😾"];
+        const response = INSULT_RESPONSES[Math.floor(Math.random() * INSULT_RESPONSES.length)];
+        await bot.sendMessage(chatId, response);
       }
     }
   }

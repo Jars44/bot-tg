@@ -8,7 +8,7 @@ import { MovieService } from "../services/MovieService.js";
 import { MESSAGES } from "../config/messages.js";
 
 export class MovieCommand implements Command {
-  pattern = /^\/film\s+(.+)$/;
+  pattern = /^\/film(?:\s+(.+))?$/;
   private movieService: MovieService;
 
   constructor(movieService: MovieService) {
@@ -20,7 +20,7 @@ export class MovieCommand implements Command {
     const keyword = match?.[1]?.trim();
 
     if (!keyword) {
-      await bot.sendMessage(chatId, MESSAGES.INVALID_FORMAT);
+      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/film Avengers`", { parse_mode: "Markdown" });
       return;
     }
 

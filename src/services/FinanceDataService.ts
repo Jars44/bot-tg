@@ -150,26 +150,48 @@ export class FinanceDataService {
     const yahooSymbol = this.normalizeYahooSymbol(symbol);
 
     try {
-      const quote = (await yahooFinance.quote(yahooSymbol)) as {
-        regularMarketPrice?: number;
-        regularMarketChangePercent?: number;
-      } | null;
+      const quote = (await yahooFinance.quote(yahooSymbol)) as any; // Use any to access potential fields safely
 
-      if (!quote || !quote.regularMarketPrice) {
+      if (!quote) {
         throw new Error(`No data for ${symbol}`);
+      }
+
+      // Try multiple fields for price
+      const price =
+        quote.regularMarketPrice ||
+        quote.price ||
+        quote.ask ||
+        quote.bid ||
+        quote.preMarketPrice ||
+        quote.postMarketPrice;
+
+      if (!price) {
+        console.warn(`[FinanceDataService] Missing price fields for ${symbol}. Quote:`, JSON.stringify(quote));
+        throw new Error(`No price data for ${symbol}`);
       }
 
       const source = this.isForex(symbol) ? "forex" : "stock";
 
       return {
         symbol: symbol.toUpperCase(),
-        price: quote.regularMarketPrice,
-        change24h: quote.regularMarketChangePercent ?? 0,
+        price: price,
+        change24h: quote.regularMarketChangePercent ?? quote.regularMarketChange ?? 0,
         source,
         timestamp: Date.now(),
       };
     } catch (error) {
       console.error(`[FinanceDataService] Error fetching Yahoo price for ${symbol}:`, error);
+
+      // Fallback for Gold if XAUUSD fails
+      if (symbol === "XAUUSD" || symbol === "XAUUSD=X") {
+        console.log("[FinanceDataService] Attempting fallback to GC=F for Gold");
+        try {
+          return await this.getYahooPrice("GC=F");
+        } catch {
+          throw new Error(`Failed to fetch price for ${symbol} (and fallback failed)`);
+        }
+      }
+
       throw new Error(`Failed to fetch price for ${symbol}`);
     }
   }
@@ -311,5 +333,135 @@ export class FinanceDataService {
       spreadPercent,
       exchanges: prices,
     };
+  }
+
+  /**
+   * OHLCV data point for charting
+   */
+  static readonly TIMEFRAMES: Record<string, string> = {
+    "1m": "1m",
+    "5m": "5m",
+    "15m": "15m",
+    "1h": "1h",
+    "4h": "4h",
+    "1d": "1d",
+  };
+
+  /**
+   * Get OHLCV (candlestick) data for charting
+   * @param symbol Asset symbol (BTC, ETH, XAUUSD, etc.)
+   * @param timeframe Timeframe (1m, 5m, 15m, 1h, 4h, 1d)
+   * @param limit Number of candles to fetch (default: 100)
+   */
+  async getOHLCV(
+    symbol: string,
+    timeframe: string = "1h",
+    limit: number = 100,
+  ): Promise<Array<{ timestamp: number; open: number; high: number; low: number; close: number; volume: number }>> {
+    // Validate timeframe
+    const tf = FinanceDataService.TIMEFRAMES[timeframe] || "1h";
+
+    if (this.isCrypto(symbol)) {
+      return this.getCryptoOHLCV(symbol, tf, limit);
+    } else {
+      return this.getYahooOHLCV(symbol, timeframe, limit);
+    }
+  }
+
+  /**
+   * Get OHLCV from Binance for crypto
+   */
+  private async getCryptoOHLCV(
+    symbol: string,
+    timeframe: string,
+    limit: number,
+  ): Promise<Array<{ timestamp: number; open: number; high: number; low: number; close: number; volume: number }>> {
+    try {
+      const normalizedSymbol = this.normalizeCryptoSymbol(symbol);
+      const ohlcv = await this.binance.fetchOHLCV(normalizedSymbol, timeframe, undefined, limit);
+
+      return ohlcv.map((candle) => ({
+        timestamp: candle[0] as number,
+        open: candle[1] as number,
+        high: candle[2] as number,
+        low: candle[3] as number,
+        close: candle[4] as number,
+        volume: candle[5] as number,
+      }));
+    } catch (error) {
+      console.error(`[FinanceDataService] Error fetching crypto OHLCV for ${symbol}:`, error);
+      throw new Error(`Failed to fetch OHLCV data for ${symbol}`);
+    }
+  }
+
+  /**
+   * Get OHLCV from Yahoo Finance for forex/stocks
+   */
+  private async getYahooOHLCV(
+    symbol: string,
+    timeframe: string,
+    limit: number,
+  ): Promise<Array<{ timestamp: number; open: number; high: number; low: number; close: number; volume: number }>> {
+    try {
+      const yahooSymbol = this.normalizeYahooSymbol(symbol);
+
+      // Map timeframe to Yahoo interval
+      const intervalMap: Record<string, string> = {
+        "1m": "1m",
+        "5m": "5m",
+        "15m": "15m",
+        "1h": "1h",
+        "4h": "1h", // Yahoo doesn't support 4h, use 1h
+        "1d": "1d",
+      };
+
+      const interval = intervalMap[timeframe] || "1h";
+
+      // Calculate date range based on timeframe
+      const now = new Date();
+      let startDate: Date;
+
+      switch (timeframe) {
+        case "1m":
+        case "5m":
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days
+          break;
+        case "15m":
+        case "1h":
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days
+          break;
+        case "4h":
+        case "1d":
+          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // 1 year
+          break;
+        default:
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+
+      const result = await yahooFinance.chart(yahooSymbol, {
+        period1: startDate,
+        period2: now,
+        interval: interval as "1m" | "5m" | "15m" | "1h" | "1d",
+      });
+
+      if (!result.quotes || result.quotes.length === 0) {
+        throw new Error(`No OHLCV data for ${symbol}`);
+      }
+
+      // Take last 'limit' candles
+      const quotes = result.quotes.slice(-limit);
+
+      return quotes.map((q) => ({
+        timestamp: new Date(q.date).getTime(),
+        open: q.open ?? 0,
+        high: q.high ?? 0,
+        low: q.low ?? 0,
+        close: q.close ?? 0,
+        volume: q.volume ?? 0,
+      }));
+    } catch (error) {
+      console.error(`[FinanceDataService] Error fetching Yahoo OHLCV for ${symbol}:`, error);
+      throw new Error(`Failed to fetch OHLCV data for ${symbol}`);
+    }
   }
 }

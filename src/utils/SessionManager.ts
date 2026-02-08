@@ -40,12 +40,27 @@ export interface LocationSessionData {
   command: "weather" | "prayer";
 }
 
+/** Lyrics search session data */
+export interface LyricsSessionData {
+  messageId: number;
+}
+
+/** TP/SL protection session data */
+export interface TpSlSessionData {
+  positionId: string;
+  symbol: string;
+  entryPrice: number;
+  takeProfit?: number;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
   | { flow: "trade"; step: "confirm"; data: TradeSessionData }
   | { flow: "anime"; step: "select"; data: AnimeSessionData }
+  | { flow: "lyrics"; step: "search"; data: LyricsSessionData }
   | { flow: "location"; step: "waiting"; data: LocationSessionData }
+  | { flow: "tpsl"; step: "tp" | "sl"; data: TpSlSessionData }
   | null;
 
 /** Session with metadata */
@@ -62,8 +77,53 @@ const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
  * In-memory session manager for wizard flows
  * Sessions are ephemeral and reset on bot restart
  */
+import type { JsonDb } from "../database/JsonDb.js"; // Import type only to avoid circular dependency issues if any
+
+/**
+ * In-memory session manager for wizard flows with JSON persistence
+ * Sessions are cached in memory for speed but persisted to DB
+ */
 export class SessionManager {
   private sessions: Map<number, Session> = new Map();
+  private db: JsonDb | null = null;
+
+  /**
+   * Initialize with database instance and load persisted sessions
+   */
+  async initialize(db: JsonDb): Promise<void> {
+    this.db = db;
+
+    // Load persisted sessions
+    try {
+      const states = await this.db.getAllConversationStates();
+
+      for (const state of states) {
+        // Skip expired sessions (double check)
+        if (state.expiresAt < Date.now()) continue;
+
+        // Map ConversationState to Session structure
+        const sessionState: SessionState = {
+          flow: state.command as any,
+          step: state.step as any,
+          data: state.data as any,
+        };
+
+        // Populate cache
+        // Estimated updatedAt based on expiresAt
+        const estimatedUpdatedAt = state.expiresAt - SESSION_TIMEOUT_MS;
+
+        this.sessions.set(state.chatId, {
+          state: sessionState,
+          createdAt: estimatedUpdatedAt,
+          updatedAt: estimatedUpdatedAt,
+        });
+      }
+
+      console.log(`[SessionManager] Loaded ${states.length} active sessions from DB`);
+    } catch (error) {
+      console.error("[SessionManager] Failed to load sessions:", error);
+    }
+  }
 
   /**
    * Get user session state
@@ -85,22 +145,32 @@ export class SessionManager {
   /**
    * Set user session state
    */
-  setState(chatId: number, state: SessionState): void {
+  async setState(chatId: number, state: SessionState): Promise<void> {
     const now = Date.now();
     const existing = this.sessions.get(chatId);
 
+    // Update in-memory
     this.sessions.set(chatId, {
       state,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     });
+
+    // Update DB if initialized
+    if (this.db && state) {
+      await this.db.setConversationState(chatId, state.flow, state.step, state.data as Record<string, unknown>);
+    }
   }
 
   /**
    * Clear user session
    */
-  clearState(chatId: number): void {
+  async clearState(chatId: number): Promise<void> {
     this.sessions.delete(chatId);
+
+    if (this.db) {
+      await this.db.clearConversationState(chatId);
+    }
   }
 
   /**
@@ -177,6 +247,17 @@ export class SessionManager {
       flow: "location",
       step: "waiting",
       data: { command },
+    });
+  }
+
+  /**
+   * Start lyrics search flow
+   */
+  startLyricsSearch(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "lyrics",
+      step: "search",
+      data: { messageId },
     });
   }
 

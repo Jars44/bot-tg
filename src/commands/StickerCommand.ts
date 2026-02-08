@@ -12,7 +12,7 @@ import { CONFIG } from "../config/index.js";
 import { delay } from "../utils/helpers.js";
 
 export class StickerCommand implements Command {
-  pattern = /^\/stiker\s+(.+)$/s;
+  pattern = /^\/stiker(?:\s+(.+))?$/s;
   private stickerService: StickerService;
   private tempCleaner: TempCleanerService;
   private db: JsonDb;
@@ -35,7 +35,9 @@ export class StickerCommand implements Command {
     const text = match?.[1]?.trim();
 
     if (!text) {
-      await bot.sendMessage(chatId, MESSAGES.ERROR_STICKER_EMPTY);
+      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/stiker Hello World`", {
+        parse_mode: "Markdown",
+      });
       return;
     }
 

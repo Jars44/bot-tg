@@ -45,4 +45,27 @@ export class PrayerService {
       return null;
     }
   }
+
+  /**
+   * Get prayer times by coordinates
+   */
+  async getPrayerTimesByCoords(lat: number, lon: number): Promise<PrayerTimes | null> {
+    try {
+      const response = await this.http.get<AladhanResponse>(`${CONFIG.API.ALADHAN}/timings`, {
+        params: {
+          latitude: lat,
+          longitude: lon,
+          method: 11, // Muhammadiyah calculation method
+        },
+      });
+
+      if (!response.data?.timings) {
+        return null;
+      }
+
+      return response.data.timings;
+    } catch {
+      return null;
+    }
+  }
 }

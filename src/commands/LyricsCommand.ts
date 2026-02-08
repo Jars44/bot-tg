@@ -8,7 +8,7 @@ import { LyricsService } from "../services/LyricsService.js";
 import { MESSAGES } from "../config/messages.js";
 
 export class LyricsCommand implements Command {
-  pattern = /^\/lirik\s+(.+)$/;
+  pattern = /^\/lirik(?:\s+(.+))?$/;
   private lyricsService: LyricsService;
 
   constructor(lyricsService: LyricsService) {
@@ -20,14 +20,18 @@ export class LyricsCommand implements Command {
     const input = match?.[1]?.trim();
 
     if (!input) {
-      await bot.sendMessage(chatId, MESSAGES.ERROR_LYRICS_FORMAT);
+      await bot.sendMessage(chatId, "❌ Format tidak lengkap!\nContoh: `/lirik Lana Del Rey - Brooklyn Baby`", {
+        parse_mode: "Markdown",
+      });
       return;
     }
 
     // Parse "Artist - Title" format
     const parts = input.split(" - ");
     if (parts.length !== 2) {
-      await bot.sendMessage(chatId, MESSAGES.ERROR_LYRICS_FORMAT);
+      await bot.sendMessage(chatId, "❌ Format salah!\nGunakan: `/lirik [Artis] - [Judul]`", {
+        parse_mode: "Markdown",
+      });
       return;
     }
 

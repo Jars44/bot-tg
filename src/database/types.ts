@@ -43,6 +43,10 @@ export interface Position {
   quantity: number;
   type: "long";
   openedAt: number;
+  /** Take Profit price level */
+  takeProfit?: number;
+  /** Stop Loss price level */
+  stopLoss?: number;
 }
 
 /** Trade execution record */
