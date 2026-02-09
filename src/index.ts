@@ -65,7 +65,7 @@ import {
   CloseCommand,
   TradeConfirmHandler,
 } from "./commands/TradeCommand.js";
-import { RiskCommand, RiskCallbackHandler, RiskInputHandler } from "./commands/RiskCommand.js";
+import { RiskCommand, RiskInputHandler } from "./commands/RiskCommand.js";
 import { MarketCommand, MarketCallbackHandler } from "./commands/MarketCommand.js";
 import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
 import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
@@ -149,9 +149,8 @@ async function main(): Promise<void> {
   const myAlertsCommand = new MyAlertsCommand(db);
 
   // Risk Wizard (with handlers)
-  const riskCommand = new RiskCommand();
-  const riskCallbackHandler = new RiskCallbackHandler();
   const riskInputHandler = new RiskInputHandler();
+  const riskCommand = new RiskCommand(riskInputHandler);
 
   // Session handler for interactive flows (with MovieCommand for movie search)
   const sessionInputHandler = new SessionInputHandler(
@@ -198,7 +197,7 @@ async function main(): Promise<void> {
 
     // Price Alerts
     new AlertHelpCommand(), // /alert (help)
-    new AlertCommand(db), // /alert [symbol] [price] [cond]
+    new AlertCommand(tradingEngine), // /alert [symbol] [price] [cond]
     myAlertsCommand, // /alerts
 
     // Sentiment Analysis
@@ -235,7 +234,7 @@ async function main(): Promise<void> {
     new MarketCallbackHandler(marketCommand, tradingEngine, chartService, sentimentAnalyzer), // mkt_ prefix
 
     // Risk Wizard
-    riskCallbackHandler, // risk_ prefix
+    riskCommand, // risk_ prefix (RiskCommand is also the CallbackHandler)
 
     // Financial commands
     expenseCommand.getCallbackHandler(), // exp_ prefix

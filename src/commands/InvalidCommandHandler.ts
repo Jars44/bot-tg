@@ -35,6 +35,8 @@ const VALID_COMMANDS = [
   /^\/market/,
   /^\/calendar/,
   /^\/sentimen/,
+  /^\/close/,
+  /^\/highimpact/,
 ];
 
 /** Commands that require arguments */

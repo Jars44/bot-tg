@@ -105,7 +105,7 @@ export class SessionInputHandler implements MessageHandler {
       }
     } else if (state.flow === "risk") {
       // UX Improvement: Delegate to RiskInputHandler for custom numeric input
-      await this.riskInputHandler.handle(bot, msg);
+      await this.riskInputHandler.handle(bot, msg, state);
     }
   }
 }

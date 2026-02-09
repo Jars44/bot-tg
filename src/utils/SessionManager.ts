@@ -307,6 +307,45 @@ export class SessionManager {
   }
 
   /**
+   * Start risk wizard flow
+   */
+  startRiskWizard(chatId: number): void {
+    this.setState(chatId, {
+      flow: "risk",
+      step: "capital",
+      data: {},
+    });
+  }
+
+  /**
+   * Update risk session data
+   */
+  updateRiskData(chatId: number, data: Partial<RiskSessionData>): void {
+    const current = this.getState(chatId);
+    if (current?.flow !== "risk") return;
+
+    this.setState(chatId, {
+      flow: "risk",
+      step: current.step,
+      data: { ...current.data, ...data },
+    });
+  }
+
+  /**
+   * Set risk wizard step
+   */
+  setRiskStep(chatId: number, step: "capital" | "risk_percent" | "stop_loss" | "result"): void {
+    const current = this.getState(chatId);
+    if (current?.flow !== "risk") return;
+
+    this.setState(chatId, {
+      flow: "risk",
+      step,
+      data: current.data,
+    });
+  }
+
+  /**
    * Cleanup expired sessions (call periodically)
    */
   cleanup(): number {
