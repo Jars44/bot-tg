@@ -57,7 +57,13 @@ import { SessionInputHandler } from "./commands/SessionInputHandler.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
-import { PortfolioCommand, BuyCommand, SellCommand, TradeConfirmHandler } from "./commands/TradeCommand.js";
+import {
+  PortfolioCommand,
+  BuyCommand,
+  SellCommand,
+  CloseCommand,
+  TradeConfirmHandler,
+} from "./commands/TradeCommand.js";
 import { RiskCommand, RiskCallbackHandler, RiskInputHandler } from "./commands/RiskCommand.js";
 import { MarketCommand, MarketCallbackHandler } from "./commands/MarketCommand.js";
 import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
@@ -172,6 +178,7 @@ async function main(): Promise<void> {
     new PortfolioCommand(tradingEngine), // /portfolio
     new BuyCommand(tradingEngine), // /buy [symbol] [qty]
     new SellCommand(tradingEngine), // /sell [symbol] [qty]
+    new CloseCommand(tradingEngine), // /close [symbol]
 
     // Risk Calculator (Hybrid: Regex + Wizard)
     riskCommand, // /risk or /risk [capital] [%] [pips]

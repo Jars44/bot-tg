@@ -197,6 +197,146 @@ export class SellCommand implements Command {
 }
 
 /**
+ * Close command for liquidating entire position
+ * Usage: /close [symbol]
+ */
+export class CloseCommand implements Command {
+  pattern = /^\/close(?:\s+(\w+))?$/;
+  private tradingEngine: TradingEngine;
+
+  constructor(tradingEngine: TradingEngine) {
+    this.tradingEngine = tradingEngine;
+  }
+
+  async execute(bot: TelegramBot, msg: TelegramBot.Message, match: RegExpMatchArray | null): Promise<void> {
+    const chatId = msg.chat.id;
+
+    if (!match || !match[1]) {
+      await bot.sendMessage(
+        chatId,
+        `⚠️ *Close Position*\n\n` +
+          `Menutup seluruh posisi aset yang dimiliki secara instan.\n\n` +
+          `*Gunakan:* \`/close [symbol]\`\n\n` +
+          `*Contoh:*\n` +
+          `\`/close BTC\` - Jual SEMUA Bitcoin\n` +
+          `\`/close ETH\` - Jual SEMUA Ethereum\n\n` +
+          `_Gunakan /portfolio untuk melihat aset yang dimiliki._`,
+        { parse_mode: "Markdown" },
+      );
+      return;
+    }
+
+    const symbolInput = match[1].toUpperCase();
+
+    // Check if closing ALL positions
+    if (symbolInput === "ALL") {
+      await withLoading(bot, chatId, async () => {
+        try {
+          const summary = await this.tradingEngine.getPortfolioSummary(chatId);
+          const activePositions = summary.positions.filter((p) => p.quantity > 0);
+
+          if (activePositions.length === 0) {
+            await bot.sendMessage(chatId, "ℹ️ Tidak ada posisi terbuka untuk ditutup.");
+            return;
+          }
+
+          const totalValue = activePositions.reduce((sum, p) => sum + p.marketValue, 0);
+
+          // Show confirmation dialog for closing ALL
+          const confirmMessage =
+            `⚠️ *KONFIRMASI CLOSE ALL*\n\n` +
+            `📉 *Aksi:* CLOSE SEMUA POSISI\n` +
+            `📦 *Jumlah Posisi:* ${activePositions.length}\n` +
+            `💰 *Estimasi Total Nilai:* ${formatUSD(totalValue)}\n\n` +
+            `Tindakan ini akan menjual SEMUA aset anda pada harga pasar saat ini.\n` +
+            `Lanjutkan?`;
+
+          const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "✅ CONFIRM CLOSE ALL", callback_data: "tconf_closeall_yes" },
+                  { text: "❌ CANCEL", callback_data: "tconf_closeall_no" },
+                ],
+              ],
+            },
+          });
+
+          // Store pending trade in session with special symbol "ALL"
+          sessionManager.startTradeConfirmation(chatId, {
+            action: "sell",
+            symbol: "ALL",
+            quantity: 0, // Not used for close all
+            price: 0, // Not used for close all
+            messageId: sentMessage.message_id,
+          });
+        } catch (error) {
+          console.error("[CloseCommand] Error fetching portfolio:", error);
+          await bot.sendMessage(chatId, "❌ Gagal memproses permintaan. Silakan coba lagi.");
+        }
+      });
+      return;
+    }
+
+    const symbol = symbolInput;
+
+    // Fetch current position and price for confirmation
+    await withLoading(bot, chatId, async () => {
+      try {
+        // Get portfolio to find position quantity
+        const summary = await this.tradingEngine.getPortfolioSummary(chatId);
+        const position = summary.positions.find((p) => p.symbol === symbol);
+
+        if (!position || position.quantity <= 0) {
+          await bot.sendMessage(chatId, `❌ Anda tidak memiliki posisi ${symbol} untuk ditutup.`);
+          return;
+        }
+
+        const quantity = position.quantity;
+        const priceData = await this.tradingEngine.getPrice(symbol);
+        const price = priceData.price;
+        const total = price * quantity;
+
+        // Show confirmation dialog
+        const confirmMessage =
+          `⚠️ *KONFIRMASI CLOSE POSITION*\n\n` +
+          `📊 *Pair:* ${symbol}\n` +
+          `📉 *Aksi:* CLOSE ALL\n` +
+          `📦 *Qty:* ${quantity}\n` +
+          `💵 *Harga:* ${formatUSD(price)}\n` +
+          `💰 *Total Estimated:* ${formatUSD(total)}\n\n` +
+          `Lanjutkan tutup posisi ini?`;
+
+        const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: "✅ CONFIRM CLOSE", callback_data: "tconf_sell_yes" },
+                { text: "❌ CANCEL", callback_data: "tconf_sell_no" },
+              ],
+            ],
+          },
+        });
+
+        // Store pending trade in session (using "sell" action as close is a sell)
+        sessionManager.startTradeConfirmation(chatId, {
+          action: "sell",
+          symbol,
+          quantity,
+          price,
+          messageId: sentMessage.message_id,
+        });
+      } catch (error) {
+        console.error("[CloseCommand] Error fetching position/price:", error);
+        await bot.sendMessage(chatId, "❌ Gagal memproses permintaan. Silakan coba lagi.");
+      }
+    });
+  }
+}
+
+/**
  * Trade confirmation callback handler
  */
 export class TradeConfirmHandler implements CallbackHandler {
@@ -237,6 +377,22 @@ export class TradeConfirmHandler implements CallbackHandler {
     // Execute trade
     await withLoading(bot, chatId, async () => {
       try {
+        // Handle CLOSE ALL
+        if (action === "closeall") {
+          const result = await this.tradingEngine.closeAllPositions(chatId);
+
+          sessionManager.clearState(chatId);
+
+          await bot.editMessageText(result.message, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: "Markdown",
+          });
+
+          await bot.answerCallbackQuery(query.id, { text: result.success ? "✅ Closed All" : "❌ Failed" });
+          return;
+        }
+
         let result;
         if (action === "buy") {
           result = await this.tradingEngine.executeBuy(chatId, tradeData.symbol, tradeData.quantity);

@@ -222,6 +222,59 @@ export class TradingEngine {
   }
 
   /**
+   * Close all open positions
+   */
+  async closeAllPositions(chatId: number): Promise<{ success: boolean; message: string; trades: TradeResult[] }> {
+    try {
+      const portfolio = await this.db.getOrCreatePortfolio(chatId);
+      const positions = portfolio.positions;
+
+      if (positions.length === 0) {
+        return {
+          success: false,
+          message: "Tidak ada posisi terbuka untuk ditutup.",
+          trades: [],
+        };
+      }
+
+      const results: TradeResult[] = [];
+      let successCount = 0;
+      let totalPnL = 0;
+
+      // Close each position
+      for (const position of positions) {
+        // Execute sell for full quantity
+        const result = await this.executeSell(chatId, position.symbol, position.quantity);
+        results.push(result);
+
+        if (result.success) {
+          successCount++;
+          if (result.pnl) totalPnL += result.pnl;
+        }
+      }
+
+      const pnlEmoji = totalPnL >= 0 ? "📈" : "📉";
+      const pnlSign = totalPnL >= 0 ? "+" : "";
+
+      return {
+        success: true,
+        message:
+          `✅ Berhasil menutup ${successCount} dari ${positions.length} posisi\n` +
+          `${pnlEmoji} Total Realized PnL: ${pnlSign}$${totalPnL.toFixed(2)}\n\n` +
+          `Gunakan /portfolio untuk melihat saldo terbaru.`,
+        trades: results,
+      };
+    } catch (error) {
+      console.error("[TradingEngine] Close all error:", error);
+      return {
+        success: false,
+        message: "Gagal memproses penutupan semua posisi.",
+        trades: [],
+      };
+    }
+  }
+
+  /**
    * Get portfolio summary with live prices
    */
   async getPortfolioSummary(chatId: number): Promise<PortfolioSummary> {

@@ -268,8 +268,14 @@ export class FinanceDataService {
         timestamp: trade.timestamp ?? Date.now(),
       }));
     } catch (error) {
-      if (error instanceof Error && (error.message.includes("fetch failed") || error.name === "NetworkError")) {
-        console.warn(`[FinanceDataService] Binance unreachable for trades (${symbol}). Whale monitoring paused.`);
+      if (
+        error instanceof Error &&
+        (error.message.includes("fetch failed") ||
+          error.name === "NetworkError" ||
+          error.name === "ExchangeNotAvailable" || // Geo-restriction
+          error.message.includes("451"))
+      ) {
+        console.warn(`[FinanceDataService] Binance unavailable for trades (${symbol}). Whale monitoring paused.`);
       } else {
         console.error(`[FinanceDataService] Error fetching trades for ${symbol}:`, error);
       }
@@ -372,7 +378,7 @@ export class FinanceDataService {
   }
 
   /**
-   * Get OHLCV from Binance for crypto
+   * Get OHLCV from Binance for crypto (with Yahoo fallback)
    */
   private async getCryptoOHLCV(
     symbol: string,
@@ -392,8 +398,10 @@ export class FinanceDataService {
         volume: candle[5] as number,
       }));
     } catch (error) {
-      console.error(`[FinanceDataService] Error fetching crypto OHLCV for ${symbol}:`, error);
-      throw new Error(`Failed to fetch OHLCV data for ${symbol}`);
+      console.warn(
+        `[FinanceDataService] Binance failed for OHLCV ${symbol}: ${error instanceof Error ? error.message : String(error)}. Failing back to Yahoo Finance...`,
+      );
+      return this.getYahooOHLCV(symbol, timeframe, limit);
     }
   }
 

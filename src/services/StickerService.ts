@@ -1,5 +1,10 @@
 /**
  * Sticker generation service using Sharp
+ * REFACTORED: Soft Lo-Fi Blur (Burik Halus)
+ * * Perubahan:
+ * 1. Hapus 'nearest' neighbor agar tidak kotak-kotak.
+ * 2. Tambah Gaussian Blur ringan.
+ * 3. Gunakan 'mitchell' kernel untuk upscale yang lebih lembut.
  */
 
 import sharp from "sharp";
@@ -11,67 +16,93 @@ import { sanitizeForSvg } from "../utils/sanitize.js";
 export class StickerService {
   private tempCleaner: TempCleanerService;
 
+  // Konfigurasi Visual
+  private readonly SQUASH_FACTOR = 0.7; // Gepeng Horizontal 70%
+  private readonly LOW_RES_SIZE = 150; // Resolusi Rendah (150px)
+  private readonly BLUR_SIGMA = 3.0; // Kekuatan Blur (Soft)
+
   constructor(tempCleaner: TempCleanerService) {
     this.tempCleaner = tempCleaner;
   }
 
-  /**
-   * Calculate font size based on longest line length
-   */
-  private calculateFontSize(longestLineLength: number): number {
-    if (longestLineLength <= 4) {
-      return CONFIG.MAX_FONT_SIZE;
-    }
-    if (longestLineLength >= 15) {
-      return CONFIG.DEFAULT_FONT_SIZE;
-    }
-    return CONFIG.FONT_SIZE_MAP[longestLineLength] ?? CONFIG.DEFAULT_FONT_SIZE;
+  private measureTextWidth(text: string, fontSize: number): number {
+    const avgRatio = 0.6;
+    return text.length * fontSize * avgRatio;
   }
 
-  /**
-   * Wrap text into lines based on max chars per line
-   */
-  private wrapText(text: string): string[] {
+  private smartWrap(text: string, fontSize: number, maxWidth: number): string[] {
+    const words = text.trim().replace(/\s+/g, " ").split(" ");
     const lines: string[] = [];
-    const inputLines = text.trim().split(/\r?\n/);
+    let currentLine = words[0];
 
-    for (const inputLine of inputLines) {
-      let currentLine = "";
-      const words = inputLine.split(" ");
-
-      for (const word of words) {
-        if ((currentLine + word).length > CONFIG.STICKER_MAX_CHARS_PER_LINE) {
-          if (currentLine.trim()) {
-            lines.push(currentLine.trim());
-          }
-          currentLine = "";
-        }
-        currentLine += word + " ";
-      }
-
-      if (currentLine.trim()) {
-        lines.push(currentLine.trim());
-      }
+    if (this.measureTextWidth(currentLine, fontSize) > maxWidth) {
+      return [];
     }
 
+    for (let i = 1; i < words.length; i++) {
+      const word = words[i];
+      const testLine = currentLine + " " + word;
+
+      if (this.measureTextWidth(testLine, fontSize) <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        lines.push(currentLine);
+        if (this.measureTextWidth(word, fontSize) > maxWidth) {
+          return [];
+        }
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
     return lines;
   }
 
-  /**
-   * Generate SVG content for sticker
-   */
+  private calculateLayout(text: string): { lines: string[]; fontSize: number } {
+    const CANVAS_SIZE = CONFIG.STICKER_SIZE || 512;
+    const PADDING = 40;
+    const USABLE_WIDTH = (CANVAS_SIZE - PADDING) / this.SQUASH_FACTOR;
+    const USABLE_HEIGHT = CANVAS_SIZE - PADDING;
+
+    let fontSize = 250;
+    const minFontSize = 10;
+
+    let finalLines: string[] = [text];
+
+    while (fontSize >= minFontSize) {
+      const lines = this.smartWrap(text, fontSize, USABLE_WIDTH);
+
+      if (lines.length === 0) {
+        fontSize -= 5;
+        continue;
+      }
+
+      const lineHeight = fontSize * 1.05;
+      const totalHeight = lines.length * lineHeight;
+
+      if (totalHeight <= USABLE_HEIGHT) {
+        finalLines = lines;
+        break;
+      }
+      fontSize -= 5;
+    }
+
+    return { lines: finalLines, fontSize };
+  }
+
   private generateSvg(lines: string[], fontSize: number): string {
-    const size = CONFIG.STICKER_SIZE;
-    const lineHeight = fontSize * 1.2;
+    const size = CONFIG.STICKER_SIZE || 512;
+    const lineHeight = fontSize * 1.05;
     const totalTextHeight = lineHeight * lines.length;
-    const startY = (size - totalTextHeight) / 2 + lineHeight / 2;
+
+    const startY = (size - totalTextHeight) / 2 + lineHeight * 0.75;
+    const centerX = 50 / this.SQUASH_FACTOR;
 
     const svgTextLines = lines
       .map((line, i) => {
-        // CRITICAL: Sanitize text to prevent malformed XML
         const sanitizedLine = sanitizeForSvg(line);
         const y = startY + i * lineHeight;
-        return `<text x="50%" y="${y}" text-anchor="middle">${sanitizedLine}</text>`;
+
+        return `<text x="${centerX}%" y="${y}" transform="scale(${this.SQUASH_FACTOR}, 1)" text-anchor="middle">${sanitizedLine}</text>`;
       })
       .join("");
 
@@ -79,10 +110,9 @@ export class StickerService {
       <style>
         text {
           fill: black;
-          font-family: "Helvetica", "Arial", sans-serif;
+          font-family: "Arial", "Helvetica", sans-serif;
           font-size: ${fontSize}px;
-          white-space: pre-wrap;
-          dominant-baseline: middle;
+          white-space: pre;
         }
       </style>
       <rect width="100%" height="100%" fill="white" />
@@ -90,19 +120,15 @@ export class StickerService {
     </svg>`;
   }
 
-  /**
-   * Create sticker from text and return file path
-   */
   async createSticker(text: string): Promise<string> {
-    const lines = this.wrapText(text);
-    const longestLineLength = lines.reduce((max, line) => Math.max(max, line.length), 0);
-    const fontSize = this.calculateFontSize(longestLineLength);
-    const svg = this.generateSvg(lines, fontSize);
+    const processedText = text.toUpperCase();
+    const layout = this.calculateLayout(processedText);
+    const svg = this.generateSvg(layout.lines, layout.fontSize);
 
     const webpPath = this.tempCleaner.getTempFilePath("sticker", ".webp");
-    const size = CONFIG.STICKER_SIZE;
+    const size = CONFIG.STICKER_SIZE || 512;
 
-    await sharp({
+    const imageBuffer = await sharp({
       create: {
         width: size,
         height: size,
@@ -110,22 +136,30 @@ export class StickerService {
         background: { r: 255, g: 255, b: 255, alpha: 0 },
       },
     })
-      .composite([
-        {
-          input: Buffer.from(svg),
-          top: 0,
-          left: 0,
-        },
-      ])
+      .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])
+      .png()
+      .toBuffer();
+
+    // --- PROSES BURIK HALUS (Soft Lo-Fi) ---
+    await sharp(imageBuffer)
+      // 1. Resize Kecil (Hancurkan Detail)
+      .resize(this.LOW_RES_SIZE, this.LOW_RES_SIZE, {
+        fit: "fill",
+        kernel: "mitchell", // Mitchell bagus untuk downscale yang soft
+      })
+      // 2. Tambah Blur Ringan saat resolusi masih kecil (efeknya lebih kuat & natural)
+      .blur(this.BLUR_SIGMA)
+      // 3. Resize Besar (Upscale)
+      .resize(size, size, {
+        fit: "fill",
+        kernel: "mitchell", // GANTI 'nearest' ke 'mitchell' agar tidak kotak-kotak
+      })
       .webp()
       .toFile(webpPath);
 
     return webpPath;
   }
 
-  /**
-   * Get path to a sticker asset file
-   */
   getStickerAssetPath(filename: string): string {
     return path.resolve(process.cwd(), "assets", filename);
   }

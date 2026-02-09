@@ -124,6 +124,7 @@ export class RandomReplyHandler implements MessageHandler {
       try {
         const stickerPath = this.stickerService.getStickerAssetPath(stickerOption);
 
+
         // Send sticker using file path
         await bot.sendSticker(chatId, stickerPath);
       } catch (err) {
