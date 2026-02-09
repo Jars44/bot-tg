@@ -86,22 +86,12 @@ export class RandomReplyHandler implements MessageHandler {
     const isInsult = this.containsInsult(text);
     const isCompliment = this.isCompliment(text);
 
-    const result = isRandom || isInsult || isCompliment;
-
-    if (result) {
-      console.log(
-        `[RandomReplyHandler] Matched message: "${text}" (Random: ${isRandom}, Insult: ${isInsult}, Compliment: ${isCompliment})`,
-      );
-    }
-
-    return result;
+    return isRandom || isInsult || isCompliment;
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text?.toLowerCase() ?? "";
-
-    console.log(`[RandomReplyHandler] Handling message: "${text}"`);
 
     // Handle compliments
     if (this.isCompliment(text)) {
@@ -120,7 +110,6 @@ export class RandomReplyHandler implements MessageHandler {
 
     // Generate random number 0-4
     const randomNum = Math.floor(Math.random() * 5);
-    console.log(`[RandomReplyHandler] Random number: ${randomNum}`);
 
     if (randomNum < 2) {
       // Text reply (index 0 or 1) - Replace with insults/gibberish + angry emojis
@@ -134,7 +123,6 @@ export class RandomReplyHandler implements MessageHandler {
 
       try {
         const stickerPath = this.stickerService.getStickerAssetPath(stickerOption);
-        console.log(`[RandomReplyHandler] Sending sticker: ${stickerPath}`);
 
         // Send sticker using file path
         await bot.sendSticker(chatId, stickerPath);
