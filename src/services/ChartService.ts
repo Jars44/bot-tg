@@ -177,6 +177,7 @@ export class ChartService {
     const priceChangePercent = (priceChange / ohlcv[0].open) * 100;
     const isUp = priceChange >= 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ChartConfiguration uses complex nested types
     const configuration: any = {
       type: "candlestick",
       data: {

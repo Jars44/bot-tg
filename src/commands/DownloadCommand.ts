@@ -1,166 +1,140 @@
 /**
- * Download command with interactive state management
+ * Download Command
+ * Universal media downloader using Cobalt API
+ * Supports: YouTube, TikTok, Instagram, Twitter, Twitch, etc.
  */
 
 import TelegramBot from "node-telegram-bot-api";
-import type { Command, CallbackHandler, MessageHandler } from "./types.js";
-import { DownloadService, DownloadSource, DownloadFormat } from "../services/DownloadService.js";
+import type { Command, MessageHandler } from "./types.js";
+import { DownloadService, DownloadResult } from "../services/DownloadService.js";
 import { TempCleanerService } from "../services/TempCleanerService.js";
-import { MESSAGES } from "../config/messages.js";
+import fs from "fs";
 
-interface DownloadState {
-  step: "source" | "format" | "link";
-  source?: DownloadSource;
-  format?: DownloadFormat;
-}
+// URL patterns for supported platforms
+const SUPPORTED_URL_PATTERN =
+  /https?:\/\/(www\.)?(youtube\.com|youtu\.be|tiktok\.com|instagram\.com|twitter\.com|x\.com|twitch\.tv|reddit\.com|vimeo\.com|soundcloud\.com)/i;
 
 export class DownloadCommand implements Command, MessageHandler {
-  pattern = /^\/download$/;
+  // Match /download with optional URL argument
+  pattern = /^\/download(?:\s+(.+))?$/;
+
   private downloadService: DownloadService;
   private tempCleaner: TempCleanerService;
-  private userStates = new Map<number, DownloadState>();
 
   constructor(downloadService: DownloadService, tempCleaner: TempCleanerService) {
     this.downloadService = downloadService;
     this.tempCleaner = tempCleaner;
   }
 
-  async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
+  async execute(bot: TelegramBot, msg: TelegramBot.Message, match: RegExpMatchArray | null): Promise<void> {
     const chatId = msg.chat.id;
+    const url = match?.[1]?.trim();
 
-    // Set initial state
-    this.userStates.set(chatId, { step: "source" });
-
-    const options = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "YouTube", callback_data: "dl_source_youtube" },
-            { text: "TikTok", callback_data: "dl_source_tiktok" },
-          ],
-        ],
-      },
-    };
-
-    await bot.sendMessage(chatId, MESSAGES.DOWNLOAD_SELECT_SOURCE, options);
-  }
-
-  /**
-   * Handle callback queries for source/format selection
-   */
-  getCallbackHandler(): CallbackHandler {
-    return {
-      prefix: "dl_",
-      handle: async (bot, query, data) => {
-        const chatId = query.message?.chat.id;
-        if (!chatId || !query.message) return;
-
-        const state = this.userStates.get(chatId) || { step: "source" };
-
-        // Handle source selection
-        if (data.startsWith("dl_source_")) {
-          const source = data.replace("dl_source_", "") as DownloadSource;
-          state.source = source;
-          state.step = "format";
-          this.userStates.set(chatId, state);
-
-          const options = {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  { text: "MP4 (Video)", callback_data: "dl_format_mp4" },
-                  { text: "MP3 (Audio)", callback_data: "dl_format_mp3" },
-                ],
-              ],
-            },
-          };
-
-          await bot.editMessageText(MESSAGES.DOWNLOAD_SELECT_FORMAT(source), {
-            chat_id: chatId,
-            message_id: query.message.message_id,
-            reply_markup: options.reply_markup,
-          });
-        }
-
-        // Handle format selection
-        if (data.startsWith("dl_format_")) {
-          const format = data.replace("dl_format_", "") as DownloadFormat;
-          state.format = format;
-          state.step = "link";
-          this.userStates.set(chatId, state);
-
-          await bot.editMessageText(MESSAGES.DOWNLOAD_SEND_LINK(format), {
-            chat_id: chatId,
-            message_id: query.message.message_id,
-          });
-        }
-
-        await bot.answerCallbackQuery(query.id);
-      },
-    };
-  }
-
-  /**
-   * Check if this handler should process the message (link input)
-   */
-  shouldHandle(msg: TelegramBot.Message): boolean {
-    const chatId = msg.chat.id;
-    const state = this.userStates.get(chatId);
-    const text = msg.text ?? "";
-
-    // Ignore commands
-    if (text.startsWith("/")) return false;
-
-    return state?.step === "link" && text.startsWith("https");
-  }
-
-  /**
-   * Handle the download link message
-   */
-  async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
-    const chatId = msg.chat.id;
-    const state = this.userStates.get(chatId);
-    const url = msg.text ?? "";
-
-    if (!state?.source || !state?.format) {
-      this.userStates.delete(chatId);
+    // If no URL provided, show help
+    if (!url) {
+      await bot.sendMessage(
+        chatId,
+        `⬇️ *Universal Downloader*\n\n` +
+          `Kirim link untuk mengunduh media.\n` +
+          `Format: \`/download [URL]\`\n\n` +
+          `*Platform yang didukung:*\n` +
+          `• YouTube\n` +
+          `• TikTok\n` +
+          `• Instagram\n` +
+          `• Twitter/X\n` +
+          `• Twitch\n` +
+          `• Reddit\n` +
+          `• Vimeo\n` +
+          `• SoundCloud\n\n` +
+          `Contoh: \`/download https://youtu.be/dQw4w9WgXcQ\``,
+        { parse_mode: "Markdown" },
+      );
       return;
     }
 
-    await bot.sendMessage(chatId, MESSAGES.DOWNLOAD_PROCESSING);
+    await this.processDownload(bot, chatId, url);
+  }
+
+  /**
+   * Handle direct URL messages (without /download command)
+   */
+  shouldHandle(msg: TelegramBot.Message): boolean {
+    const text = msg.text ?? "";
+    // Ignore commands
+    if (text.startsWith("/")) return false;
+    // Check if it's a supported URL
+    return SUPPORTED_URL_PATTERN.test(text);
+  }
+
+  async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
+    const chatId = msg.chat.id;
+    const url = msg.text ?? "";
+    await this.processDownload(bot, chatId, url);
+  }
+
+  /**
+   * Core download logic
+   */
+  private async processDownload(bot: TelegramBot, chatId: number, url: string): Promise<void> {
+    // 1. Send "analyzing" status
+    const statusMsg = await bot.sendMessage(chatId, "🔍 Menganalisis URL...");
+    await bot.sendChatAction(chatId, "typing");
+
+    let result: DownloadResult;
 
     try {
-      const result = await this.downloadService.download(state.source, state.format, url);
+      // 2. Check if audio-only (SoundCloud, etc.)
+      const isAudioOnly = url.includes("soundcloud.com");
 
-      if (!result) {
-        await bot.sendMessage(chatId, MESSAGES.ERROR_DOWNLOAD);
-        this.userStates.delete(chatId);
+      // 3. Download media
+      await bot.editMessageText("⬇️ Mengunduh media...", {
+        chat_id: chatId,
+        message_id: statusMsg.message_id,
+      });
+
+      result = await this.downloadService.downloadMedia(url, isAudioOnly);
+
+      // 4. Check file size
+      if (this.downloadService.isFileTooLarge(result.sizeBytes)) {
+        // File too large - send direct link instead
+        const directUrl = await this.downloadService.getDirectUrl(url);
+        await bot.editMessageText(
+          `⚠️ *File terlalu besar* (>${Math.round(result.sizeBytes / 1024 / 1024)}MB)\n\n` +
+            `Telegram hanya mendukung hingga 50MB.\n` +
+            `Download langsung: ${directUrl}`,
+          {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+            parse_mode: "Markdown",
+          },
+        );
+        // Cleanup the large file
+        this.tempCleaner.deleteFile(result.filePath);
         return;
       }
 
-      const caption = result.format === "mp4" ? MESSAGES.DOWNLOAD_VIDEO_CAPTION : MESSAGES.DOWNLOAD_AUDIO_CAPTION;
+      // 5. Send file
+      await bot.deleteMessage(chatId, statusMsg.message_id);
+      await bot.sendChatAction(chatId, result.isAudio ? "upload_voice" : "upload_video");
 
-      if (result.type === "url") {
-        // Direct URL - send directly
-        if (result.format === "mp4") {
-          await bot.sendVideo(chatId, result.path, { caption });
-        } else {
-          await bot.sendAudio(chatId, result.path, { caption });
-        }
+      if (result.isAudio) {
+        await bot.sendAudio(chatId, fs.createReadStream(result.filePath), {
+          caption: "🎵 Downloaded via Cobalt",
+        });
       } else {
-        // Downloaded file
-        if (result.format === "mp4") {
-          await bot.sendVideo(chatId, result.path, { caption });
-        } else {
-          await bot.sendAudio(chatId, result.path, { caption });
-        }
-        // Cleanup temp file
-        this.tempCleaner.deleteFile(result.path);
+        await bot.sendVideo(chatId, fs.createReadStream(result.filePath), {
+          caption: "🎬 Downloaded via Cobalt",
+        });
       }
-    } catch {
-      await bot.sendMessage(chatId, MESSAGES.ERROR_DOWNLOAD_PROCESS);
-    }
 
-    this.userStates.delete(chatId);
+      // 6. Cleanup
+      this.tempCleaner.deleteFile(result.filePath);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan.";
+      await bot.editMessageText(`❌ ${errorMessage}`, {
+        chat_id: chatId,
+        message_id: statusMsg.message_id,
+      });
+    }
   }
 }

@@ -106,24 +106,40 @@ export function createCategoryKeyboard(): TelegramBot.InlineKeyboardButton[][] {
 }
 
 /**
- * Main menu buttons for dashboard
+ * Main menu buttons - Core/Stable Features
  */
-export const MENU_BUTTONS = [
-  { text: "Cuaca", callback_data: "menu_weather" },
-  { text: "Sholat", callback_data: "menu_prayer" },
+export const MENU_CORE_BUTTONS = [
   { text: "Keuangan", callback_data: "menu_expense" },
   { text: "Trading", callback_data: "menu_trading" },
-  { text: "Anime", callback_data: "menu_anime" },
-  { text: "Lirik", callback_data: "menu_lyrics" },
-  { text: "Berita", callback_data: "menu_news" },
-  { text: "Bantuan", callback_data: "menu_help" },
+  { text: "Sholat", callback_data: "menu_prayer" },
+  { text: "Kutipan", callback_data: "menu_quote" }, // Replaces simple "Bantuan" with a feature
 ];
 
 /**
- * Create main menu keyboard
+ * Main menu buttons - Experimental/Beta Features
+ */
+export const MENU_EXPERIMENTAL_BUTTONS = [
+  { text: "Cuaca", callback_data: "menu_weather" },
+  { text: "Berita", callback_data: "menu_news" },
+  { text: "Anime", callback_data: "menu_anime" },
+  { text: "Lirik", callback_data: "menu_lyrics" },
+  { text: "Film", callback_data: "menu_movie" },
+  { text: "Help", callback_data: "menu_help" },
+];
+
+/**
+ * Create main menu keyboard with segmentation
  */
 export function createMenuKeyboard(): TelegramBot.InlineKeyboardButton[][] {
-  return createGrid(MENU_BUTTONS, 2);
+  const coreGrid = createGrid(MENU_CORE_BUTTONS, 2);
+  const experimentalGrid = createGrid(MENU_EXPERIMENTAL_BUTTONS, 3);
+
+  // Visual separator for experimental features
+  const separator: TelegramBot.InlineKeyboardButton[] = [
+    { text: "--- 🧪 Fitur Eksperimental ---", callback_data: "noop" },
+  ];
+
+  return [...coreGrid, separator, ...experimentalGrid];
 }
 
 /**

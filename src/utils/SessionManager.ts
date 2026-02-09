@@ -125,11 +125,13 @@ export class SessionManager {
         if (state.expiresAt < Date.now()) continue;
 
         // Map ConversationState to Session structure
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         const sessionState: SessionState = {
           flow: state.command as any,
           step: state.step as any,
           data: state.data as any,
         };
+        /* eslint-enable @typescript-eslint/no-explicit-any */
 
         // Populate cache
         // Estimated updatedAt based on expiresAt

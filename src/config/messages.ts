@@ -63,41 +63,31 @@ export const MESSAGES = {
   // Help text
   HELP_TEXT: `📖 *Panduan Bot*
   
-🏠 *Navigasi*
-/menu - Menu Utama
-/start - Restart Bot
-/stop - Akhiri Sesi
-/help - Bantuan
+🟢 *Fitur Utama (Stabil)*
+---------------------------
+/catat - Catat Keuangan
+/rekap - Laporan Keuangan
+/portfolio - Cek Aset Trading
+/sholat [kota] - Jadwal Sholat
+/stiker - Buat Stiker
+/quote - Kutipan Bijak
+/ingatkan - Set Pengingat
 
-🎬 *Media & Tools*
+🧪 *Fitur Eksperimental (Beta)*
+---------------------------
+_Fitur ini bergantung pada layanan pihak ketiga dan mungkin tidak stabil._
+
+/berita - Berita Terkini (GNews)
+/cuaca [kota] - Info Cuaca
 /anime [judul] - Info Anime
 /film [judul] - Info Film
-/lirik [artis - judul] - Cari Lirik
-/stiker [teks/gambar] - Buat Stiker
-/download [url] - Unduh Media
-/quote - Kutipan Acak
-
-🌍 *Info & Utilitas*
-/cuaca [kota] - Cek Cuaca
-/sholat [kota] - Jadwal Sholat
+/lirik [lagu] - Cari Lirik
+/download [url] - Unduh Sosmed
 /gempa - Info Gempa BMKG
-/berita - Berita Terkini
-/ingatkan [waktu] [pesan] - Set Alarm
 
-💰 *Keuangan*
-/catat - Input Transaksi
-/rekap - Ringkasan Keuangan
-/laporan - Laporan Detail
-
-📈 *Market & Trading*
-/market [symbol] - Market Dashboard
-/chart [symbol] [tf] - Grafik Harga
-/calendar - Kalender Ekonomi
-/sentimen [keyword] - Analisis Sentimen
-/portfolio - Cek Aset
-/buy [symbol] [qty] - Order Buy (Paper)
-/sell [symbol] [qty] - Order Sell (Paper)
-/close [symbol] - Tutup Posisi
-/alert [symbol] [harga] - Set Alert
-/risk [modal] [%] [pips] - Kalkulator Risiko`,
+⚙️ *System*
+/menu - Dashboard Utama
+/help - Tampilkan Pesan Ini
+/start - Restart Sesi
+/stop - Akhiri Sesi`,
 } as const;

@@ -123,7 +123,7 @@ export class MenuCommand implements Command, CallbackHandler {
 
       case "anime":
       case "lyrics":
-      case "movie":
+      case "movie": {
         // Interactive inputs - Prompt user
         let prompt = "";
         if (action === "anime") {
@@ -142,6 +142,23 @@ export class MenuCommand implements Command, CallbackHandler {
             inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
           },
         });
+        break;
+      }
+
+      case "noop":
+        // Do nothing for separator
+        break;
+
+      case "quote":
+        await bot.sendMessage(chatId, "💡 Gunakan perintah: /quote");
+        break;
+
+      case "weather":
+        await bot.sendMessage(chatId, "🌦 Gunakan perintah: /cuaca [nama kota]");
+        break;
+
+      case "prayer":
+        await bot.sendMessage(chatId, "🕌 Gunakan perintah: /sholat [nama kota]");
         break;
 
       default:

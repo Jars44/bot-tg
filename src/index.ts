@@ -108,7 +108,7 @@ async function main(): Promise<void> {
   const lyricsService = new LyricsService(httpClient);
   const movieService = new MovieService(httpClient);
   const earthquakeService = new EarthquakeService(httpClient);
-  const downloadService = new DownloadService(httpClient, tempCleaner);
+  const downloadService = new DownloadService(tempCleaner);
   const stickerService = new StickerService(tempCleaner);
 
   // Financial Services
@@ -146,7 +146,7 @@ async function main(): Promise<void> {
   // DI for TradingMenuHandler
   const portfolioCommand = new PortfolioCommand(tradingEngine);
   const calendarCommand = new CalendarCommand(economicCalendarService);
-  const myAlertsCommand = new MyAlertsCommand(db);
+  const myAlertsCommand = new MyAlertsCommand();
 
   // Risk Wizard (with handlers)
   const riskInputHandler = new RiskInputHandler();
@@ -243,9 +243,6 @@ async function main(): Promise<void> {
 
     // Search selection
     new AnimeSelectionHandler(), // anime_sel_ prefix
-
-    // Download
-    downloadCommand.getCallbackHandler(),
 
     // TP/SL
     new TpSlCallbackHandler(), // tpsl_ prefix

@@ -153,7 +153,8 @@ export class FinanceDataService {
     const yahooSymbol = this.normalizeYahooSymbol(symbol);
 
     try {
-      const quote = (await yahooFinance.quote(yahooSymbol)) as any; // Use any to access potential fields safely
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Yahoo Finance types are incomplete
+      const quote = (await yahooFinance.quote(yahooSymbol)) as any;
 
       if (!quote) {
         throw new Error(`No data for ${symbol}`);

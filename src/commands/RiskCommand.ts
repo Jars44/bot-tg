@@ -22,6 +22,7 @@ import { sessionManager, type RiskSessionData } from "../utils/SessionManager.js
 export class RiskInputHandler {
   constructor() {}
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SessionState type is complex
   async handle(bot: TelegramBot, msg: TelegramBot.Message, state: any): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text || "";

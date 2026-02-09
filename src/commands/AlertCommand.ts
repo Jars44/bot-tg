@@ -124,12 +124,6 @@ export class AlertHelpCommand implements Command {
  */
 export class MyAlertsCommand implements Command {
   pattern = /^\/myalerts$/;
-  // @ts-ignore - db not used yet in mock
-  private db: any;
-
-  constructor(db: any) {
-    this.db = db;
-  }
 
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
