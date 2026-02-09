@@ -65,6 +65,13 @@ export interface MarketHubSessionData {
   previousView?: "chart" | "sentiment" | "risk" | "alert";
 }
 
+/** Download wizard session data */
+export interface DownloadSessionData {
+  platform?: "youtube" | "tiktok" | "instagram" | "twitter" | "other";
+  format?: "video" | "audio";
+  messageId?: number;
+}
+
 /** Risk Wizard session data - Interactive position sizing calculator */
 export interface RiskSessionData {
   capital?: number;
@@ -84,6 +91,7 @@ export type SessionState =
   | { flow: "tpsl"; step: "tp" | "sl"; data: TpSlSessionData }
   | { flow: "market_hub"; step: "symbol_input" | "dashboard"; data: MarketHubSessionData }
   | { flow: "risk"; step: "capital" | "risk_percent" | "stop_loss" | "result"; data: RiskSessionData }
+  | { flow: "download"; step: "platform" | "format" | "url"; data: DownloadSessionData }
   | null;
 
 /** Session with metadata */

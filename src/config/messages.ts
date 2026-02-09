@@ -61,33 +61,41 @@ export const MESSAGES = {
   DOWNLOAD_AUDIO_CAPTION: "✅ Audio berhasil diproses.",
 
   // Help text
-  HELP_TEXT: `📖 *Panduan Bot*
-  
-🟢 *Fitur Utama (Stabil)*
----------------------------
-/catat - Catat Keuangan
-/rekap - Laporan Keuangan
-/portfolio - Cek Aset Trading
-/sholat [kota] - Jadwal Sholat
-/stiker - Buat Stiker
-/quote - Kutipan Bijak
-/ingatkan - Set Pengingat
+  HELP_TEXT: `📖 Panduan Perintah Bot
 
-🧪 *Fitur Eksperimental (Beta)*
----------------------------
-_Fitur ini bergantung pada layanan pihak ketiga dan mungkin tidak stabil._
+🏠 Navigasi Utama
+/menu - Pusat navigasi utama untuk melihat semua fitur bot
+/chart - Melihat grafik candlestick aset crypto/forex secara visual
+/portfolio - Mengecek saldo, aset yang dimiliki, dan profit/loss terkini
 
-/berita - Berita Terkini (GNews)
-/cuaca [kota] - Info Cuaca
-/anime [judul] - Info Anime
-/film [judul] - Info Film
-/lirik [lagu] - Cari Lirik
-/download [url] - Unduh Sosmed
-/gempa - Info Gempa BMKG
+🕌 Ibadah & Lokasi
+/sholat - Mengecek jadwal sholat harian sesuai lokasi pengguna
+/cuaca - Info cuaca terkini dan prediksi hari ini
 
-⚙️ *System*
-/menu - Dashboard Utama
-/help - Tampilkan Pesan Ini
-/start - Restart Sesi
-/stop - Akhiri Sesi`,
+💰 Finansial & Trading
+/market - Market Hub: Dashboard aset dengan chart, sentimen, dan aksi trading
+/catat - Mencatat pengeluaran harian untuk tracking keuangan pribadi
+/buy - Melakukan simulasi pembelian aset (crypto/saham/forex)
+/sell - Melakukan simulasi penjualan aset untuk mengambil profit
+/alert - Memasang alarm notifikasi jika harga aset menyentuh target
+/calendar - Kalender ekonomi
+/risk - Kalkulator manajemen risiko sebelum entry trading
+/rekap - Melihat ringkasan total pengeluaran keuangan
+/laporan - Laporan keuangan mendetail (biasanya dicek bulanan)
+
+🎯 Utilitas
+/ingatkan - Membuat pengingat waktu personal (alarm sederhana)
+/stiker - Membuat stiker Telegram instan dari teks yang dikirim
+/quote - Mendapatkan kutipan kata-kata bijak acak
+/gempa - Informasi gempa bumi terkini dari BMKG
+
+🎬 Hiburan
+/anime - Mencari informasi dan sinopsis anime
+/lirik - Mencari teks lirik lagu lengkap
+
+🧪 Experimental (Butuh API/Tidak Stabil)
+/download - Unduh video/audio (Sering tidak stabil)
+/film - Cari info film (Butuh TMDB_API_KEY)
+/berita - Berita terkini (Butuh GNEWS_API_TOKEN)
+/sentimen - Analisis sentimen pasar`,
 } as const;

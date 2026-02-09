@@ -57,13 +57,22 @@ export class WeatherCommand implements Command {
       const { weather, locationName } = result;
       const dayTime = weather.is_day ? "Siang" : "Malam";
 
-      await bot.editMessageText(
-        `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
-        {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        },
-      );
+      try {
+        await bot.editMessageText(
+          `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
+          {
+            chat_id: chatId,
+            message_id: searchingMessage.message_id,
+          },
+        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        console.error("[WeatherCommand] Edit failed:", err.message);
+        await bot.sendMessage(
+          chatId,
+          `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
+        );
+      }
     } catch {
       await bot.editMessageText(MESSAGES.ERROR_WEATHER, {
         chat_id: chatId,

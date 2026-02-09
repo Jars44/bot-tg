@@ -1,140 +1,327 @@
 /**
- * Download Command
- * Universal media downloader using Cobalt API
- * Supports: YouTube, TikTok, Instagram, Twitter, Twitch, etc.
+ * Download Command - Wizard-Style Menu
+ * Universal media downloader with step-by-step flow:
+ * 1. /download → Show platform selection
+ * 2. Select platform → Show video/audio choice
+ * 3. Select format → Ask for URL
+ * 4. Send URL → Download and send
+ *
+ * Memory-Optimized: Works with stream URLs instead of local files.
  */
 
 import TelegramBot from "node-telegram-bot-api";
-import type { Command, MessageHandler } from "./types.js";
+import type { Command, CallbackHandler, MessageHandler } from "./types.js";
 import { DownloadService, DownloadResult } from "../services/DownloadService.js";
-import { TempCleanerService } from "../services/TempCleanerService.js";
-import fs from "fs";
+import { sessionManager, DownloadSessionData } from "../utils/SessionManager.js";
 
-// URL patterns for supported platforms
-const SUPPORTED_URL_PATTERN =
-  /https?:\/\/(www\.)?(youtube\.com|youtu\.be|tiktok\.com|instagram\.com|twitter\.com|x\.com|twitch\.tv|reddit\.com|vimeo\.com|soundcloud\.com)/i;
+// Platform configurations
+const PLATFORMS = {
+  youtube: { emoji: "🎬", name: "YouTube" },
+  tiktok: { emoji: "🎵", name: "TikTok" },
+  instagram: { emoji: "📸", name: "Instagram" },
+  twitter: { emoji: "🐦", name: "Twitter/X" },
+  other: { emoji: "🌐", name: "Lainnya" },
+} as const;
 
-export class DownloadCommand implements Command, MessageHandler {
-  // Match /download with optional URL argument
-  pattern = /^\/download(?:\s+(.+))?$/;
+type PlatformKey = keyof typeof PLATFORMS;
+
+/**
+ * Main Download Command - Shows wizard menu
+ */
+export class DownloadCommand implements Command {
+  pattern = /^\/download$/;
+
+  async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
+    const chatId = msg.chat.id;
+
+    // Build platform keyboard
+    const keyboard: TelegramBot.InlineKeyboardButton[][] = [
+      [
+        { text: `${PLATFORMS.youtube.emoji} YouTube`, callback_data: "dl_platform_youtube" },
+        { text: `${PLATFORMS.tiktok.emoji} TikTok`, callback_data: "dl_platform_tiktok" },
+      ],
+      [
+        { text: `${PLATFORMS.instagram.emoji} Instagram`, callback_data: "dl_platform_instagram" },
+        { text: `${PLATFORMS.twitter.emoji} Twitter/X`, callback_data: "dl_platform_twitter" },
+      ],
+      [{ text: `${PLATFORMS.other.emoji} Platform Lainnya`, callback_data: "dl_platform_other" }],
+      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+    ];
+
+    const message = await bot.sendMessage(chatId, `⬇️ *Universal Downloader*\n\nPilih platform yang ingin diunduh:`, {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: keyboard },
+    });
+
+    // Save session
+    sessionManager.setState(chatId, {
+      flow: "download",
+      step: "platform",
+      data: { messageId: message.message_id },
+    });
+  }
+}
+
+/**
+ * Download Callback Handler - Handles inline button presses
+ */
+export class DownloadCallbackHandler implements CallbackHandler {
+  prefix = "dl_";
 
   private downloadService: DownloadService;
-  private tempCleaner: TempCleanerService;
 
-  constructor(downloadService: DownloadService, tempCleaner: TempCleanerService) {
+  constructor(downloadService: DownloadService) {
     this.downloadService = downloadService;
-    this.tempCleaner = tempCleaner;
   }
 
-  async execute(bot: TelegramBot, msg: TelegramBot.Message, match: RegExpMatchArray | null): Promise<void> {
-    const chatId = msg.chat.id;
-    const url = match?.[1]?.trim();
+  async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
+    const chatId = query.message?.chat.id;
+    const messageId = query.message?.message_id;
 
-    // If no URL provided, show help
-    if (!url) {
-      await bot.sendMessage(
-        chatId,
-        `⬇️ *Universal Downloader*\n\n` +
-          `Kirim link untuk mengunduh media.\n` +
-          `Format: \`/download [URL]\`\n\n` +
-          `*Platform yang didukung:*\n` +
-          `• YouTube\n` +
-          `• TikTok\n` +
-          `• Instagram\n` +
-          `• Twitter/X\n` +
-          `• Twitch\n` +
-          `• Reddit\n` +
-          `• Vimeo\n` +
-          `• SoundCloud\n\n` +
-          `Contoh: \`/download https://youtu.be/dQw4w9WgXcQ\``,
-        { parse_mode: "Markdown" },
-      );
+    if (!chatId || !messageId) return;
+
+    await bot.answerCallbackQuery(query.id);
+
+    // Handle cancel
+    if (data === "dl_cancel") {
+      sessionManager.clearState(chatId);
+      await bot.editMessageText("❌ Download dibatalkan.", {
+        chat_id: chatId,
+        message_id: messageId,
+      });
       return;
     }
 
-    await this.processDownload(bot, chatId, url);
+    // Handle back to platform selection
+    if (data === "dl_back_platform") {
+      await this.showPlatformMenu(bot, chatId, messageId);
+      return;
+    }
+
+    // Handle platform selection
+    if (data.startsWith("dl_platform_")) {
+      const platform = data.replace("dl_platform_", "") as PlatformKey;
+      await this.showFormatSelection(bot, chatId, messageId, platform);
+      return;
+    }
+
+    // Handle format selection
+    if (data.startsWith("dl_format_")) {
+      const format = data.replace("dl_format_", "") as "video" | "audio";
+      await this.askForUrl(bot, chatId, messageId, format);
+      return;
+    }
   }
 
   /**
-   * Handle direct URL messages (without /download command)
+   * Show platform selection menu (for back button)
    */
+  private async showPlatformMenu(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
+    const keyboard: TelegramBot.InlineKeyboardButton[][] = [
+      [
+        { text: `${PLATFORMS.youtube.emoji} YouTube`, callback_data: "dl_platform_youtube" },
+        { text: `${PLATFORMS.tiktok.emoji} TikTok`, callback_data: "dl_platform_tiktok" },
+      ],
+      [
+        { text: `${PLATFORMS.instagram.emoji} Instagram`, callback_data: "dl_platform_instagram" },
+        { text: `${PLATFORMS.twitter.emoji} Twitter/X`, callback_data: "dl_platform_twitter" },
+      ],
+      [{ text: `${PLATFORMS.other.emoji} Platform Lainnya`, callback_data: "dl_platform_other" }],
+      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+    ];
+
+    await bot.editMessageText(`⬇️ *Universal Downloader*\n\nPilih platform yang ingin diunduh:`, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: keyboard },
+    });
+
+    sessionManager.setState(chatId, {
+      flow: "download",
+      step: "platform",
+      data: { messageId },
+    });
+  }
+
+  /**
+   * Step 2: Show video/audio format selection
+   */
+  private async showFormatSelection(
+    bot: TelegramBot,
+    chatId: number,
+    messageId: number,
+    platform: PlatformKey,
+  ): Promise<void> {
+    const platformInfo = PLATFORMS[platform];
+
+    const keyboard: TelegramBot.InlineKeyboardButton[][] = [
+      [
+        { text: "🎬 Video", callback_data: "dl_format_video" },
+        { text: "🎵 Audio Only", callback_data: "dl_format_audio" },
+      ],
+      [{ text: "⬅️ Kembali", callback_data: "dl_back_platform" }],
+      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+    ];
+
+    await bot.editMessageText(
+      `⬇️ *Download dari ${platformInfo.emoji} ${platformInfo.name}*\n\nPilih format yang diinginkan:`,
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: keyboard },
+      },
+    );
+
+    sessionManager.setState(chatId, {
+      flow: "download",
+      step: "format",
+      data: { platform, messageId },
+    });
+  }
+
+  /**
+   * Step 3: Ask user to send URL
+   */
+  private async askForUrl(
+    bot: TelegramBot,
+    chatId: number,
+    messageId: number,
+    format: "video" | "audio",
+  ): Promise<void> {
+    const state = sessionManager.getState(chatId);
+    if (state?.flow !== "download") return;
+
+    const platformInfo = PLATFORMS[(state.data as DownloadSessionData).platform || "other"];
+    const formatText = format === "video" ? "🎬 Video" : "🎵 Audio";
+
+    await bot.editMessageText(
+      `⬇️ *Download ${platformInfo.emoji} ${platformInfo.name}*\n\n` +
+        `Format: ${formatText}\n\n` +
+        `📎 *Kirim link yang ingin diunduh:*`,
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [[{ text: "❌ Batal", callback_data: "dl_cancel" }]],
+        },
+      },
+    );
+
+    sessionManager.setState(chatId, {
+      flow: "download",
+      step: "url",
+      data: { ...(state.data as DownloadSessionData), format, messageId },
+    });
+  }
+
+  /**
+   * Get download service for input handler
+   */
+  getDownloadService(): DownloadService {
+    return this.downloadService;
+  }
+}
+
+/**
+ * Download Input Handler - Handles URL text input
+ */
+export class DownloadInputHandler implements MessageHandler {
+  private downloadService: DownloadService;
+
+  constructor(downloadService: DownloadService) {
+    this.downloadService = downloadService;
+  }
+
   shouldHandle(msg: TelegramBot.Message): boolean {
-    const text = msg.text ?? "";
-    // Ignore commands
-    if (text.startsWith("/")) return false;
-    // Check if it's a supported URL
-    return SUPPORTED_URL_PATTERN.test(text);
+    if (!msg.text) return false;
+    if (msg.text.startsWith("/")) return false;
+
+    const state = sessionManager.getState(msg.chat.id);
+    return state?.flow === "download" && state.step === "url";
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
-    const url = msg.text ?? "";
-    await this.processDownload(bot, chatId, url);
+    const url = msg.text?.trim();
+
+    if (!url) return;
+
+    const state = sessionManager.getState(chatId);
+    if (state?.flow !== "download" || state.step !== "url") return;
+
+    // Clear session
+    const sessionData = state.data as DownloadSessionData;
+    sessionManager.clearState(chatId);
+
+    // Delete wizard message if we have messageId
+    if (sessionData.messageId) {
+      try {
+        await bot.deleteMessage(chatId, sessionData.messageId);
+      } catch {
+        // Ignore if message already deleted
+      }
+    }
+
+    // Process download
+    await this.processDownload(bot, chatId, url, sessionData.format === "audio");
   }
 
   /**
-   * Core download logic
+   * Core download logic - Memory-Optimized
    */
-  private async processDownload(bot: TelegramBot, chatId: number, url: string): Promise<void> {
-    // 1. Send "analyzing" status
+  private async processDownload(bot: TelegramBot, chatId: number, url: string, isAudioOnly: boolean): Promise<void> {
     const statusMsg = await bot.sendMessage(chatId, "🔍 Menganalisis URL...");
     await bot.sendChatAction(chatId, "typing");
 
     let result: DownloadResult;
 
     try {
-      // 2. Check if audio-only (SoundCloud, etc.)
-      const isAudioOnly = url.includes("soundcloud.com");
-
-      // 3. Download media
-      await bot.editMessageText("⬇️ Mengunduh media...", {
+      await bot.editMessageText("⬇️ Memproses media...", {
         chat_id: chatId,
         message_id: statusMsg.message_id,
       });
 
       result = await this.downloadService.downloadMedia(url, isAudioOnly);
 
-      // 4. Check file size
-      if (this.downloadService.isFileTooLarge(result.sizeBytes)) {
-        // File too large - send direct link instead
-        const directUrl = await this.downloadService.getDirectUrl(url);
+      await bot.deleteMessage(chatId, statusMsg.message_id);
+      await bot.sendChatAction(chatId, result.isAudio ? "upload_voice" : "upload_video");
+
+      const source = result.source === "cobalt" ? "Cobalt" : "yt-dlp";
+
+      if (result.isAudio) {
+        await bot.sendAudio(chatId, result.url, {
+          caption: `🎵 Downloaded via ${source}`,
+          title: result.filename,
+        });
+      } else {
+        await bot.sendVideo(chatId, result.url, {
+          caption: `🎬 Downloaded via ${source}`,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan.";
+
+      try {
+        const directUrl = await this.downloadService.getDirectUrl(url, isAudioOnly);
         await bot.editMessageText(
-          `⚠️ *File terlalu besar* (>${Math.round(result.sizeBytes / 1024 / 1024)}MB)\n\n` +
-            `Telegram hanya mendukung hingga 50MB.\n` +
-            `Download langsung: ${directUrl}`,
+          `⚠️ *Tidak dapat mengirim file langsung.*\n\n` +
+            `Alasan: ${errorMessage.split("\n")[0]}\n\n` +
+            `🔗 Download langsung:\n${directUrl}`,
           {
             chat_id: chatId,
             message_id: statusMsg.message_id,
             parse_mode: "Markdown",
           },
         );
-        // Cleanup the large file
-        this.tempCleaner.deleteFile(result.filePath);
-        return;
-      }
-
-      // 5. Send file
-      await bot.deleteMessage(chatId, statusMsg.message_id);
-      await bot.sendChatAction(chatId, result.isAudio ? "upload_voice" : "upload_video");
-
-      if (result.isAudio) {
-        await bot.sendAudio(chatId, fs.createReadStream(result.filePath), {
-          caption: "🎵 Downloaded via Cobalt",
-        });
-      } else {
-        await bot.sendVideo(chatId, fs.createReadStream(result.filePath), {
-          caption: "🎬 Downloaded via Cobalt",
+      } catch {
+        await bot.editMessageText(`❌ ${errorMessage}`, {
+          chat_id: chatId,
+          message_id: statusMsg.message_id,
         });
       }
-
-      // 6. Cleanup
-      this.tempCleaner.deleteFile(result.filePath);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Terjadi kesalahan.";
-      await bot.editMessageText(`❌ ${errorMessage}`, {
-        chat_id: chatId,
-        message_id: statusMsg.message_id,
-      });
     }
   }
 }

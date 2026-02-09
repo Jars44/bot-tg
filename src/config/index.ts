@@ -40,7 +40,7 @@ export const CONFIG = {
     ALADHAN: "https://api.aladhan.com/v1",
     TMDB: "https://api.themoviedb.org/3",
     TMDB_IMAGE: "https://image.tmdb.org/t/p/w500",
-    COBALT: process.env.COBALT_API_URL || "https://api.cobalt.tools", // Universal Downloader
+    COBALT: "https://cobalt.canine.tools", // Universal Downloader (v10)
     FOREX_FACTORY: "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
   },
 

@@ -50,7 +50,7 @@ import { NewsCommand } from "./commands/NewsCommand.js";
 import { EarthquakeCommand } from "./commands/EarthquakeCommand.js";
 import { PrayerCommand } from "./commands/PrayerCommand.js";
 import { LyricsCommand } from "./commands/LyricsCommand.js";
-import { DownloadCommand } from "./commands/DownloadCommand.js";
+import { DownloadCommand, DownloadCallbackHandler, DownloadInputHandler } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
 import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/MenuCommand.js";
 import { SessionInputHandler } from "./commands/SessionInputHandler.js";
@@ -127,7 +127,9 @@ async function main(): Promise<void> {
 
   // Initialize commands with DI
   const reminderCommand = new ReminderCommand(db);
-  const downloadCommand = new DownloadCommand(downloadService, tempCleaner);
+  const downloadCommand = new DownloadCommand();
+  const downloadCallbackHandler = new DownloadCallbackHandler(downloadService);
+  const downloadInputHandler = new DownloadInputHandler(downloadService);
   const expenseCommand = new ExpenseCommand(db);
   const weatherCommand = new WeatherCommand(weatherService);
   const prayerCommand = new PrayerCommand(prayerService);
@@ -217,7 +219,7 @@ async function main(): Promise<void> {
     new LocationHandler(weatherService, prayerService), // Handle location messages (high priority)
     expenseCommand, // Handle expense flow text input
     sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
-    downloadCommand, // Handle download links
+    downloadInputHandler, // Handle download URL input
     new TpSlInputHandler(db), // Handle TP/SL input
     new RandomReplyHandler(stickerService),
     new InvalidCommandHandler(),
@@ -247,7 +249,8 @@ async function main(): Promise<void> {
     // TP/SL
     new TpSlCallbackHandler(), // tpsl_ prefix
 
-    // Charting
+    // Download wizard
+    downloadCallbackHandler, // dl_ prefix
     new ChartCallbackHandler(chartService), // chart_ prefix
   ];
 

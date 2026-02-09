@@ -124,9 +124,8 @@ export class RandomReplyHandler implements MessageHandler {
       try {
         const stickerPath = this.stickerService.getStickerAssetPath(stickerOption);
 
-
-        // Send sticker using file path
-        await bot.sendSticker(chatId, stickerPath);
+        // Send sticker using file path with explicit content type to avoid deprecation warning
+        await bot.sendSticker(chatId, stickerPath, {}, { contentType: "video/webm" });
       } catch (err) {
         console.error("[RandomReplyHandler] Failed to send sticker:", err);
         // Fallback to text reply if sticker fails

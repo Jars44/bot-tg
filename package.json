@@ -10,7 +10,7 @@
     "lint": "eslint src/**/*.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "jarsz",
   "license": "ISC",
   "description": "Production-grade Telegram Bot",
   "dependencies": {
@@ -27,7 +27,8 @@
     "node-cron": "^3.0.3",
     "node-telegram-bot-api": "^0.66.0",
     "sharp": "^0.34.5",
-    "yahoo-finance2": "^3.13.0"
+    "yahoo-finance2": "^3.13.0",
+    "youtube-dl-exec": "^3.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.19.10",
