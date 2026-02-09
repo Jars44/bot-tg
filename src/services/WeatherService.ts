@@ -122,4 +122,19 @@ export class WeatherService {
       return null;
     }
   }
+  /**
+   * Get formatted weather string for coordinates
+   */
+  async formattedWeatherByCoords(lat: number, lon: number): Promise<string> {
+    const result = await this.getWeatherByCoords(lat, lon);
+
+    if (!result) {
+      throw new Error("Failed to fetch weather data");
+    }
+
+    const { weather, locationName } = result;
+    const dayTime = weather.is_day ? "Siang" : "Malam";
+
+    return `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+  }
 }

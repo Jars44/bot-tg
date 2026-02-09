@@ -6,11 +6,11 @@
 
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
-import { sessionManager, isMarketHubSession } from "../utils/SessionManager.js";
-import { WeatherCommand } from "./WeatherCommand.js";
-import { PrayerCommand } from "./PrayerCommand.js";
+import { sessionManager, isMarketHubSession, isMovieSession } from "../utils/SessionManager.js";
+
 import { AnimeCommand } from "./AnimeCommand.js";
 import { LyricsCommand } from "./LyricsCommand.js";
+import { MovieCommand } from "./MovieCommand.js";
 import { MarketCommand } from "./MarketCommand.js";
 import { RiskInputHandler } from "./RiskCommand.js";
 
@@ -18,25 +18,22 @@ import { RiskInputHandler } from "./RiskCommand.js";
  * Handles text input during active sessions (e.g. asking for location, song title)
  */
 export class SessionInputHandler implements MessageHandler {
-  private weatherCommand: WeatherCommand;
-  private prayerCommand: PrayerCommand;
   private animeCommand: AnimeCommand;
   private lyricsCommand: LyricsCommand;
+  private movieCommand: MovieCommand;
   private marketCommand: MarketCommand;
   private riskInputHandler: RiskInputHandler;
 
   constructor(
-    weatherCommand: WeatherCommand,
-    prayerCommand: PrayerCommand,
     animeCommand: AnimeCommand,
     lyricsCommand: LyricsCommand,
+    movieCommand: MovieCommand,
     marketCommand: MarketCommand,
     riskInputHandler: RiskInputHandler,
   ) {
-    this.weatherCommand = weatherCommand;
-    this.prayerCommand = prayerCommand;
     this.animeCommand = animeCommand;
     this.lyricsCommand = lyricsCommand;
+    this.movieCommand = movieCommand;
     this.marketCommand = marketCommand;
     this.riskInputHandler = riskInputHandler;
   }
@@ -53,9 +50,9 @@ export class SessionInputHandler implements MessageHandler {
     if (!state) return false;
 
     return (
-      state.flow === "location" ||
       state.flow === "lyrics" ||
       state.flow === "anime" ||
+      state.flow === "movie" ||
       state.flow === "market_hub" ||
       state.flow === "risk"
     );
@@ -72,33 +69,24 @@ export class SessionInputHandler implements MessageHandler {
     if (!state) return;
 
     // Route based on flow type
-    if (state.flow === "location") {
-      const command = state.data.command;
-
-      // Clear session before executing command
-      sessionManager.clearState(chatId);
-
-      // Create mock match array [full_match, capture_group_1]
-      const match = ["/" + command + " " + text, text] as RegExpMatchArray;
-
-      if (command === "weather") {
-        await this.weatherCommand.execute(bot, msg, match);
-      } else if (command === "prayer") {
-        await this.prayerCommand.execute(bot, msg, match);
-      }
-    } else if (state.flow === "lyrics") {
+    if (state.flow === "lyrics") {
       // Clear session
       sessionManager.clearState(chatId);
 
       // Create mock match array
-      const match = ["/lirik " + text, text] as RegExpMatchArray;
+      const lyricsMatch = ["/lirik " + text, text] as RegExpMatchArray;
 
-      await this.lyricsCommand.execute(bot, msg, match);
+      await this.lyricsCommand.execute(bot, msg, lyricsMatch);
     } else if (state.flow === "anime") {
-      // If user types new search while selecting, treat as new search
+      // Clear session and search for anime
       sessionManager.clearState(chatId);
-      const match = ["/anime " + text, text] as RegExpMatchArray;
-      await this.animeCommand.execute(bot, msg, match);
+      const animeMatch = ["/anime " + text, text] as RegExpMatchArray;
+      await this.animeCommand.execute(bot, msg, animeMatch);
+    } else if (isMovieSession(state)) {
+      // UX Fix: Handle movie search input
+      sessionManager.clearState(chatId);
+      const movieMatch = ["/film " + text, text] as RegExpMatchArray;
+      await this.movieCommand.execute(bot, msg, movieMatch);
     } else if (isMarketHubSession(state)) {
       // UX Improvement: Handle symbol input for Market Hub
       if (state.step === "symbol_input") {

@@ -54,6 +54,7 @@ import { DownloadCommand } from "./commands/DownloadCommand.js";
 import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
 import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/MenuCommand.js";
 import { SessionInputHandler } from "./commands/SessionInputHandler.js";
+import { LocationHandler } from "./commands/LocationHandler.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
@@ -128,26 +129,35 @@ async function main(): Promise<void> {
   const reminderCommand = new ReminderCommand(db);
   const downloadCommand = new DownloadCommand(downloadService, tempCleaner);
   const expenseCommand = new ExpenseCommand(db);
-  const menuCommand = new MenuCommand();
   const weatherCommand = new WeatherCommand(weatherService);
   const prayerCommand = new PrayerCommand(prayerService);
   const animeCommand = new AnimeCommand(animeService);
   const lyricsCommand = new LyricsCommand(lyricsService);
+  const movieCommand = new MovieCommand(movieService);
+
+  // DI for MenuCommand
+  const newsCommand = new NewsCommand(newsService);
+  const helpCommand = new HelpCommand();
+  const menuCommand = new MenuCommand(newsCommand, helpCommand);
 
   // Market Hub Command (with DI)
   const marketCommand = new MarketCommand(tradingEngine);
+
+  // DI for TradingMenuHandler
+  const portfolioCommand = new PortfolioCommand(tradingEngine);
+  const calendarCommand = new CalendarCommand(economicCalendarService);
+  const myAlertsCommand = new MyAlertsCommand(db);
 
   // Risk Wizard (with handlers)
   const riskCommand = new RiskCommand();
   const riskCallbackHandler = new RiskCallbackHandler();
   const riskInputHandler = new RiskInputHandler();
 
-  // Session handler for interactive flows
+  // Session handler for interactive flows (with MovieCommand for movie search)
   const sessionInputHandler = new SessionInputHandler(
-    weatherCommand,
-    prayerCommand,
     animeCommand,
     lyricsCommand,
+    movieCommand,
     marketCommand,
     riskInputHandler,
   );
@@ -156,14 +166,14 @@ async function main(): Promise<void> {
     // Core commands - MenuCommand handles /start and /menu
     menuCommand,
     new StopCommand(),
-    new HelpCommand(),
+    helpCommand,
     weatherCommand,
     reminderCommand,
     new StickerCommand(stickerService, tempCleaner, db),
     animeCommand,
-    new MovieCommand(movieService),
+    movieCommand,
     new QuoteCommand(quoteService),
-    new NewsCommand(newsService),
+    newsCommand,
     new EarthquakeCommand(earthquakeService),
     prayerCommand,
     lyricsCommand,
@@ -175,7 +185,7 @@ async function main(): Promise<void> {
     new RekapCommand(db), // /rekap
 
     // Paper Trading
-    new PortfolioCommand(tradingEngine), // /portfolio
+    portfolioCommand, // /portfolio
     new BuyCommand(tradingEngine), // /buy [symbol] [qty]
     new SellCommand(tradingEngine), // /sell [symbol] [qty]
     new CloseCommand(tradingEngine), // /close [symbol]
@@ -189,14 +199,14 @@ async function main(): Promise<void> {
     // Price Alerts
     new AlertHelpCommand(), // /alert (help)
     new AlertCommand(db), // /alert [symbol] [price] [cond]
-    new MyAlertsCommand(db), // /alerts
+    myAlertsCommand, // /alerts
 
     // Sentiment Analysis
     new SentimentHelpCommand(), // /sentimen (help)
     new SentimentCommand(sentimentAnalyzer), // /sentimen [keyword]
 
     // Economic Calendar
-    new CalendarCommand(economicCalendarService), // /calendar
+    calendarCommand, // /calendar
     new HighImpactCommand(economicCalendarService), // /highimpact
 
     // Charting
@@ -205,6 +215,7 @@ async function main(): Promise<void> {
 
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
+    new LocationHandler(weatherService, prayerService), // Handle location messages (high priority)
     expenseCommand, // Handle expense flow text input
     sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
     downloadCommand, // Handle download links
@@ -218,7 +229,7 @@ async function main(): Promise<void> {
     // Menu navigation
     menuCommand, // menu_ prefix
     new FinanceMenuHandler(), // fin_ prefix
-    new TradingMenuHandler(), // trade_ menu prefix (different from tconf_)
+    new TradingMenuHandler(portfolioCommand, calendarCommand, myAlertsCommand), // trade_ menu prefix (different from tconf_)
 
     // Market Hub
     new MarketCallbackHandler(marketCommand, tradingEngine, chartService, sentimentAnalyzer), // mkt_ prefix

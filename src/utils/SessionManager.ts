@@ -37,11 +37,16 @@ export interface AnimeSessionData {
 
 /** Location request session data */
 export interface LocationSessionData {
-  command: "weather" | "prayer";
+  pendingCommand?: "weather" | "prayer";
 }
 
 /** Lyrics search session data */
 export interface LyricsSessionData {
+  messageId: number;
+}
+
+/** Movie search session data */
+export interface MovieSessionData {
   messageId: number;
 }
 
@@ -72,8 +77,9 @@ export interface RiskSessionData {
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
   | { flow: "trade"; step: "confirm"; data: TradeSessionData }
-  | { flow: "anime"; step: "select"; data: AnimeSessionData }
+  | { flow: "anime"; step: "search" | "select"; data: AnimeSessionData }
   | { flow: "lyrics"; step: "search"; data: LyricsSessionData }
+  | { flow: "movie"; step: "search"; data: MovieSessionData }
   | { flow: "location"; step: "waiting"; data: LocationSessionData }
   | { flow: "tpsl"; step: "tp" | "sl"; data: TpSlSessionData }
   | { flow: "market_hub"; step: "symbol_input" | "dashboard"; data: MarketHubSessionData }
@@ -259,11 +265,11 @@ export class SessionManager {
   /**
    * Start location request flow
    */
-  startLocationRequest(chatId: number, command: "weather" | "prayer"): void {
+  startLocationRequest(chatId: number, pendingCommand: "weather" | "prayer"): void {
     this.setState(chatId, {
       flow: "location",
       step: "waiting",
-      data: { command },
+      data: { pendingCommand },
     });
   }
 
@@ -273,6 +279,28 @@ export class SessionManager {
   startLyricsSearch(chatId: number, messageId: number): void {
     this.setState(chatId, {
       flow: "lyrics",
+      step: "search",
+      data: { messageId },
+    });
+  }
+
+  /**
+   * Start anime search flow (from menu)
+   */
+  startAnimeSearch(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "anime",
+      step: "search",
+      data: { results: [], messageId },
+    });
+  }
+
+  /**
+   * Start movie search flow
+   */
+  startMovieSearch(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "movie",
       step: "search",
       data: { messageId },
     });
@@ -334,4 +362,9 @@ export function isMarketHubSession(state: SessionState): state is Extract<Sessio
 /** Type guard for risk session */
 export function isRiskSession(state: SessionState): state is Extract<SessionState, { flow: "risk" }> {
   return state !== null && state.flow === "risk";
+}
+
+/** Type guard for movie session */
+export function isMovieSession(state: SessionState): state is Extract<SessionState, { flow: "movie" }> {
+  return state !== null && state.flow === "movie";
 }

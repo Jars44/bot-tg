@@ -22,6 +22,19 @@ const VALID_COMMANDS = [
   /^\/download/,
   /^\/film/,
   /^\/stiker/,
+  /^\/menu/,
+  /^\/chart/,
+  /^\/portfolio/,
+  /^\/catat/,
+  /^\/buy/,
+  /^\/sell/,
+  /^\/alert/,
+  /^\/risk/,
+  /^\/rekap/,
+  /^\/laporan/,
+  /^\/market/,
+  /^\/calendar/,
+  /^\/sentimen/,
 ];
 
 /** Commands that require arguments */

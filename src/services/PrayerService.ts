@@ -68,4 +68,16 @@ export class PrayerService {
       return null;
     }
   }
+  /**
+   * Get formatted prayer timings string for coordinates
+   */
+  async formattedTimingsByCoords(lat: number, lon: number): Promise<string> {
+    const times = await this.getPrayerTimesByCoords(lat, lon);
+
+    if (!times) {
+      throw new Error("Failed to fetch prayer times");
+    }
+
+    return `🕌 Jadwal Sholat:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
+  }
 }
