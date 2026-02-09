@@ -108,6 +108,9 @@ export class DownloadCommand implements Command, MessageHandler {
     const state = this.userStates.get(chatId);
     const text = msg.text ?? "";
 
+    // Ignore commands
+    if (text.startsWith("/")) return false;
+
     return state?.step === "link" && text.startsWith("https");
   }
 

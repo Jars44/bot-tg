@@ -135,10 +135,19 @@ export class ExpenseCommand implements Command, MessageHandler {
   /**
    * Check if this handler should process the message
    */
-  shouldHandle(msg: TelegramBot.Message): boolean {
+  /**
+   * Check if this handler should process the message
+   */
+  async shouldHandle(msg: TelegramBot.Message): Promise<boolean> {
     if (!msg.text) return false;
-    // Will be checked in handle() with async state lookup
-    return true; // Let handle() decide based on state
+
+    // Skip commands (starting with /) to avoid swallowing other commands
+    // when in expense flow (e.g. /menu should work even if adding expense)
+    if (msg.text.startsWith("/")) return false;
+
+    // Check if user is in expense flow state
+    const state = await this.db.getConversationState(msg.chat.id);
+    return state?.command === "expense";
   }
 
   /**

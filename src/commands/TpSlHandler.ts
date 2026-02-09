@@ -22,6 +22,9 @@ export class TpSlInputHandler implements MessageHandler {
     const chatId = msg.chat.id;
     const state = sessionManager.getState(chatId);
 
+    // Ignore commands
+    if (msg.text?.startsWith("/")) return false;
+
     return state?.flow === "tpsl" && Boolean(msg.text);
   }
 

@@ -20,7 +20,7 @@ export interface Command {
  */
 export interface MessageHandler {
   /** Check if this handler should process the message */
-  shouldHandle(msg: TelegramBot.Message): boolean;
+  shouldHandle(msg: TelegramBot.Message): boolean | Promise<boolean>;
 
   /** Handle the message */
   handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void>;

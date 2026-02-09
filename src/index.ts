@@ -275,7 +275,7 @@ async function main(): Promise<void> {
     if (!msg.text) return;
 
     for (const handler of messageHandlers) {
-      if (handler.shouldHandle(msg)) {
+      if (await handler.shouldHandle(msg)) {
         try {
           await handler.handle(bot, msg);
         } catch (err) {

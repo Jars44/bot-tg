@@ -82,12 +82,26 @@ export class RandomReplyHandler implements MessageHandler {
       return false;
     }
 
-    return this.isRandomText(text) || this.containsInsult(text) || this.isCompliment(text);
+    const isRandom = this.isRandomText(text);
+    const isInsult = this.containsInsult(text);
+    const isCompliment = this.isCompliment(text);
+
+    const result = isRandom || isInsult || isCompliment;
+
+    if (result) {
+      console.log(
+        `[RandomReplyHandler] Matched message: "${text}" (Random: ${isRandom}, Insult: ${isInsult}, Compliment: ${isCompliment})`,
+      );
+    }
+
+    return result;
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text?.toLowerCase() ?? "";
+
+    console.log(`[RandomReplyHandler] Handling message: "${text}"`);
 
     // Handle compliments
     if (this.isCompliment(text)) {
@@ -106,21 +120,23 @@ export class RandomReplyHandler implements MessageHandler {
 
     // Generate random number 0-4
     const randomNum = Math.floor(Math.random() * 5);
+    console.log(`[RandomReplyHandler] Random number: ${randomNum}`);
 
     if (randomNum < 2) {
       // Text reply (index 0 or 1) - Replace with insults/gibberish + angry emojis
       const INSULT_RESPONSES = ["lah kocak", "apalah 😐", "apacoba", "😐", "😡", "😾"];
-      // Override default messages with these custom ones for this specific user request context
-      // Or mix them with existing ones. Let's start fresh with these as requested.
       const response = INSULT_RESPONSES[Math.floor(Math.random() * INSULT_RESPONSES.length)];
       await bot.sendMessage(chatId, response);
     } else {
       // Sticker reply (index 2, 3, or 4)
       const stickerIndex = randomNum - 2;
-      const stickerPath = this.stickerService.getStickerAssetPath(STICKER_OPTIONS[stickerIndex]);
+      const stickerOption = STICKER_OPTIONS[stickerIndex];
 
       try {
-        // Send sticker using file path instead of buffer to avoid deprecation warnings
+        const stickerPath = this.stickerService.getStickerAssetPath(stickerOption);
+        console.log(`[RandomReplyHandler] Sending sticker: ${stickerPath}`);
+
+        // Send sticker using file path
         await bot.sendSticker(chatId, stickerPath);
       } catch (err) {
         console.error("[RandomReplyHandler] Failed to send sticker:", err);
