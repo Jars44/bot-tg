@@ -53,7 +53,7 @@ export class RandomReplyHandler implements MessageHandler {
       text.length >= 4 &&
       !text.includes(" ") &&
       !/^[0-9]+$/.test(text) &&
-      (/[a-z]{6,}/i.test(text) || /(.)\\1{3,}/.test(text))
+      (/[a-z]{6,}/i.test(text) || /(.)\1{3,}/.test(text))
     );
   }
 
