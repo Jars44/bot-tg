@@ -6,6 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { MovieService } from "../services/MovieService.js";
 import { MESSAGES } from "../config/messages.js";
+import { getBackToMenuButton } from "../utils/uiHelper.js";
 
 export class MovieCommand implements Command {
   pattern = /^\/film(?:\s+(.+))?$/;
@@ -59,6 +60,7 @@ Deskripsi: ${movie.overview}
       await bot.sendPhoto(chatId, movie.posterUrl, {
         caption: reply,
         parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
     } catch {
       await bot.editMessageText(MESSAGES.ERROR_MOVIE, {

@@ -80,6 +80,22 @@ export interface RiskSessionData {
   messageId?: number;
 }
 
+/** Weather menu wizard session data */
+export interface WeatherMenuSessionData {
+  messageId: number;
+}
+
+/** Prayer menu wizard session data */
+export interface PrayerMenuSessionData {
+  messageId: number;
+}
+
+/** Smart Paste session data - stores detected URL for confirmation */
+export interface SmartPasteSessionData {
+  url: string;
+  messageId: number;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
@@ -92,6 +108,9 @@ export type SessionState =
   | { flow: "market_hub"; step: "symbol_input" | "dashboard"; data: MarketHubSessionData }
   | { flow: "risk"; step: "capital" | "risk_percent" | "stop_loss" | "result"; data: RiskSessionData }
   | { flow: "download"; step: "platform" | "format" | "url"; data: DownloadSessionData }
+  | { flow: "weather_menu"; step: "city_input"; data: WeatherMenuSessionData }
+  | { flow: "prayer_menu"; step: "city_input"; data: PrayerMenuSessionData }
+  | { flow: "smart_paste"; step: "confirm"; data: SmartPasteSessionData }
   | null;
 
 /** Session with metadata */
@@ -356,6 +375,39 @@ export class SessionManager {
   }
 
   /**
+   * Start weather menu wizard flow
+   */
+  startWeatherMenu(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "weather_menu",
+      step: "city_input",
+      data: { messageId },
+    });
+  }
+
+  /**
+   * Start prayer menu wizard flow
+   */
+  startPrayerMenu(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "prayer_menu",
+      step: "city_input",
+      data: { messageId },
+    });
+  }
+
+  /**
+   * Start smart paste confirmation flow
+   */
+  startSmartPaste(chatId: number, url: string, messageId: number): void {
+    this.setState(chatId, {
+      flow: "smart_paste",
+      step: "confirm",
+      data: { url, messageId },
+    });
+  }
+
+  /**
    * Cleanup expired sessions (call periodically)
    */
   cleanup(): number {
@@ -416,4 +468,19 @@ export function isRiskSession(state: SessionState): state is Extract<SessionStat
 /** Type guard for movie session */
 export function isMovieSession(state: SessionState): state is Extract<SessionState, { flow: "movie" }> {
   return state !== null && state.flow === "movie";
+}
+
+/** Type guard for weather menu session */
+export function isWeatherMenuSession(state: SessionState): state is Extract<SessionState, { flow: "weather_menu" }> {
+  return state !== null && state.flow === "weather_menu";
+}
+
+/** Type guard for prayer menu session */
+export function isPrayerMenuSession(state: SessionState): state is Extract<SessionState, { flow: "prayer_menu" }> {
+  return state !== null && state.flow === "prayer_menu";
+}
+
+/** Type guard for smart paste session */
+export function isSmartPasteSession(state: SessionState): state is Extract<SessionState, { flow: "smart_paste" }> {
+  return state !== null && state.flow === "smart_paste";
 }

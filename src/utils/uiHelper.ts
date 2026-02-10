@@ -314,6 +314,20 @@ export function createRiskResultButtons(): TelegramBot.InlineKeyboardButton[][] 
 }
 
 /**
+ * Get a standard "Back to Menu" inline keyboard button row
+ */
+export function getBackToMenuButton(): TelegramBot.InlineKeyboardButton[][] {
+  return [[{ text: "🏠 Menu Utama", callback_data: "menu_back" }]];
+}
+
+/**
+ * Append a "Menu Utama" button row to an existing inline keyboard
+ */
+export function appendMenuButton(keyboard: TelegramBot.InlineKeyboardButton[][]): TelegramBot.InlineKeyboardButton[][] {
+  return [...keyboard, [{ text: "🏠 Menu Utama", callback_data: "menu_back" }]];
+}
+
+/**
  * Safe edit message wrapper - handles stale message errors gracefully
  */
 export async function safeEditMessage(

@@ -6,13 +6,21 @@
 
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
-import { sessionManager, isMarketHubSession, isMovieSession } from "../utils/SessionManager.js";
+import {
+  sessionManager,
+  isMarketHubSession,
+  isMovieSession,
+  isWeatherMenuSession,
+  isPrayerMenuSession,
+} from "../utils/SessionManager.js";
 
 import { AnimeCommand } from "./AnimeCommand.js";
 import { LyricsCommand } from "./LyricsCommand.js";
 import { MovieCommand } from "./MovieCommand.js";
 import { MarketCommand } from "./MarketCommand.js";
 import { RiskInputHandler } from "./RiskCommand.js";
+import { WeatherCommand } from "./WeatherCommand.js";
+import { PrayerCommand } from "./PrayerCommand.js";
 
 /**
  * Handles text input during active sessions (e.g. asking for location, song title)
@@ -23,6 +31,8 @@ export class SessionInputHandler implements MessageHandler {
   private movieCommand: MovieCommand;
   private marketCommand: MarketCommand;
   private riskInputHandler: RiskInputHandler;
+  private weatherCommand: WeatherCommand;
+  private prayerCommand: PrayerCommand;
 
   constructor(
     animeCommand: AnimeCommand,
@@ -30,12 +40,16 @@ export class SessionInputHandler implements MessageHandler {
     movieCommand: MovieCommand,
     marketCommand: MarketCommand,
     riskInputHandler: RiskInputHandler,
+    weatherCommand: WeatherCommand,
+    prayerCommand: PrayerCommand,
   ) {
     this.animeCommand = animeCommand;
     this.lyricsCommand = lyricsCommand;
     this.movieCommand = movieCommand;
     this.marketCommand = marketCommand;
     this.riskInputHandler = riskInputHandler;
+    this.weatherCommand = weatherCommand;
+    this.prayerCommand = prayerCommand;
   }
 
   /**
@@ -54,7 +68,9 @@ export class SessionInputHandler implements MessageHandler {
       state.flow === "anime" ||
       state.flow === "movie" ||
       state.flow === "market_hub" ||
-      state.flow === "risk"
+      state.flow === "risk" ||
+      state.flow === "weather_menu" ||
+      state.flow === "prayer_menu"
     );
   }
 
@@ -106,6 +122,14 @@ export class SessionInputHandler implements MessageHandler {
     } else if (state.flow === "risk") {
       // UX Improvement: Delegate to RiskInputHandler for custom numeric input
       await this.riskInputHandler.handle(bot, msg, state);
+    } else if (isWeatherMenuSession(state)) {
+      // UX Wizard: Weather from menu
+      sessionManager.clearState(chatId);
+      await this.weatherCommand.fetchAndSendWeather(bot, chatId, text);
+    } else if (isPrayerMenuSession(state)) {
+      // UX Wizard: Prayer from menu
+      sessionManager.clearState(chatId);
+      await this.prayerCommand.fetchAndSendPrayerTimes(bot, chatId, text);
     }
   }
 }

@@ -12,13 +12,16 @@ import {
   createFinanceKeyboard,
   safeEditMessage,
   createGrid,
+  getBackToMenuButton,
 } from "../utils/uiHelper.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { MESSAGES } from "../config/messages.js";
 import type { NewsCommand } from "./NewsCommand.js";
 import type { HelpCommand } from "./HelpCommand.js";
 import type { PortfolioCommand } from "./TradeCommand.js";
 import type { CalendarCommand } from "./CalendarCommand.js";
 import type { MyAlertsCommand } from "./AlertCommand.js";
+import type { QuoteService } from "../services/QuoteService.js";
 
 /**
  * Main menu command handler
@@ -30,25 +33,31 @@ export class MenuCommand implements Command, CallbackHandler {
   // Dependencies injected via constructor
   private newsCommand: NewsCommand;
   private helpCommand: HelpCommand;
+  private quoteService: QuoteService;
 
-  constructor(newsCommand: NewsCommand, helpCommand: HelpCommand) {
+  constructor(newsCommand: NewsCommand, helpCommand: HelpCommand, quoteService: QuoteService) {
     this.newsCommand = newsCommand;
     this.helpCommand = helpCommand;
+    this.quoteService = quoteService;
   }
 
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
+    const text = msg.text || "";
 
-    await bot.sendMessage(
-      chatId,
-      `🏦 *Jars44 Bot Dashboard*\n` + `---------------------------\n` + `Pilih layanan yang tersedia:`,
-      {
-        reply_markup: {
-          inline_keyboard: createMenuKeyboard(),
-        },
-        parse_mode: "Markdown",
+    let messageText = `Jarvis Bot Dashboard\n` + `---------------------------\n` + `Pilih layanan yang tersedia:`;
+
+    // Add welcome message for /start command
+    if (text.startsWith("/start")) {
+      messageText = `${MESSAGES.WELCOME}\n\n${messageText}`;
+    }
+
+    await bot.sendMessage(chatId, messageText, {
+      reply_markup: {
+        inline_keyboard: createMenuKeyboard(),
       },
-    );
+      parse_mode: "Markdown",
+    });
   }
 
   async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
@@ -66,7 +75,7 @@ export class MenuCommand implements Command, CallbackHandler {
           bot,
           chatId,
           messageId,
-          `📉 *Trading Center*\n` + `---------------------------\n` + `Akses fitur paper trading dan analisa:`,
+          `Trading Center\n` + `---------------------------\n` + `Akses fitur paper trading dan analisa:`,
           {
             parse_mode: "Markdown",
             reply_markup: {
@@ -81,7 +90,7 @@ export class MenuCommand implements Command, CallbackHandler {
           bot,
           chatId,
           messageId,
-          `💰 *Keuangan Pribadi*\n` + `---------------------------\n` + `Kelola pencatatan keuangan anda:`,
+          `Keuangan Pribadi\n` + `---------------------------\n` + `Kelola pencatatan keuangan anda:`,
           {
             parse_mode: "Markdown",
             reply_markup: {
@@ -96,7 +105,7 @@ export class MenuCommand implements Command, CallbackHandler {
           bot,
           chatId,
           messageId,
-          `🏦 *Jars44 Bot Dashboard*\n` + `---------------------------\n` + `Pilih layanan yang tersedia:`,
+          `Jarvis Bot Dashboard\n` + `---------------------------\n` + `Pilih layanan yang tersedia:`,
           {
             parse_mode: "Markdown",
             reply_markup: {
@@ -149,16 +158,47 @@ export class MenuCommand implements Command, CallbackHandler {
         // Do nothing for separator
         break;
 
-      case "quote":
-        await bot.sendMessage(chatId, "💡 Gunakan perintah: /quote");
+      case "quote": {
+        // Direct execution: Fetch and display quote immediately
+        await safeEditMessage(bot, chatId, messageId, "⏳ Mengambil kutipan...");
+        try {
+          const quote = await this.quoteService.getQuoteOfTheDay();
+          if (quote) {
+            await safeEditMessage(bot, chatId, messageId, `💬 _"${quote.body}"_\n\n— *${quote.author}*`, {
+              parse_mode: "Markdown",
+              reply_markup: { inline_keyboard: getBackToMenuButton() },
+            });
+          } else {
+            await safeEditMessage(bot, chatId, messageId, MESSAGES.ERROR_QUOTE, {
+              reply_markup: { inline_keyboard: getBackToMenuButton() },
+            });
+          }
+        } catch {
+          await safeEditMessage(bot, chatId, messageId, MESSAGES.ERROR_QUOTE, {
+            reply_markup: { inline_keyboard: getBackToMenuButton() },
+          });
+        }
         break;
+      }
 
       case "weather":
-        await bot.sendMessage(chatId, "🌦 Gunakan perintah: /cuaca [nama kota]");
+        // Wizard flow: Ask for city name
+        sessionManager.startWeatherMenu(chatId, messageId);
+        await safeEditMessage(bot, chatId, messageId, "🌤 Silakan ketik nama kota untuk melihat cuaca:", {
+          reply_markup: {
+            inline_keyboard: createGrid([{ text: "❌ Batal", callback_data: "menu_back" }]),
+          },
+        });
         break;
 
       case "prayer":
-        await bot.sendMessage(chatId, "🕌 Gunakan perintah: /sholat [nama kota]");
+        // Wizard flow: Ask for city name
+        sessionManager.startPrayerMenu(chatId, messageId);
+        await safeEditMessage(bot, chatId, messageId, "🕌 Silakan ketik nama kota untuk melihat jadwal sholat:", {
+          reply_markup: {
+            inline_keyboard: createGrid([{ text: "❌ Batal", callback_data: "menu_back" }]),
+          },
+        });
         break;
 
       default:

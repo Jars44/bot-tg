@@ -56,6 +56,7 @@ import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/
 import { SessionInputHandler } from "./commands/SessionInputHandler.js";
 import { LocationHandler } from "./commands/LocationHandler.js";
 import { LocationCallbackHandler } from "./commands/LocationCallbackHandler.js";
+import { SmartPasteHandler, SmartPasteCallbackHandler } from "./commands/SmartPasteHandler.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
@@ -141,7 +142,7 @@ async function main(): Promise<void> {
   // DI for MenuCommand
   const newsCommand = new NewsCommand(newsService);
   const helpCommand = new HelpCommand();
-  const menuCommand = new MenuCommand(newsCommand, helpCommand);
+  const menuCommand = new MenuCommand(newsCommand, helpCommand, quoteService);
 
   // Market Hub Command (with DI)
   const marketCommand = new MarketCommand(tradingEngine);
@@ -162,6 +163,8 @@ async function main(): Promise<void> {
     movieCommand,
     marketCommand,
     riskInputHandler,
+    weatherCommand,
+    prayerCommand,
   );
 
   const commands: Command[] = [
@@ -217,6 +220,7 @@ async function main(): Promise<void> {
 
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
+    new SmartPasteHandler(), // Smart Paste: Auto-detect URLs (highest priority)
     new LocationHandler(weatherService, prayerService), // Handle location messages (high priority)
     expenseCommand, // Handle expense flow text input
     sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
@@ -254,6 +258,7 @@ async function main(): Promise<void> {
     downloadCallbackHandler, // dl_ prefix
     new ChartCallbackHandler(chartService), // chart_ prefix
     new LocationCallbackHandler(weatherService, prayerService), // loc_ prefix
+    new SmartPasteCallbackHandler(downloadInputHandler), // sp_ prefix
   ];
 
   // Start cron jobs

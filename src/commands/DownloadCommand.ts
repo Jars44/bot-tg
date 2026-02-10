@@ -271,8 +271,9 @@ export class DownloadInputHandler implements MessageHandler {
 
   /**
    * Core download logic - Memory-Optimized
+   * Public so SmartPasteHandler can reuse it
    */
-  private async processDownload(bot: TelegramBot, chatId: number, url: string, isAudioOnly: boolean): Promise<void> {
+  async processDownload(bot: TelegramBot, chatId: number, url: string, isAudioOnly: boolean): Promise<void> {
     const statusMsg = await bot.sendMessage(chatId, "🔍 Menganalisis URL...");
     await bot.sendChatAction(chatId, "typing");
 

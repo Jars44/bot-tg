@@ -7,6 +7,7 @@ import type { Command } from "./types.js";
 import { WeatherService } from "../services/WeatherService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { getBackToMenuButton } from "../utils/uiHelper.js";
 
 export class WeatherCommand implements Command {
   pattern = /^\/cuaca(?:\s+(.+))?$/;
@@ -63,6 +64,7 @@ export class WeatherCommand implements Command {
           {
             chat_id: chatId,
             message_id: searchingMessage.message_id,
+            reply_markup: { inline_keyboard: getBackToMenuButton() },
           },
         );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -105,6 +107,7 @@ export class WeatherCommand implements Command {
         {
           chat_id: chatId,
           message_id: searchingMessage.message_id,
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
         },
       );
     } catch {

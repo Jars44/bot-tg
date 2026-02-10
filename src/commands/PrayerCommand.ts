@@ -7,6 +7,7 @@ import type { Command } from "./types.js";
 import { PrayerService } from "../services/PrayerService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { getBackToMenuButton } from "../utils/uiHelper.js";
 
 export class PrayerCommand implements Command {
   pattern = /^\/sholat(?:\s+(.+))?$/;
@@ -59,6 +60,7 @@ export class PrayerCommand implements Command {
         {
           chat_id: chatId,
           message_id: searchingMessage.message_id,
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
         },
       );
     } catch {
@@ -90,6 +92,7 @@ export class PrayerCommand implements Command {
         {
           chat_id: chatId,
           message_id: searchingMessage.message_id,
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
         },
       );
     } catch {

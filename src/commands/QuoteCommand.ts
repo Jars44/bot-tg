@@ -6,6 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { QuoteService } from "../services/QuoteService.js";
 import { MESSAGES } from "../config/messages.js";
+import { getBackToMenuButton } from "../utils/uiHelper.js";
 
 export class QuoteCommand implements Command {
   pattern = /^\/quote$/;
@@ -34,6 +35,7 @@ export class QuoteCommand implements Command {
       await bot.editMessageText(`"${quote.body}"\n\n- ${quote.author}`, {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
+        reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
     } catch {
       await bot.editMessageText(MESSAGES.ERROR_QUOTE, {
