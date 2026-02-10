@@ -137,7 +137,27 @@ interface Session {
 }
 
 /** Session timeout in milliseconds (10 minutes) */
+/** Session timeout in milliseconds (10 minutes) */
 const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
+
+/** Centralized Session Flow Keys */
+export const SESSION_FLOWS = {
+  EXPENSE: "expense",
+  TRADE: "trade",
+  ANIME: "anime",
+  LYRICS: "lyrics",
+  MOVIE: "movie",
+  LOCATION: "location",
+  TPSL: "tpsl",
+  MARKET_HUB: "market_hub",
+  RISK: "risk",
+  BUY_WIZARD: "buy_wizard",
+  SELL_WIZARD: "sell_wizard",
+  DOWNLOAD: "download",
+  WEATHER_MENU: "weather_menu",
+  PRAYER_MENU: "prayer_menu",
+  SMART_PASTE: "smart_paste",
+} as const;
 
 /**
  * In-memory session manager for wizard flows
@@ -261,7 +281,7 @@ export class SessionManager {
    */
   startExpenseFlow(chatId: number): void {
     this.setState(chatId, {
-      flow: "expense",
+      flow: SESSION_FLOWS.EXPENSE,
       step: "type",
       data: {},
     });
@@ -276,10 +296,10 @@ export class SessionManager {
     data: Partial<ExpenseSessionData>,
   ): void {
     const current = this.getState(chatId);
-    if (current?.flow !== "expense") return;
+    if (current?.flow !== SESSION_FLOWS.EXPENSE) return;
 
     this.setState(chatId, {
-      flow: "expense",
+      flow: SESSION_FLOWS.EXPENSE,
       step,
       data: { ...current.data, ...data },
     });
@@ -290,7 +310,7 @@ export class SessionManager {
    */
   startTradeConfirmation(chatId: number, data: TradeSessionData): void {
     this.setState(chatId, {
-      flow: "trade",
+      flow: SESSION_FLOWS.TRADE,
       step: "confirm",
       data,
     });
@@ -301,7 +321,7 @@ export class SessionManager {
    */
   startAnimeSelection(chatId: number, data: AnimeSessionData): void {
     this.setState(chatId, {
-      flow: "anime",
+      flow: SESSION_FLOWS.ANIME,
       step: "select",
       data,
     });
@@ -312,7 +332,7 @@ export class SessionManager {
    */
   startLocationRequest(chatId: number, pendingCommand: "weather" | "prayer"): void {
     this.setState(chatId, {
-      flow: "location",
+      flow: SESSION_FLOWS.LOCATION,
       step: "waiting",
       data: { pendingCommand },
     });
@@ -323,7 +343,7 @@ export class SessionManager {
    */
   startLyricsSearch(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "lyrics",
+      flow: SESSION_FLOWS.LYRICS,
       step: "search",
       data: { messageId },
     });
@@ -334,7 +354,7 @@ export class SessionManager {
    */
   startAnimeSearch(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "anime",
+      flow: SESSION_FLOWS.ANIME,
       step: "search",
       data: { results: [], messageId },
     });
@@ -345,7 +365,7 @@ export class SessionManager {
    */
   startMovieSearch(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "movie",
+      flow: SESSION_FLOWS.MOVIE,
       step: "search",
       data: { messageId },
     });
@@ -356,7 +376,7 @@ export class SessionManager {
    */
   startRiskWizard(chatId: number): void {
     this.setState(chatId, {
-      flow: "risk",
+      flow: SESSION_FLOWS.RISK,
       step: "capital",
       data: {},
     });
@@ -367,10 +387,10 @@ export class SessionManager {
    */
   updateRiskData(chatId: number, data: Partial<RiskSessionData>): void {
     const current = this.getState(chatId);
-    if (current?.flow !== "risk") return;
+    if (current?.flow !== SESSION_FLOWS.RISK) return;
 
     this.setState(chatId, {
-      flow: "risk",
+      flow: SESSION_FLOWS.RISK,
       step: current.step,
       data: { ...current.data, ...data },
     });
@@ -381,10 +401,10 @@ export class SessionManager {
    */
   setRiskStep(chatId: number, step: "capital" | "risk_percent" | "stop_loss" | "result"): void {
     const current = this.getState(chatId);
-    if (current?.flow !== "risk") return;
+    if (current?.flow !== SESSION_FLOWS.RISK) return;
 
     this.setState(chatId, {
-      flow: "risk",
+      flow: SESSION_FLOWS.RISK,
       step,
       data: current.data,
     });
@@ -395,7 +415,7 @@ export class SessionManager {
    */
   startWeatherMenu(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "weather_menu",
+      flow: SESSION_FLOWS.WEATHER_MENU,
       step: "city_input",
       data: { messageId },
     });
@@ -406,7 +426,7 @@ export class SessionManager {
    */
   startPrayerMenu(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "prayer_menu",
+      flow: SESSION_FLOWS.PRAYER_MENU,
       step: "city_input",
       data: { messageId },
     });
@@ -417,7 +437,7 @@ export class SessionManager {
    */
   startSmartPaste(chatId: number, url: string, messageId: number): void {
     this.setState(chatId, {
-      flow: "smart_paste",
+      flow: SESSION_FLOWS.SMART_PASTE,
       step: "confirm",
       data: { url, messageId },
     });
@@ -428,7 +448,7 @@ export class SessionManager {
    */
   startBuyWizard(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "buy_wizard",
+      flow: SESSION_FLOWS.BUY_WIZARD,
       step: "symbol",
       data: { messageId },
     });
@@ -439,7 +459,7 @@ export class SessionManager {
    */
   startSellWizard(chatId: number, messageId: number): void {
     this.setState(chatId, {
-      flow: "sell_wizard",
+      flow: SESSION_FLOWS.SELL_WIZARD,
       step: "symbol",
       data: { messageId },
     });
@@ -485,7 +505,7 @@ export function isTradeSession(state: SessionState): state is Extract<SessionSta
 
 /** Type guard for anime session */
 export function isAnimeSession(state: SessionState): state is Extract<SessionState, { flow: "anime" }> {
-  return state !== null && state.flow === "anime";
+  return state !== null && state.flow === SESSION_FLOWS.ANIME;
 }
 
 /** Type guard for location session */
@@ -500,7 +520,7 @@ export function isMarketHubSession(state: SessionState): state is Extract<Sessio
 
 /** Type guard for risk session */
 export function isRiskSession(state: SessionState): state is Extract<SessionState, { flow: "risk" }> {
-  return state !== null && state.flow === "risk";
+  return state !== null && state.flow === SESSION_FLOWS.RISK;
 }
 
 /** Type guard for movie session */

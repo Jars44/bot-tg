@@ -4,6 +4,7 @@
  */
 
 import TelegramBot from "node-telegram-bot-api";
+import { MESSAGES } from "../config/messages.js";
 import type { Command } from "./types.js";
 import type { EconomicCalendarService } from "../services/EconomicCalendarService.js";
 
@@ -21,7 +22,7 @@ export class CalendarCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, "⧗ Mengambil data economic calendar...");
+    await bot.sendMessage(chatId, MESSAGES.CALENDAR_FETCHING);
 
     try {
       const events = await this.calendarService.getTodayEvents();
@@ -30,7 +31,7 @@ export class CalendarCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[CalendarCommand] Error:", error);
-      await bot.sendMessage(chatId, "× Gagal mengambil calendar. Silakan coba lagi.");
+      await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
     }
   }
 }
@@ -49,13 +50,13 @@ export class HighImpactCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, "⧗ Mengambil high-impact events...");
+    await bot.sendMessage(chatId, MESSAGES.CALENDAR_HIGH_IMPACT_FETCHING);
 
     try {
       const events = await this.calendarService.getHighImpactEvents();
 
       if (events.length === 0) {
-        await bot.sendMessage(chatId, "Tidak ada high-impact event hari ini.");
+        await bot.sendMessage(chatId, MESSAGES.CALENDAR_NO_EVENTS);
         return;
       }
 
@@ -72,7 +73,7 @@ export class HighImpactCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[HighImpactCommand] Error:", error);
-      await bot.sendMessage(chatId, "× Gagal mengambil data. Silakan coba lagi.");
+      await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
     }
   }
 

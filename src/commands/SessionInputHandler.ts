@@ -8,6 +8,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
 import {
   sessionManager,
+  SESSION_FLOWS,
   isMarketHubSession,
   isMovieSession,
   isWeatherMenuSession,
@@ -64,13 +65,13 @@ export class SessionInputHandler implements MessageHandler {
     if (!state) return false;
 
     return (
-      state.flow === "lyrics" ||
-      state.flow === "anime" ||
-      state.flow === "movie" ||
-      state.flow === "market_hub" ||
-      state.flow === "risk" ||
-      state.flow === "weather_menu" ||
-      state.flow === "prayer_menu"
+      state.flow === SESSION_FLOWS.LYRICS ||
+      state.flow === SESSION_FLOWS.ANIME ||
+      state.flow === SESSION_FLOWS.MOVIE ||
+      state.flow === SESSION_FLOWS.MARKET_HUB ||
+      state.flow === SESSION_FLOWS.RISK ||
+      state.flow === SESSION_FLOWS.WEATHER_MENU ||
+      state.flow === SESSION_FLOWS.PRAYER_MENU
     );
   }
 
@@ -85,7 +86,7 @@ export class SessionInputHandler implements MessageHandler {
     if (!state) return;
 
     // Route based on flow type
-    if (state.flow === "lyrics") {
+    if (state.flow === SESSION_FLOWS.LYRICS) {
       // Clear session
       sessionManager.clearState(chatId);
 
@@ -93,7 +94,7 @@ export class SessionInputHandler implements MessageHandler {
       const lyricsMatch = ["/lirik " + text, text] as RegExpMatchArray;
 
       await this.lyricsCommand.execute(bot, msg, lyricsMatch);
-    } else if (state.flow === "anime") {
+    } else if (state.flow === SESSION_FLOWS.ANIME) {
       // Clear session and search for anime
       sessionManager.clearState(chatId);
       const animeMatch = ["/anime " + text, text] as RegExpMatchArray;
@@ -119,7 +120,7 @@ export class SessionInputHandler implements MessageHandler {
         // Show dashboard for entered symbol
         await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
       }
-    } else if (state.flow === "risk") {
+    } else if (state.flow === SESSION_FLOWS.RISK) {
       // UX Improvement: Delegate to RiskInputHandler for custom numeric input
       await this.riskInputHandler.handle(bot, msg, state);
     } else if (isWeatherMenuSession(state)) {

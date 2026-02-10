@@ -6,7 +6,8 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { MovieService } from "../services/MovieService.js";
 import { MESSAGES } from "../config/messages.js";
-import { getBackToMenuButton } from "../utils/uiHelper.js";
+import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
+import { sessionManager } from "../utils/SessionManager.js";
 
 export class MovieCommand implements Command {
   pattern = /^\/film(?:\s+(.+))?$/;
@@ -21,18 +22,9 @@ export class MovieCommand implements Command {
     const keyword = match?.[1]?.trim();
 
     if (!keyword) {
-      await bot.sendMessage(
-        chatId,
-        `*Cari Film*\n\n` +
-          `Mencari informasi film dari database TMDB.\n\n` +
-          `*Gunakan:* \`/film [judul film]\`\n\n` +
-          `*Contoh:*\n` +
-          `\`/film Avengers\`\n` +
-          `\`/film Interstellar\`\n` +
-          `\`/film The Dark Knight\`\n\n` +
-          `⚠︎ _Fitur experimental — membutuhkan TMDB\\_API\\_KEY_`,
-        { parse_mode: "Markdown" },
-      );
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_MOVIE, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT);
+      sessionManager.startMovieSearch(chatId, promptMsg.message_id);
       return;
     }
 
@@ -42,10 +34,10 @@ export class MovieCommand implements Command {
       const movie = await this.movieService.searchMovie(keyword);
 
       if (!movie) {
-        await bot.editMessageText(MESSAGES.ERROR_MOVIE, {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_MOVIE);
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_MOVIE);
+        }
         return;
       }
 
@@ -62,11 +54,12 @@ Deskripsi: ${movie.overview}
         parse_mode: "Markdown",
         reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
-    } catch {
-      await bot.editMessageText(MESSAGES.ERROR_MOVIE, {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      });
+    } catch (error) {
+      console.error("[MovieCommand] Error:", error);
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_MOVIE);
+      if (!edited) {
+        await bot.sendMessage(chatId, MESSAGES.ERROR_MOVIE);
+      }
     }
   }
 }

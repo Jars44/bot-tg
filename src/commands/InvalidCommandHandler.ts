@@ -6,8 +6,15 @@ import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
 import { MESSAGES } from "../config/messages.js";
 
-/** Valid command patterns */
-const VALID_COMMANDS = [
+/** Valid command patterns - Must match patterns in index.ts command registration */
+const VALID_COMMAND_PATTERNS = [
+  // Core commands
+  /^\/start/,
+  /^\/stop/,
+  /^\/help/,
+  /^\/menu/,
+
+  // Utility commands
   /^\/lirik/,
   /^\/quote/,
   /^\/anime/,
@@ -15,64 +22,52 @@ const VALID_COMMANDS = [
   /^\/berita/,
   /^\/sholat/,
   /^\/gempa/,
-  /^\/help/,
-  /^\/start/,
-  /^\/stop/,
   /^\/ingatkan/,
   /^\/download/,
   /^\/film/,
   /^\/stiker/,
-  /^\/menu/,
+
+  // Financial commands
   /^\/chart/,
   /^\/portfolio/,
   /^\/catat/,
   /^\/buy/,
   /^\/sell/,
+  /^\/close/,
   /^\/alert/,
   /^\/risk/,
   /^\/rekap/,
   /^\/laporan/,
   /^\/market/,
   /^\/calendar/,
-  /^\/sentimen/,
-  /^\/close/,
   /^\/highimpact/,
+  /^\/sentimen/,
 ];
-
-/** Commands that require arguments */
-const INCOMPLETE_COMMANDS = [/^\/sholat$/, /^\/anime$/, /^\/lirik$/, /^\/ingatkan$/, /^\/film$/, /^\/stiker$/];
 
 export class InvalidCommandHandler implements MessageHandler {
   shouldHandle(msg: TelegramBot.Message): boolean {
-    const text = msg.text?.toLowerCase() ?? "";
+    const text = msg.text ?? "";
 
     // Only handle messages starting with /
     if (!text.startsWith("/")) {
       return false;
     }
 
-    // Check for incomplete commands
-    const isIncomplete = INCOMPLETE_COMMANDS.some((cmd) => cmd.test(text));
-    if (isIncomplete) {
-      return true;
+    // Check if this message matches ANY registered command pattern
+    const matchesValidPattern = VALID_COMMAND_PATTERNS.some((pattern) => pattern.test(text));
+
+    // If it matches a valid pattern, let the command handler deal with it
+    // (including cases where the command needs arguments)
+    if (matchesValidPattern) {
+      return false;
     }
 
-    // Check for invalid commands
-    const isValid = VALID_COMMANDS.some((cmd) => cmd.test(text));
-    return !isValid;
+    // Only handle truly invalid commands
+    return true;
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
-    const text = msg.text?.toLowerCase() ?? "";
-
-    // Check if it's an incomplete command
-    const isIncomplete = INCOMPLETE_COMMANDS.some((cmd) => cmd.test(text));
-
-    if (isIncomplete) {
-      await bot.sendMessage(chatId, MESSAGES.INVALID_FORMAT);
-    } else {
-      await bot.sendMessage(chatId, MESSAGES.UNKNOWN_COMMAND);
-    }
+    await bot.sendMessage(chatId, MESSAGES.UNKNOWN_COMMAND);
   }
 }

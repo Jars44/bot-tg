@@ -6,6 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { EarthquakeService } from "../services/EarthquakeService.js";
 import { MESSAGES } from "../config/messages.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 export class EarthquakeCommand implements Command {
   pattern = /^\/gempa$/;
@@ -24,10 +25,10 @@ export class EarthquakeCommand implements Command {
       const quake = await this.earthquakeService.getLatestEarthquake();
 
       if (!quake) {
-        await bot.editMessageText(MESSAGES.ERROR_EARTHQUAKE, {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_EARTHQUAKE);
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_EARTHQUAKE);
+        }
         return;
       }
 
@@ -43,10 +44,10 @@ Potensi: ${quake.potential}
 `;
 
       if (!quake.shakemapUrl) {
-        await bot.editMessageText(MESSAGES.ERROR_IMAGE_INVALID, {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_IMAGE_INVALID);
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_IMAGE_INVALID);
+        }
         return;
       }
 
@@ -54,11 +55,12 @@ Potensi: ${quake.potential}
       await bot.sendPhoto(chatId, quake.shakemapUrl, {
         caption: resultText,
       });
-    } catch {
-      await bot.editMessageText(MESSAGES.ERROR_EARTHQUAKE, {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      });
+    } catch (error) {
+      console.error("[EarthquakeCommand] Error:", error);
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_EARTHQUAKE);
+      if (!edited) {
+        await bot.sendMessage(chatId, MESSAGES.ERROR_EARTHQUAKE);
+      }
     }
   }
 }

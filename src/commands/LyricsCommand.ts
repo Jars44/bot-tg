@@ -6,6 +6,8 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { LyricsService } from "../services/LyricsService.js";
 import { MESSAGES } from "../config/messages.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
+import { sessionManager } from "../utils/SessionManager.js";
 
 export class LyricsCommand implements Command {
   pattern = /^\/lirik(?:\s+(.+))?$/;
@@ -20,18 +22,9 @@ export class LyricsCommand implements Command {
     const input = match?.[1]?.trim();
 
     if (!input) {
-      await bot.sendMessage(
-        chatId,
-        `*Cari Lirik Lagu*\n\n` +
-          `Mencari teks lirik lagu lengkap dari berbagai artis.\n\n` +
-          `*Gunakan:* \`/lirik [Artis] - [Judul]\`\n\n` +
-          `*Contoh:*\n` +
-          `\`/lirik Lana Del Rey - Brooklyn Baby\`\n` +
-          `\`/lirik Coldplay - Yellow\`\n` +
-          `\`/lirik Taylor Swift - Anti-Hero\`\n\n` +
-          `_Pastikan format [Artis] - [Judul] dengan tanda strip._`,
-        { parse_mode: "Markdown" },
-      );
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_LYRICS, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT);
+      sessionManager.startLyricsSearch(chatId, promptMsg.message_id);
       return;
     }
 
@@ -57,23 +50,38 @@ export class LyricsCommand implements Command {
       const lyrics = await this.lyricsService.getLyrics(artist, title);
 
       if (!lyrics) {
-        await bot.editMessageText(MESSAGES.ERROR_LYRICS(title, artist), {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(
+          bot,
+          chatId,
+          searchingMessage.message_id,
+          MESSAGES.ERROR_LYRICS(title, artist),
+        );
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_LYRICS(title, artist));
+        }
         return;
       }
 
-      await bot.editMessageText(`*${title}* — ${artist}\n\n${lyrics}`, {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
+      const lyricsText = `*${title}* — ${artist}\n\n${lyrics}`;
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, lyricsText, {
         parse_mode: "Markdown",
       });
-    } catch {
-      await bot.editMessageText(MESSAGES.ERROR_LYRICS(title, artist), {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      });
+      if (!edited) {
+        await bot.sendMessage(chatId, lyricsText, {
+          parse_mode: "Markdown",
+        });
+      }
+    } catch (error) {
+      console.error("[LyricsCommand] Error:", error);
+      const edited = await safeEditMessage(
+        bot,
+        chatId,
+        searchingMessage.message_id,
+        MESSAGES.ERROR_LYRICS(title, artist),
+      );
+      if (!edited) {
+        await bot.sendMessage(chatId, MESSAGES.ERROR_LYRICS(title, artist));
+      }
     }
   }
 }

@@ -8,6 +8,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler, CallbackHandler } from "./types.js";
 import { sessionManager, isSmartPasteSession } from "../utils/SessionManager.js";
 import { DownloadInputHandler } from "./DownloadCommand.js";
+import { MESSAGES } from "../config/messages.js";
 
 /** Supported platform URL patterns */
 const SUPPORTED_URL_PATTERNS = [
@@ -49,7 +50,7 @@ export class SmartPasteHandler implements MessageHandler {
 
     const url = urlMatch[0];
 
-    const confirmMsg = await bot.sendMessage(chatId, `🔗 Link terdeteksi, ingin download?\n\n\`${url}\``, {
+    const confirmMsg = await bot.sendMessage(chatId, MESSAGES.SMART_PASTE_CONFIRM(url), {
       parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
@@ -88,7 +89,7 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
 
     const state = sessionManager.getState(chatId);
     if (!isSmartPasteSession(state)) {
-      await bot.editMessageText("⏳ Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.", {
+      await bot.editMessageText(MESSAGES.SMART_PASTE_SESSION_EXPIRED, {
         chat_id: chatId,
         message_id: messageId,
       });
@@ -100,7 +101,7 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
     // Handle cancel
     if (data === "sp_cancel") {
       sessionManager.clearState(chatId);
-      await bot.editMessageText("❌ Download dibatalkan.", {
+      await bot.editMessageText(MESSAGES.SMART_PASTE_CANCELLED, {
         chat_id: chatId,
         message_id: messageId,
       });

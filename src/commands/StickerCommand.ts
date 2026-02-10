@@ -35,18 +35,9 @@ export class StickerCommand implements Command {
     const text = match?.[1]?.trim();
 
     if (!text) {
-      await bot.sendMessage(
-        chatId,
-        `*Buat Stiker*\n\n` +
-          `Membuat stiker Telegram instan dari teks yang kamu kirim.\n\n` +
-          `*Gunakan:* \`/stiker [teks]\`\n\n` +
-          `*Contoh:*\n` +
-          `\`/stiker Hello World!\`\n` +
-          `\`/stiker Selamat Ulang Tahun\`\n` +
-          `\`/stiker GOAL!!!\`\n\n` +
-          `_Limit: ${CONFIG.STICKER_LIMIT} stiker per hari._`,
-        { parse_mode: "Markdown" },
-      );
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_STICKER.replace("{limit}", CONFIG.STICKER_LIMIT.toString()), {
+        parse_mode: "Markdown",
+      });
       return;
     }
 

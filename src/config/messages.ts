@@ -60,6 +60,34 @@ export const MESSAGES = {
   DOWNLOAD_VIDEO_CAPTION: "✓ Video berhasil diproses.",
   DOWNLOAD_AUDIO_CAPTION: "✓ Audio berhasil diproses.",
 
+  // Guides (Clean Minimalist)
+  GUIDE_LYRICS: `**Cari Lirik Lagu**
+
+Mencari teks lirik lengkap dari berbagai sumber.
+
+**Penggunaan Manual:**
+\`/lirik [Artis] - [Judul]\`
+
+**Contoh:**
+\`/lirik Coldplay - Yellow\`
+\`/lirik Taylor Swift - Anti Hero\`
+
+Pastikan gunakan tanda strip (-) antara artis dan judul.`,
+
+  GUIDE_MOVIE: `**Cari Info Film**
+
+Mencari rating, sinopsis, dan info rilis film.
+
+**Penggunaan Manual:**
+\`/film [Judul Film]\`
+
+**Contoh:**
+\`/film Avengers\`
+\`/film Interstellar\`
+\`/film The Dark Knight\``,
+
+  GUIDE_PROMPT: "» Silakan ketik kata kunci pencarian Anda sekarang:",
+
   // Help text
   HELP_TEXT: `*Panduan Perintah*
 
@@ -98,4 +126,41 @@ export const MESSAGES = {
 • /film — Cari info film
 • /berita — Berita terkini
 • /sentimen — Analisis sentimen pasar`,
+  // Calendar
+  CALENDAR_FETCHING: "⧗ Mengambil data economic calendar...",
+  CALENDAR_HIGH_IMPACT_FETCHING: "⧗ Mengambil high-impact events...",
+  CALENDAR_NO_EVENTS: "Tidak ada high-impact event hari ini.",
+  CALENDAR_ERROR: "× Gagal mengambil data calendar.",
+
+  // Sentiment
+  SENTIMENT_FORMAT_ERROR: "× Format salah.\nGunakan: `/sentimen [keyword]`\nContoh: `/sentimen bitcoin`",
+  SENTIMENT_ANALYZING: (keyword: string) => `⧗ Menganalisis sentimen untuk "${keyword}"...`,
+  SENTIMENT_ERROR: "× Gagal menganalisis sentimen.",
+
+  // Alert
+  ALERT_INVALID_PRICE: "⚠︎ Harga tidak valid.",
+  ALERT_FETCH_ERROR: "⚠︎ Gagal mengambil harga pasar.",
+  ALERT_NONE: "Belum ada alert aktif.",
+
+  // Risk
+  RISK_INVALID_INPUT: "⚠︎ Input tidak valid. Masukkan angka positif.",
+  // Smart Paste
+  SMART_PASTE_CONFIRM: (url: string) => `🔗 Link terdeteksi, ingin download?\n\n\`${url}\``,
+  SMART_PASTE_SESSION_EXPIRED: "⏳ Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.",
+  SMART_PASTE_CANCELLED: "❌ Download dibatalkan.",
+
+  // Sticker Guide
+  GUIDE_STICKER: `**Buat Stiker**
+
+Membuat stiker Telegram instan dari teks yang kamu kirim.
+
+**Penggunaan Manual:**
+\`/stiker [teks]\`
+
+**Contoh:**
+\`/stiker Hello World!\`
+\`/stiker Selamat Ulang Tahun\`
+\`/stiker GOAL!!!\`
+
+_Limit: {limit} stiker per hari._`,
 } as const;

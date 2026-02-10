@@ -14,6 +14,7 @@ import {
   safeEditMessage,
   formatUSD,
 } from "../utils/uiHelper.js";
+import { MESSAGES } from "../config/messages.js";
 import { sessionManager, type RiskSessionData } from "../utils/SessionManager.js";
 
 /**
@@ -29,7 +30,7 @@ export class RiskInputHandler {
     const value = parseFloat(text);
 
     if (isNaN(value) || value <= 0) {
-      await bot.sendMessage(chatId, "⚠︎ Input tidak valid. Masukkan angka positif.");
+      await bot.sendMessage(chatId, MESSAGES.RISK_INVALID_INPUT);
       return;
     }
 

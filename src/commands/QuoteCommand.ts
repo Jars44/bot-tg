@@ -6,7 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { QuoteService } from "../services/QuoteService.js";
 import { MESSAGES } from "../config/messages.js";
-import { getBackToMenuButton } from "../utils/uiHelper.js";
+import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
 
 export class QuoteCommand implements Command {
   pattern = /^\/quote$/;
@@ -25,23 +25,28 @@ export class QuoteCommand implements Command {
       const quote = await this.quoteService.getQuoteOfTheDay();
 
       if (!quote) {
-        await bot.editMessageText(MESSAGES.ERROR_QUOTE, {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_QUOTE);
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_QUOTE);
+        }
         return;
       }
 
-      await bot.editMessageText(`"${quote.body}"\n\n- ${quote.author}`, {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
+      const quoteText = `"${quote.body}"\n\n- ${quote.author}`;
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, quoteText, {
         reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
-    } catch {
-      await bot.editMessageText(MESSAGES.ERROR_QUOTE, {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
-      });
+      if (!edited) {
+        await bot.sendMessage(chatId, quoteText, {
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
+        });
+      }
+    } catch (error) {
+      console.error("[QuoteCommand] Error:", error);
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_QUOTE);
+      if (!edited) {
+        await bot.sendMessage(chatId, MESSAGES.ERROR_QUOTE);
+      }
     }
   }
 }

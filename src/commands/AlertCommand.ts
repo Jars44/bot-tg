@@ -7,6 +7,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { withLoading, formatUSD } from "../utils/uiHelper.js";
+import { MESSAGES } from "../config/messages.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 
 interface Alert {
@@ -50,7 +51,7 @@ export class AlertCommand implements Command {
     let condition = match[3] as "above" | "below" | ">" | "<" | undefined;
 
     if (isNaN(targetPrice) || targetPrice <= 0) {
-      await bot.sendMessage(chatId, "⚠︎ Harga tidak valid.");
+      await bot.sendMessage(chatId, MESSAGES.ALERT_INVALID_PRICE);
       return;
     }
 
@@ -91,7 +92,7 @@ export class AlertCommand implements Command {
         );
       } catch (error) {
         console.error("[AlertCommand] Error:", error);
-        await bot.sendMessage(chatId, "⚠︎ Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, MESSAGES.ALERT_FETCH_ERROR);
       }
     });
   }
@@ -128,7 +129,7 @@ export class MyAlertsCommand implements Command {
     const chatId = msg.chat.id;
 
     if (alerts.length === 0) {
-      await bot.sendMessage(chatId, "Belum ada alert aktif.");
+      await bot.sendMessage(chatId, MESSAGES.ALERT_NONE);
       return;
     }
 
