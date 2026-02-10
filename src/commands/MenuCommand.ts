@@ -24,7 +24,7 @@ import type { MyAlertsCommand } from "./AlertCommand.js";
  * Main menu command handler
  */
 export class MenuCommand implements Command, CallbackHandler {
-  pattern = /^\/menu$/;
+  pattern = /^\/(start|menu)$/;
   prefix = "menu_";
 
   // Dependencies injected via constructor

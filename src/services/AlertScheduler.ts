@@ -35,12 +35,12 @@ export class AlertScheduler {
     this.bot = bot;
 
     this.startPriceAlertMonitor();
-    this.startWhaleMonitor();
+    // this.startWhaleMonitor(); // Disabled per user request
     this.startArbitrageMonitor();
     this.startEconomicCalendarNotifier();
     this.startPositionMonitor();
 
-    console.log("[AlertScheduler] All monitoring jobs started");
+    console.log("[AlertScheduler] Monitoring jobs started (Whale monitor disabled)");
   }
 
   /**
@@ -152,6 +152,7 @@ export class AlertScheduler {
   /**
    * Whale monitor - runs every minute
    */
+  // @ts-expect-error - Disabled per user request
   private startWhaleMonitor(): void {
     this.whaleJob = cron.schedule("* * * * *", async () => {
       await this.checkWhaleTrades();

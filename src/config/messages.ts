@@ -77,14 +77,12 @@ export const MESSAGES = {
 /catat - Mencatat pengeluaran harian untuk tracking keuangan pribadi
 /buy - Melakukan simulasi pembelian aset (crypto/saham/forex)
 /sell - Melakukan simulasi penjualan aset untuk mengambil profit
-/alert - Memasang alarm notifikasi jika harga aset menyentuh target
 /calendar - Kalender ekonomi
 /risk - Kalkulator manajemen risiko sebelum entry trading
 /rekap - Melihat ringkasan total pengeluaran keuangan
 /laporan - Laporan keuangan mendetail (biasanya dicek bulanan)
 
 🎯 Utilitas
-/ingatkan - Membuat pengingat waktu personal (alarm sederhana)
 /stiker - Membuat stiker Telegram instan dari teks yang dikirim
 /quote - Mendapatkan kutipan kata-kata bijak acak
 /gempa - Informasi gempa bumi terkini dari BMKG
@@ -95,6 +93,8 @@ export const MESSAGES = {
 
 🧪 Experimental (Butuh API/Tidak Stabil)
 /download - Unduh video/audio (Sering tidak stabil)
+/ingatkan - Membuat pengingat waktu personal (alarm sederhana)
+/alert - Memasang alarm notifikasi jika harga aset menyentuh target
 /film - Cari info film (Butuh TMDB_API_KEY)
 /berita - Berita terkini (Butuh GNEWS_API_TOKEN)
 /sentimen - Analisis sentimen pasar`,

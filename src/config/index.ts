@@ -45,7 +45,7 @@ export const CONFIG = {
   },
 
   /** User-Agent header for APIs that require it (especially Nominatim) */
-  USER_AGENT: "TelegramBot/2.0 (https://github.com/Jars44/telegram-bot)",
+  USER_AGENT: "TelegramBot/2.0 (https://t.me/Jars44_Bot)",
 
   /** Font size mapping for sticker text based on longest line length */
   FONT_SIZE_MAP: {
@@ -85,6 +85,7 @@ export const CONFIG = {
     WHALE_THRESHOLD_USD: 500000,
     /** Arbitrage opportunity threshold percentage */
     ARBITRAGE_THRESHOLD_PCT: 1.5,
+    
     /** Price check interval in milliseconds (1 minute) */
     CHECK_INTERVAL_MS: 60 * 1000,
     /** Conversation state expiry in milliseconds (10 minutes) */

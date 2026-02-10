@@ -55,6 +55,7 @@ import { InvalidCommandHandler } from "./commands/InvalidCommandHandler.js";
 import { MenuCommand, FinanceMenuHandler, TradingMenuHandler } from "./commands/MenuCommand.js";
 import { SessionInputHandler } from "./commands/SessionInputHandler.js";
 import { LocationHandler } from "./commands/LocationHandler.js";
+import { LocationCallbackHandler } from "./commands/LocationCallbackHandler.js";
 
 // Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
@@ -252,6 +253,7 @@ async function main(): Promise<void> {
     // Download wizard
     downloadCallbackHandler, // dl_ prefix
     new ChartCallbackHandler(chartService), // chart_ prefix
+    new LocationCallbackHandler(weatherService, prayerService), // loc_ prefix
   ];
 
   // Start cron jobs
@@ -288,8 +290,8 @@ async function main(): Promise<void> {
 
   // Register message handlers
   bot.on("message", async (msg) => {
-    // Skip if no text or handled by commands
-    if (!msg.text) return;
+    // Skip if message has neither text nor location (e.g., stickers, photos)
+    if (!msg.text && !msg.location) return;
 
     for (const handler of messageHandlers) {
       if (await handler.shouldHandle(msg)) {

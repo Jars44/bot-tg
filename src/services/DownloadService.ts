@@ -51,6 +51,7 @@ interface CobaltV10Request {
   filenamePattern?: "classic" | "basic" | "pretty" | "nerdy";
   /** Audio format for audio-only downloads: "best", "mp3", "ogg", "wav", "opus" */
   audioFormat?: "best" | "mp3" | "ogg" | "wav" | "opus";
+  audioBitrate?: "320" | "256" | "128" | "96" | "64" | "8";
   /** TikTok-specific: remove watermark */
   tiktokWatermark?: boolean; // Note: Cobalt v10 usually handles this via downloadMode or defaults
 }
@@ -204,6 +205,7 @@ export class DownloadService {
       // Explicitly set quality and format (Max 720p, 30fps is handled by Cobalt best effort, Audio mp3)
       videoQuality: "720",
       audioFormat: "mp3",
+      audioBitrate: "64",
       filenamePattern: "basic",
     };
 
@@ -277,7 +279,7 @@ export class DownloadService {
           noCheckCertificates: true,
           preferFreeFormats: true,
           noPlaylist: true,
-          // Video: max 720p, max 30fps. Audio: mp3
+          // Video: max 720p, max 30fps. Audio: mp3, 64kbps
           format: audioOnly
             ? "bestaudio[ext=mp3]/bestaudio"
             : "bestVideo[height<=720][fps<=30]+bestAudio/best[height<=720][fps<=30]/best",
