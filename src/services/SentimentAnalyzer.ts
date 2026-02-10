@@ -33,13 +33,19 @@ export class SentimentAnalyzer {
       }
 
       // Extract headlines
-      const headlines = newsItems.slice(0, 5).map((item) => item.title);
+      const headlines = newsItems.slice(0, 5).map((item) => ({
+        title: item.title,
+        url: item.url,
+      }));
 
       // Calculate sentiment score
       let bullishScore = 0;
       let bearishScore = 0;
 
-      const allText = headlines.join(" ").toLowerCase();
+      const allText = headlines
+        .map((h) => h.title)
+        .join(" ")
+        .toLowerCase();
 
       // Count bullish keywords
       for (const word of CONFIG.SENTIMENT.BULLISH) {
@@ -134,8 +140,15 @@ export class SentimentAnalyzer {
     if (result.headlines.length > 0) {
       message += `*Recent Headlines:*\n`;
       for (const headline of result.headlines) {
-        const truncated = headline.length > 60 ? headline.substring(0, 57) + "..." : headline;
-        message += `• ${truncated}\n`;
+        const title = headline.title;
+        // Increase limit to 150 chars to show full title + source
+        const truncated = title.length > 150 ? title.substring(0, 147) + "..." : title;
+        // Check if URL is valid to avoid formatting errors
+        if (headline.url && headline.url.startsWith("http")) {
+          message += `• [${truncated}](${headline.url})\n`;
+        } else {
+          message += `• ${truncated}\n`;
+        }
       }
     }
 

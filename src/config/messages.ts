@@ -120,23 +120,24 @@ Mencari rating, sinopsis, dan info rilis film.
 • /risk — Kalkulator manajemen risiko
 • /rekap — Ringkasan pengeluaran
 • /laporan — Laporan keuangan detail
+• /sentimen — Analisis sentimen pasar
 
 *Utilitas*
 • /stiker — Buat stiker dari teks
 • /quote — Kutipan kata bijak
 • /gempa — Info gempa terkini BMKG
+• /berita — Berita terkini
 
 *Hiburan*
 • /anime — Cari info anime
 • /lirik — Cari lirik lagu
+• /film — Cari info film
 
 *Eksperimental*
 • /download — Unduh video/audio
 • /ingatkan — Pengingat waktu
-• /alert — Alarm harga aset
-• /film — Cari info film
-• /berita — Berita terkini
-• /sentimen — Analisis sentimen pasar`,
+• /alert — Alarm harga aset`,
+
   // Calendar
   CALENDAR_FETCHING: "⧗ Mengambil data economic calendar...",
   CALENDAR_HIGH_IMPACT_FETCHING: "⧗ Mengambil high-impact events...",

@@ -6,6 +6,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 import type { Command } from "./types.js";
 import type { SentimentAnalyzer } from "../services/SentimentAnalyzer.js";
 
@@ -33,16 +34,25 @@ export class SentimentCommand implements Command {
 
     const keyword = match[1].trim();
 
-    await bot.sendMessage(chatId, MESSAGES.SENTIMENT_ANALYZING(keyword));
+    const analyzingMsg = await bot.sendMessage(chatId, MESSAGES.SENTIMENT_ANALYZING(keyword));
 
     try {
       const result = await this.sentimentAnalyzer.analyzeSentiment(keyword);
       const message = this.sentimentAnalyzer.formatSentimentResult(result);
 
-      await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      // Edit the analyzing message with the result
+      const edited = await safeEditMessage(bot, chatId, analyzingMsg.message_id, message, {
+        parse_mode: "Markdown",
+        disable_web_page_preview: true, // Disable preview to keep it clean
+      });
+
+      if (!edited) {
+        // Fallback if edit fails
+        await bot.sendMessage(chatId, message, { parse_mode: "Markdown", disable_web_page_preview: true });
+      }
     } catch (error) {
       console.error("[SentimentCommand] Error:", error);
-      await bot.sendMessage(chatId, MESSAGES.SENTIMENT_ERROR);
+      await safeEditMessage(bot, chatId, analyzingMsg.message_id, MESSAGES.SENTIMENT_ERROR);
     }
   }
 }

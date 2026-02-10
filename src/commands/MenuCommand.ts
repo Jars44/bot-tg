@@ -161,7 +161,14 @@ export class MenuCommand implements Command, CallbackHandler {
 
       case "quote": {
         // Direct execution: Fetch and display quote immediately
-        await safeEditMessage(bot, chatId, messageId, "⏳ Mengambil kutipan...");
+        try {
+          await safeEditMessage(bot, chatId, messageId, "⏳ Mengambil kutipan...");
+        } catch {
+          // If edit fails, delete and send new message
+          await bot.deleteMessage(chatId, messageId);
+          await bot.sendMessage(chatId, "⏳ Mengambil kutipan...");
+        }
+
         try {
           const quote = await this.quoteService.getQuoteOfTheDay();
           if (quote) {

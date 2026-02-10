@@ -145,7 +145,7 @@ export interface PositionWithPnL extends Position {
 export interface SentimentResult {
   sentiment: "Bullish" | "Bearish" | "Neutral";
   score: number; // -100 to +100
-  headlines: string[];
+  headlines: { title: string; url: string }[];
   analysis: string;
   keyword: string;
 }

@@ -22,9 +22,9 @@ export class NewsCommand implements Command {
     const searchingMessage = await bot.sendMessage(chatId, MESSAGES.SEARCHING_NEWS);
 
     try {
-      const article = await this.newsService.getTopHeadline();
+      const articles = await this.newsService.getTopHeadlines(5);
 
-      if (!article) {
+      if (!articles || articles.length === 0) {
         const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_NEWS);
         if (!edited) {
           await bot.sendMessage(chatId, MESSAGES.ERROR_NEWS);
@@ -32,10 +32,29 @@ export class NewsCommand implements Command {
         return;
       }
 
-      const newsText = `Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`;
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, newsText);
+      let newsText = `*Berita Terkini:*\n\n`;
+
+      for (const article of articles) {
+        // Ensure title is not too long for the link text
+        const title = article.title.length > 150 ? article.title.substring(0, 147) + "..." : article.title;
+
+        if (article.url && article.url.startsWith("http")) {
+          newsText += `• [${title}](${article.url})\n`;
+        } else {
+          newsText += `• ${title}\n`;
+        }
+      }
+
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, newsText, {
+        parse_mode: "Markdown",
+        disable_web_page_preview: false,
+      });
+
       if (!edited) {
-        await bot.sendMessage(chatId, newsText);
+        await bot.sendMessage(chatId, newsText, {
+          parse_mode: "Markdown",
+          disable_web_page_preview: false,
+        });
       }
     } catch (error) {
       console.error("[NewsCommand] Error:", error);

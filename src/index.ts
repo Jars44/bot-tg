@@ -105,7 +105,7 @@ async function main(): Promise<void> {
   const weatherService = new WeatherService(httpClient);
   const animeService = new AnimeService();
   const quoteService = new QuoteService(httpClient);
-  const newsService = new NewsService(httpClient);
+  const newsService = new NewsService();
   const prayerService = new PrayerService(httpClient);
   const lyricsService = new LyricsService(httpClient);
   const movieService = new MovieService(httpClient);
