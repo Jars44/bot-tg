@@ -163,9 +163,18 @@ export class SessionInputHandler implements MessageHandler {
       const chartMatch = ["/chart " + text, symbol, timeframe] as RegExpMatchArray;
       await this.chartCommand.execute(bot, msg, chartMatch);
     } else if (state.flow === SESSION_FLOWS.STICKER) {
-      sessionManager.clearState(chatId);
-      const stickerMatch = ["/stiker " + text, text] as RegExpMatchArray;
-      await this.stickerCommand.execute(bot, msg, stickerMatch);
+      const userId = msg.from?.id;
+      if (!userId) return;
+
+      // Handle sticker text input
+      if (state.step === "awaiting_text") {
+        await this.stickerCommand.processTextInput(bot, chatId, userId, text);
+      } else {
+        // Fallback for legacy "input" step
+        sessionManager.clearState(chatId);
+        const stickerMatch = ["/stiker " + text, text] as RegExpMatchArray;
+        await this.stickerCommand.execute(bot, msg, stickerMatch);
+      }
     } else if (state.flow === SESSION_FLOWS.SENTIMENT) {
       sessionManager.clearState(chatId);
       const sentimentMatch = ["/sentimen " + text, text] as RegExpMatchArray;

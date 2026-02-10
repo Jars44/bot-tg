@@ -118,6 +118,7 @@ export interface ChartSessionData {
 /** Sticker wizard session data */
 export interface StickerSessionData {
   messageId: number;
+  type?: "text" | "image";
 }
 
 /** Sentiment wizard session data */
@@ -153,7 +154,7 @@ export type SessionState =
   | { flow: "prayer_menu"; step: "city_input"; data: PrayerMenuSessionData }
   | { flow: "smart_paste"; step: "confirm"; data: SmartPasteSessionData }
   | { flow: "chart"; step: "input"; data: ChartSessionData }
-  | { flow: "sticker"; step: "input"; data: StickerSessionData }
+  | { flow: "sticker"; step: "type_selection" | "awaiting_text" | "awaiting_image" | "input"; data: StickerSessionData }
   | { flow: "sentiment"; step: "input"; data: SentimentSessionData }
   | { flow: "alert"; step: "input"; data: AlertSessionData }
   | { flow: "reminder"; step: "input"; data: ReminderSessionData }
@@ -619,4 +620,9 @@ export function isPrayerMenuSession(state: SessionState): state is Extract<Sessi
 /** Type guard for smart paste session */
 export function isSmartPasteSession(state: SessionState): state is Extract<SessionState, { flow: "smart_paste" }> {
   return state !== null && state.flow === "smart_paste";
+}
+
+/** Type guard for sticker session */
+export function isStickerSession(state: SessionState): state is Extract<SessionState, { flow: "sticker" }> {
+  return state !== null && state.flow === SESSION_FLOWS.STICKER;
 }

@@ -43,6 +43,7 @@ import { WeatherCommand } from "./commands/WeatherCommand.js";
 import { ReminderCommand } from "./commands/ReminderCommand.js";
 import { RandomReplyHandler } from "./commands/RandomReplyHandler.js";
 import { StickerCommand } from "./commands/StickerCommand.js";
+import { StickerHandler } from "./commands/StickerHandler.js";
 import { AnimeCommand, AnimeSelectionHandler } from "./commands/AnimeCommand.js";
 import { MovieCommand } from "./commands/MovieCommand.js";
 import { QuoteCommand } from "./commands/QuoteCommand.js";
@@ -238,6 +239,7 @@ async function main(): Promise<void> {
   const messageHandlers: MessageHandler[] = [
     new SmartPasteHandler(), // Smart Paste: Auto-detect URLs (highest priority)
     new LocationHandler(weatherService, prayerService), // Handle location messages (high priority)
+    new StickerHandler(stickerService, tempCleaner, db), // Handle photo messages for sticker creation
     expenseCommand, // Handle expense flow text input
     sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
     downloadInputHandler, // Handle download URL input
@@ -272,6 +274,7 @@ async function main(): Promise<void> {
 
     // Download wizard
     downloadCallbackHandler, // dl_ prefix
+    stickerCommand, // sticker_ prefix
     new ChartCallbackHandler(chartService), // chart_ prefix
     new LocationCallbackHandler(weatherService, prayerService), // loc_ prefix
     new SmartPasteCallbackHandler(downloadInputHandler), // sp_ prefix
@@ -311,8 +314,10 @@ async function main(): Promise<void> {
 
   // Register message handlers
   bot.on("message", async (msg) => {
-    // Skip if message has neither text nor location (e.g., stickers, photos)
-    if (!msg.text && !msg.location) return;
+    // Skip command messages (they're handled by onText)
+    if (msg.text && msg.text.startsWith("/")) return;
+    // Process messages with text, location, or photos
+    if (!msg.text && !msg.location && !msg.photo) return;
 
     for (const handler of messageHandlers) {
       if (await handler.shouldHandle(msg)) {

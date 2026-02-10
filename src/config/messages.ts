@@ -46,6 +46,19 @@ export const MESSAGES = {
 
   // Sticker
   STICKER_CREATING: "⧗ Memproses stiker...",
+  STICKER_MENU: "*Pilih Jenis Stiker*\n\nPilih tipe stiker yang ingin Anda buat:",
+  STICKER_IMAGE_PROMPT: `*Stiker dari Gambar*
+
+Silakan kirim gambar yang ingin dijadikan stiker.
+
+*Tips:*
+• Gunakan format **PNG** dengan background transparan untuk hasil terbaik
+• Jika Anda mengirim **JPG**, stiker akan berbentuk kotak dengan background solid
+• Resolusi optimal: 512x512 piksel
+• Orientasi 1:1 lebih disarankan
+
+_Gambar akan otomatis diproses dan diubah ke format WebP._`,
+  STICKER_PROCESSING_IMAGE: "⧗ Memproses gambar menjadi stiker...",
 
   // Reminder
   REMINDER_SET: (time: string, message: string) => `✓ Pengingat diset untuk ${time}\nPesan: "${message}"`,

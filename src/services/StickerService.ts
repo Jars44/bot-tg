@@ -163,4 +163,66 @@ export class StickerService {
   getStickerAssetPath(filename: string): string {
     return path.resolve(process.cwd(), "assets", filename);
   }
+
+  /**
+   * Process image (photo) to sticker format
+   * - Download highest resolution photo from Telegram
+   * - Resize to fit 512x512 (maintain aspect ratio)
+   * - Convert to WebP format
+   * - Ensure file size < 512KB
+   */
+  async processImageToSticker(imageBuffer: Buffer): Promise<string> {
+    const size = CONFIG.STICKER_SIZE || 512;
+    const maxSizeBytes = 512 * 1024; // 512KB
+
+    try {
+      // Get image metadata
+      const metadata = await sharp(imageBuffer).metadata();
+
+      if (!metadata.width || !metadata.height) {
+        throw new Error("Invalid image metadata");
+      }
+
+      // Calculate dimensions to fit within 512x512 while maintaining aspect ratio
+      let targetWidth = metadata.width;
+      let targetHeight = metadata.height;
+
+      if (targetWidth > size || targetHeight > size) {
+        const ratio = Math.min(size / targetWidth, size / targetHeight);
+        targetWidth = Math.round(targetWidth * ratio);
+        targetHeight = Math.round(targetHeight * ratio);
+      }
+
+      // Process image: resize and convert to WebP
+      let quality = 90; // Start with high quality
+      let processedBuffer: Buffer;
+
+      // Iteratively reduce quality if file size exceeds limit
+      do {
+        processedBuffer = await sharp(imageBuffer)
+          .resize(targetWidth, targetHeight, {
+            fit: "contain",
+            background: { r: 0, g: 0, b: 0, alpha: 0 }, // Transparent background
+          })
+          // If original has alpha channel, preserve it
+          .webp({ quality, lossless: false })
+          .toBuffer();
+
+        // If still too large, reduce quality
+        if (processedBuffer.length > maxSizeBytes && quality > 20) {
+          quality -= 10;
+        } else {
+          break;
+        }
+      } while (processedBuffer.length > maxSizeBytes && quality >= 20);
+
+      // Save to temp file
+      const webpPath = this.tempCleaner.getTempFilePath("sticker-image", ".webp");
+      await sharp(processedBuffer).toFile(webpPath);
+
+      return webpPath;
+    } catch (error) {
+      throw new Error(`Failed to process image: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }
 }
