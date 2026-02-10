@@ -7,6 +7,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { withLoading, formatUSD } from "../utils/uiHelper.js";
+import { sessionManager } from "../utils/SessionManager.js";
 import { MESSAGES } from "../config/messages.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 
@@ -33,16 +34,9 @@ export class AlertCommand implements Command {
     const chatId = msg.chat.id;
 
     if (!match || !match[1] || !match[2]) {
-      await bot.sendMessage(
-        chatId,
-        `*Price Alert*\n\n` +
-          `Set notifikasi harga aset.\n` +
-          `Format: \`/alert [Symbol] [Price]\`\n\n` +
-          `Contoh:\n` +
-          `\`/alert BTC 50000\`\n` +
-          `\`/alert ETH 3000\``,
-        { parse_mode: "Markdown" },
-      );
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_ALERT, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_ALERT);
+      sessionManager.startAlertWizard(chatId, promptMsg.message_id);
       return;
     }
 
@@ -95,27 +89,6 @@ export class AlertCommand implements Command {
         await bot.sendMessage(chatId, MESSAGES.ALERT_FETCH_ERROR);
       }
     });
-  }
-}
-
-/**
- * Alert Help Command
- */
-export class AlertHelpCommand implements Command {
-  pattern = /^\/alert$/;
-
-  async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
-    const chatId = msg.chat.id;
-    await bot.sendMessage(
-      chatId,
-      `*Price Alert*\n\n` +
-        `Set notifikasi harga aset.\n` +
-        `Format: \`/alert [Symbol] [Price]\`\n\n` +
-        `Contoh:\n` +
-        `\`/alert BTC 50000\`\n` +
-        `\`/alert ETH 3000\``,
-      { parse_mode: "Markdown" },
-    );
   }
 }
 

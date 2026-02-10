@@ -86,7 +86,17 @@ Mencari rating, sinopsis, dan info rilis film.
 \`/film Interstellar\`
 \`/film The Dark Knight\``,
 
-  GUIDE_PROMPT: "» Silakan ketik kata kunci pencarian Anda sekarang:",
+  // Guide Prompts
+  GUIDE_PROMPT_LYRICS: "» Silakan ketik judul lagu dan artis yang ingin Anda cari (sesuai format di atas):",
+  GUIDE_PROMPT_MOVIE: "» Silakan ketik judul film yang ingin Anda cari:",
+  GUIDE_PROMPT_ANIME: "» Silakan ketik judul anime yang ingin Anda cari:",
+  GUIDE_PROMPT_CHART: "» Silakan ketik simbol aset dan timeframe (contoh: BTC 1h):",
+  GUIDE_PROMPT_STICKER: "» Silakan ketik teks yang ingin dijadikan stiker (maks 50 karakter):",
+  GUIDE_PROMPT_SENTIMENT: "» Silakan ketik kata kunci berita yang ingin dianalisis (contoh: crypto):",
+  GUIDE_PROMPT_ALERT: "» Silakan ketik simbol dan harga target (contoh: BTC 50000):",
+  GUIDE_PROMPT_REMINDER: "» Silakan ketik waktu dan pesan pengingat (contoh: 07:00 Pagi):",
+  GUIDE_PROMPT_BUY: "» Silakan ketik simbol aset yang ingin dibeli (contoh: BTC 1000):",
+  GUIDE_PROMPT_SELL: "» Silakan ketik simbol aset yang ingin dijual (contoh: BTC 1000):",
 
   // Help text
   HELP_TEXT: `*Panduan Perintah*
@@ -95,6 +105,7 @@ Mencari rating, sinopsis, dan info rilis film.
 • /menu — Pusat navigasi utama
 • /chart — Grafik candlestick crypto/forex
 • /portfolio — Saldo, aset, dan profit/loss
+• /help — Bantuan
 
 *Ibadah & Lokasi*
 • /sholat — Jadwal sholat harian
@@ -163,4 +174,72 @@ Membuat stiker Telegram instan dari teks yang kamu kirim.
 \`/stiker GOAL!!!\`
 
 _Limit: {limit} stiker per hari._`,
+  // Guides
+  GUIDE_CHART: `📊 *Technical Chart*
+
+Gunakan: \`/chart [symbol] [timeframe]\`
+
+*Contoh:*
+\`/chart BTC 1h\` - Bitcoin 1 jam
+\`/chart ETH 4h\` - Ethereum 4 jam
+\`/chart XAUUSD 1d\` - Gold harian
+
+*Timeframes:*
+• \`1m\` - 1 menit
+• \`5m\` - 5 menit
+• \`15m\` - 15 menit
+• \`1h\` - 1 jam
+• \`4h\` - 4 jam
+• \`1d\` - 1 hari`,
+
+  GUIDE_SENTIMENT: `*Sentiment Analysis*
+
+Analisis sentimen pasar berdasarkan berita terkini.
+
+*Format:*
+\`/sentimen [keyword]\`
+
+*Contoh:*
+\`/sentimen bitcoin\`
+\`/sentimen ethereum\`
+\`/sentimen crypto\`
+\`/sentimen forex\`
+
+_Analisis menggunakan keyword scoring dari headline berita._`,
+
+  GUIDE_ALERT: `*Price Alert*
+
+Set notifikasi harga aset.
+Format: \`/alert [Symbol] [Price]\`
+
+Contoh:
+\`/alert BTC 50000\`
+\`/alert ETH 3000\``,
+
+  GUIDE_REMINDER: `*Pengingat Waktu*
+
+Membuat pengingat waktu personal yang akan dikirimkan pada jam yang ditentukan.
+
+*Gunakan:* \`/ingatkan [HH:MM] [pesan]\`
+
+*Contoh:*
+\`/ingatkan 12:00 Makan siang\`
+\`/ingatkan 08:30 Meeting pagi\`
+\`/ingatkan 17:00 Pulang kerja\`
+
+_Format waktu: 24 jam (contoh: 14:30 untuk jam 2:30 siang)_`,
+
+  GUIDE_ANIME: `*Cari Anime*
+
+Mencari informasi dan sinopsis anime dari MyAnimeList.
+
+*Gunakan:* \`/anime [judul anime]\`
+
+*Contoh:*
+\`/anime Naruto\`
+\`/anime Attack on Titan\`
+\`/anime One Piece\`
+\`/anime Jujutsu Kaisen\`
+
+_Hasil pencarian akan menampilkan daftar pilihan jika ada lebih dari satu hasil._`,
 } as const;

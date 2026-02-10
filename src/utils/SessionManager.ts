@@ -110,6 +110,31 @@ export interface SmartPasteSessionData {
   messageId: number;
 }
 
+/** Chart wizard session data */
+export interface ChartSessionData {
+  messageId: number;
+}
+
+/** Sticker wizard session data */
+export interface StickerSessionData {
+  messageId: number;
+}
+
+/** Sentiment wizard session data */
+export interface SentimentSessionData {
+  messageId: number;
+}
+
+/** Alert wizard session data */
+export interface AlertSessionData {
+  messageId: number;
+}
+
+/** Reminder wizard session data */
+export interface ReminderSessionData {
+  messageId: number;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
@@ -127,6 +152,11 @@ export type SessionState =
   | { flow: "weather_menu"; step: "city_input"; data: WeatherMenuSessionData }
   | { flow: "prayer_menu"; step: "city_input"; data: PrayerMenuSessionData }
   | { flow: "smart_paste"; step: "confirm"; data: SmartPasteSessionData }
+  | { flow: "chart"; step: "input"; data: ChartSessionData }
+  | { flow: "sticker"; step: "input"; data: StickerSessionData }
+  | { flow: "sentiment"; step: "input"; data: SentimentSessionData }
+  | { flow: "alert"; step: "input"; data: AlertSessionData }
+  | { flow: "reminder"; step: "input"; data: ReminderSessionData }
   | null;
 
 /** Session with metadata */
@@ -157,6 +187,11 @@ export const SESSION_FLOWS = {
   WEATHER_MENU: "weather_menu",
   PRAYER_MENU: "prayer_menu",
   SMART_PASTE: "smart_paste",
+  CHART: "chart",
+  STICKER: "sticker",
+  SENTIMENT: "sentiment",
+  ALERT: "alert",
+  REMINDER: "reminder",
 } as const;
 
 /**
@@ -457,10 +492,53 @@ export class SessionManager {
   /**
    * Start sell wizard flow
    */
+  /**
+   * Start sell wizard flow
+   */
   startSellWizard(chatId: number, messageId: number): void {
     this.setState(chatId, {
       flow: SESSION_FLOWS.SELL_WIZARD,
       step: "symbol",
+      data: { messageId },
+    });
+  }
+
+  startChartWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.CHART,
+      step: "input",
+      data: { messageId },
+    });
+  }
+
+  startStickerWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.STICKER,
+      step: "input",
+      data: { messageId },
+    });
+  }
+
+  startSentimentWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.SENTIMENT,
+      step: "input",
+      data: { messageId },
+    });
+  }
+
+  startAlertWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.ALERT,
+      step: "input",
+      data: { messageId },
+    });
+  }
+
+  startReminderWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.REMINDER,
+      step: "input",
       data: { messageId },
     });
   }

@@ -7,6 +7,7 @@ import type { Command } from "./types.js";
 import { StickerService } from "../services/StickerService.js";
 import { TempCleanerService } from "../services/TempCleanerService.js";
 import { JsonDb } from "../database/JsonDb.js";
+import { sessionManager } from "../utils/SessionManager.js";
 import { MESSAGES } from "../config/messages.js";
 import { CONFIG } from "../config/index.js";
 import { delay } from "../utils/helpers.js";
@@ -38,6 +39,8 @@ export class StickerCommand implements Command {
       await bot.sendMessage(chatId, MESSAGES.GUIDE_STICKER.replace("{limit}", CONFIG.STICKER_LIMIT.toString()), {
         parse_mode: "Markdown",
       });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_STICKER);
+      sessionManager.startStickerWizard(chatId, promptMsg.message_id);
       return;
     }
 

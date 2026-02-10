@@ -23,7 +23,7 @@ export class MovieCommand implements Command {
 
     if (!keyword) {
       await bot.sendMessage(chatId, MESSAGES.GUIDE_MOVIE, { parse_mode: "Markdown" });
-      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT);
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_MOVIE);
       sessionManager.startMovieSearch(chatId, promptMsg.message_id);
       return;
     }

@@ -8,6 +8,7 @@ import type { Command } from "./types.js";
 import { JsonDb } from "../database/JsonDb.js";
 import { MESSAGES } from "../config/messages.js";
 import { getCurrentTimeString } from "../utils/helpers.js";
+import { sessionManager } from "../utils/SessionManager.js";
 
 export class ReminderCommand implements Command {
   pattern = /^\/ingatkan(?:\s+(\d{1,2}:\d{2})(?:\s+(.+))?)?$/;
@@ -83,18 +84,9 @@ export class ReminderCommand implements Command {
     const message = match?.[2]?.trim();
 
     if (!time) {
-      await bot.sendMessage(
-        chatId,
-        `*Pengingat Waktu*\n\n` +
-          `Membuat pengingat waktu personal yang akan dikirimkan pada jam yang ditentukan.\n\n` +
-          `*Gunakan:* \`/ingatkan [HH:MM] [pesan]\`\n\n` +
-          `*Contoh:*\n` +
-          `\`/ingatkan 12:00 Makan siang\`\n` +
-          `\`/ingatkan 08:30 Meeting pagi\`\n` +
-          `\`/ingatkan 17:00 Pulang kerja\`\n\n` +
-          `_Format waktu: 24 jam (contoh: 14:30 untuk jam 2:30 siang)_`,
-        { parse_mode: "Markdown" },
-      );
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_REMINDER, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_REMINDER);
+      sessionManager.startReminderWizard(chatId, promptMsg.message_id);
       return;
     }
 

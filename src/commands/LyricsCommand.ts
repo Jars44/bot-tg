@@ -23,7 +23,7 @@ export class LyricsCommand implements Command {
 
     if (!input) {
       await bot.sendMessage(chatId, MESSAGES.GUIDE_LYRICS, { parse_mode: "Markdown" });
-      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT);
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_LYRICS);
       sessionManager.startLyricsSearch(chatId, promptMsg.message_id);
       return;
     }

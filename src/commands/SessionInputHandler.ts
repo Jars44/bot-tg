@@ -22,6 +22,12 @@ import { MarketCommand } from "./MarketCommand.js";
 import { RiskInputHandler } from "./RiskCommand.js";
 import { WeatherCommand } from "./WeatherCommand.js";
 import { PrayerCommand } from "./PrayerCommand.js";
+import { ChartCommand } from "./ChartCommand.js";
+import { StickerCommand } from "./StickerCommand.js";
+import { SentimentCommand } from "./SentimentCommand.js";
+import { AlertCommand } from "./AlertCommand.js";
+import { ReminderCommand } from "./ReminderCommand.js";
+import { BuyCommand, SellCommand } from "./TradeCommand.js";
 
 /**
  * Handles text input during active sessions (e.g. asking for location, song title)
@@ -34,6 +40,13 @@ export class SessionInputHandler implements MessageHandler {
   private riskInputHandler: RiskInputHandler;
   private weatherCommand: WeatherCommand;
   private prayerCommand: PrayerCommand;
+  private chartCommand: ChartCommand;
+  private stickerCommand: StickerCommand;
+  private sentimentCommand: SentimentCommand;
+  private alertCommand: AlertCommand;
+  private reminderCommand: ReminderCommand;
+  private buyCommand: BuyCommand;
+  private sellCommand: SellCommand;
 
   constructor(
     animeCommand: AnimeCommand,
@@ -43,6 +56,13 @@ export class SessionInputHandler implements MessageHandler {
     riskInputHandler: RiskInputHandler,
     weatherCommand: WeatherCommand,
     prayerCommand: PrayerCommand,
+    chartCommand: ChartCommand,
+    stickerCommand: StickerCommand,
+    sentimentCommand: SentimentCommand,
+    alertCommand: AlertCommand,
+    reminderCommand: ReminderCommand,
+    buyCommand: BuyCommand,
+    sellCommand: SellCommand,
   ) {
     this.animeCommand = animeCommand;
     this.lyricsCommand = lyricsCommand;
@@ -51,6 +71,13 @@ export class SessionInputHandler implements MessageHandler {
     this.riskInputHandler = riskInputHandler;
     this.weatherCommand = weatherCommand;
     this.prayerCommand = prayerCommand;
+    this.chartCommand = chartCommand;
+    this.stickerCommand = stickerCommand;
+    this.sentimentCommand = sentimentCommand;
+    this.alertCommand = alertCommand;
+    this.reminderCommand = reminderCommand;
+    this.buyCommand = buyCommand;
+    this.sellCommand = sellCommand;
   }
 
   /**
@@ -71,7 +98,14 @@ export class SessionInputHandler implements MessageHandler {
       state.flow === SESSION_FLOWS.MARKET_HUB ||
       state.flow === SESSION_FLOWS.RISK ||
       state.flow === SESSION_FLOWS.WEATHER_MENU ||
-      state.flow === SESSION_FLOWS.PRAYER_MENU
+      state.flow === SESSION_FLOWS.PRAYER_MENU ||
+      state.flow === SESSION_FLOWS.CHART ||
+      state.flow === SESSION_FLOWS.STICKER ||
+      state.flow === SESSION_FLOWS.SENTIMENT ||
+      state.flow === SESSION_FLOWS.ALERT ||
+      state.flow === SESSION_FLOWS.REMINDER ||
+      state.flow === SESSION_FLOWS.BUY_WIZARD ||
+      state.flow === SESSION_FLOWS.SELL_WIZARD
     );
   }
 
@@ -87,50 +121,93 @@ export class SessionInputHandler implements MessageHandler {
 
     // Route based on flow type
     if (state.flow === SESSION_FLOWS.LYRICS) {
-      // Clear session
       sessionManager.clearState(chatId);
-
-      // Create mock match array
       const lyricsMatch = ["/lirik " + text, text] as RegExpMatchArray;
-
       await this.lyricsCommand.execute(bot, msg, lyricsMatch);
     } else if (state.flow === SESSION_FLOWS.ANIME) {
-      // Clear session and search for anime
       sessionManager.clearState(chatId);
       const animeMatch = ["/anime " + text, text] as RegExpMatchArray;
       await this.animeCommand.execute(bot, msg, animeMatch);
     } else if (isMovieSession(state)) {
-      // UX Fix: Handle movie search input
       sessionManager.clearState(chatId);
       const movieMatch = ["/film " + text, text] as RegExpMatchArray;
       await this.movieCommand.execute(bot, msg, movieMatch);
     } else if (isMarketHubSession(state)) {
-      // UX Improvement: Handle symbol input for Market Hub
       if (state.step === "symbol_input") {
         const symbol = text.toUpperCase().trim();
         const messageId = state.data.messageId;
-
-        // Delete user's input message to keep chat clean
         try {
           await bot.deleteMessage(chatId, msg.message_id);
         } catch {
-          // Ignore if can't delete
+          // Ignore
         }
-
-        // Show dashboard for entered symbol
         await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
       }
     } else if (state.flow === SESSION_FLOWS.RISK) {
-      // UX Improvement: Delegate to RiskInputHandler for custom numeric input
       await this.riskInputHandler.handle(bot, msg, state);
     } else if (isWeatherMenuSession(state)) {
-      // UX Wizard: Weather from menu
       sessionManager.clearState(chatId);
       await this.weatherCommand.fetchAndSendWeather(bot, chatId, text);
     } else if (isPrayerMenuSession(state)) {
-      // UX Wizard: Prayer from menu
       sessionManager.clearState(chatId);
       await this.prayerCommand.fetchAndSendPrayerTimes(bot, chatId, text);
+    } else if (state.flow === SESSION_FLOWS.CHART) {
+      sessionManager.clearState(chatId);
+      // Chart expects: /chart [symbol] [timeframe]
+      // User input could be "BTC 1h" or just "BTC"
+      // Match regex: /^\/chart(?:\s+(\w+)(?:\s+(\w+))?)?$/
+      // match[1] = symbol, match[2] = timeframe
+      const parts = text.split(/\s+/);
+      const symbol = parts[0];
+      const timeframe = parts[1];
+      const chartMatch = ["/chart " + text, symbol, timeframe] as RegExpMatchArray;
+      await this.chartCommand.execute(bot, msg, chartMatch);
+    } else if (state.flow === SESSION_FLOWS.STICKER) {
+      sessionManager.clearState(chatId);
+      const stickerMatch = ["/stiker " + text, text] as RegExpMatchArray;
+      await this.stickerCommand.execute(bot, msg, stickerMatch);
+    } else if (state.flow === SESSION_FLOWS.SENTIMENT) {
+      sessionManager.clearState(chatId);
+      const sentimentMatch = ["/sentimen " + text, text] as RegExpMatchArray;
+      await this.sentimentCommand.execute(bot, msg, sentimentMatch);
+    } else if (state.flow === SESSION_FLOWS.ALERT) {
+      sessionManager.clearState(chatId);
+      // Alert expects: /alert [symbol] [price] [condition]
+      // match[1]=symbol, match[2]=price, match[3]=condition
+      const parts = text.split(/\s+/);
+      const alertMatch = ["/alert " + text, parts[0], parts[1], parts[2]] as RegExpMatchArray;
+      await this.alertCommand.execute(bot, msg, alertMatch);
+    } else if (state.flow === SESSION_FLOWS.REMINDER) {
+      sessionManager.clearState(chatId);
+      // Reminder expects: /ingatkan [time] [message]
+      // match[1]=time, match[2]=message
+      // User input: "07:00 Bangun" -> parts=["07:00", "Bangun"]
+      // But message can have spaces.
+      // match[1] = first word, match[2] = rest of string.
+      const firstSpace = text.indexOf(" ");
+      if (firstSpace === -1) {
+        // Only one word, likely invalid, but let command handle it
+        const reminderMatch = ["/ingatkan " + text, text, undefined] as unknown as RegExpMatchArray;
+        await this.reminderCommand.execute(bot, msg, reminderMatch);
+      } else {
+        const time = text.substring(0, firstSpace);
+        const reminderMsg = text.substring(firstSpace + 1);
+        const reminderMatch = ["/ingatkan " + text, time, reminderMsg] as RegExpMatchArray;
+        await this.reminderCommand.execute(bot, msg, reminderMatch);
+      }
+    } else if (state.flow === SESSION_FLOWS.BUY_WIZARD) {
+      sessionManager.clearState(chatId);
+      // Buy expects: /buy [symbol] [qty]
+      // User input: "BTC 0.1"
+      const parts = text.split(/\s+/);
+      const match = ["/buy " + text, parts[0], parts[1]] as RegExpMatchArray;
+      await this.buyCommand.execute(bot, msg, match);
+    } else if (state.flow === SESSION_FLOWS.SELL_WIZARD) {
+      sessionManager.clearState(chatId);
+      // Sell expects: /sell [symbol] [qty]
+      const parts = text.split(/\s+/);
+      const match = ["/sell " + text, parts[0], parts[1]] as RegExpMatchArray;
+      await this.sellCommand.execute(bot, msg, match);
     }
   }
 }

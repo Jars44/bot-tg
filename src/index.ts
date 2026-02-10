@@ -69,8 +69,8 @@ import {
 } from "./commands/TradeCommand.js";
 import { RiskCommand, RiskInputHandler } from "./commands/RiskCommand.js";
 import { MarketCommand, MarketCallbackHandler } from "./commands/MarketCommand.js";
-import { AlertCommand, MyAlertsCommand, AlertHelpCommand } from "./commands/AlertCommand.js";
-import { SentimentCommand, SentimentHelpCommand } from "./commands/SentimentCommand.js";
+import { AlertCommand, MyAlertsCommand } from "./commands/AlertCommand.js";
+import { SentimentCommand } from "./commands/SentimentCommand.js";
 import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.js";
 import { ChartCommand, ChartCallbackHandler } from "./commands/ChartCommand.js";
 import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js";
@@ -138,6 +138,12 @@ async function main(): Promise<void> {
   const animeCommand = new AnimeCommand(animeService);
   const lyricsCommand = new LyricsCommand(lyricsService);
   const movieCommand = new MovieCommand(movieService);
+  const stickerCommand = new StickerCommand(stickerService, tempCleaner, db);
+  const chartCommand = new ChartCommand(chartService);
+  const sentimentCommand = new SentimentCommand(sentimentAnalyzer);
+  const alertCommand = new AlertCommand(tradingEngine);
+  const buyCommand = new BuyCommand(tradingEngine);
+  const sellCommand = new SellCommand(tradingEngine);
 
   // DI for MenuCommand
   const newsCommand = new NewsCommand(newsService);
@@ -169,6 +175,13 @@ async function main(): Promise<void> {
     riskInputHandler,
     weatherCommand,
     prayerCommand,
+    chartCommand,
+    stickerCommand,
+    sentimentCommand,
+    alertCommand,
+    reminderCommand,
+    buyCommand,
+    sellCommand,
   );
 
   const commands: Command[] = [
@@ -178,7 +191,7 @@ async function main(): Promise<void> {
     helpCommand,
     weatherCommand,
     reminderCommand,
-    new StickerCommand(stickerService, tempCleaner, db),
+    stickerCommand,
     animeCommand,
     movieCommand,
     new QuoteCommand(quoteService),
@@ -195,8 +208,8 @@ async function main(): Promise<void> {
 
     // Paper Trading
     portfolioCommand, // /portfolio
-    new BuyCommand(tradingEngine), // /buy [symbol] [qty]
-    new SellCommand(tradingEngine), // /sell [symbol] [qty]
+    buyCommand, // /buy [symbol] [qty]
+    sellCommand, // /sell [symbol] [qty]
     new CloseCommand(tradingEngine), // /close [symbol]
 
     // Risk Calculator (Hybrid: Regex + Wizard)
@@ -206,20 +219,19 @@ async function main(): Promise<void> {
     marketCommand, // /market [symbol] or /m [symbol]
 
     // Price Alerts
-    new AlertHelpCommand(), // /alert (help)
-    new AlertCommand(tradingEngine), // /alert [symbol] [price] [cond]
+    alertCommand, // /alert [symbol] [price] [cond]
     myAlertsCommand, // /alerts
 
     // Sentiment Analysis
-    new SentimentHelpCommand(), // /sentimen (help)
-    new SentimentCommand(sentimentAnalyzer), // /sentimen [keyword]
+    sentimentCommand, // /sentimen [keyword]
 
     // Economic Calendar
     calendarCommand, // /calendar
     new HighImpactCommand(economicCalendarService), // /highimpact
 
     // Charting
-    new ChartCommand(chartService), // /chart [symbol] [timeframe]
+    // Charting
+    chartCommand, // /chart [symbol] [timeframe]
   ];
 
   // Message handlers (for non-command messages)

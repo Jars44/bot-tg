@@ -9,6 +9,7 @@ import type { Command, CallbackHandler } from "./types.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 import { sessionManager, type TradeSessionData } from "../utils/SessionManager.js";
 import { createConfirmButtons, formatUSD, withLoading } from "../utils/uiHelper.js";
+import { MESSAGES } from "../config/messages.js";
 
 /**
  * View paper trading portfolio
@@ -64,6 +65,8 @@ export class BuyCommand implements Command {
           `\`/buy AAPL 10\``,
         { parse_mode: "Markdown" },
       );
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_BUY);
+      sessionManager.startBuyWizard(chatId, promptMsg.message_id);
       return;
     }
 
@@ -142,6 +145,8 @@ export class SellCommand implements Command {
           `\`/sell ETH 0.5\``,
         { parse_mode: "Markdown" },
       );
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_SELL);
+      sessionManager.startSellWizard(chatId, promptMsg.message_id);
       return;
     }
 

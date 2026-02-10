@@ -7,6 +7,8 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import type { ChartService } from "../services/ChartService.js";
 import { FinanceDataService } from "../services/FinanceDataService.js";
+import { sessionManager } from "../utils/SessionManager.js";
+import { MESSAGES } from "../config/messages.js";
 
 export class ChartCommand implements Command {
   pattern = /^\/chart(?:\s+(\w+)(?:\s+(\w+))?)?$/;
@@ -23,22 +25,9 @@ export class ChartCommand implements Command {
 
     // Validation - show help if no symbol
     if (!symbol) {
-      const helpMessage =
-        `📊 *Technical Chart*\n\n` +
-        `Gunakan: \`/chart [symbol] [timeframe]\`\n\n` +
-        `*Contoh:*\n` +
-        `\`/chart BTC 1h\` - Bitcoin 1 jam\n` +
-        `\`/chart ETH 4h\` - Ethereum 4 jam\n` +
-        `\`/chart XAUUSD 1d\` - Gold harian\n\n` +
-        `*Timeframes:*\n` +
-        `• \`1m\` - 1 menit\n` +
-        `• \`5m\` - 5 menit\n` +
-        `• \`15m\` - 15 menit\n` +
-        `• \`1h\` - 1 jam\n` +
-        `• \`4h\` - 4 jam\n` +
-        `• \`1d\` - 1 hari`;
-
-      await bot.sendMessage(chatId, helpMessage, { parse_mode: "Markdown" });
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_CHART, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_CHART);
+      sessionManager.startChartWizard(chatId, promptMsg.message_id);
       return;
     }
 
@@ -87,22 +76,7 @@ export class ChartHelpCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    const helpMessage =
-      `📊 *Technical Chart*\n\n` +
-      `Gunakan: \`/chart [symbol] [timeframe]\`\n\n` +
-      `*Contoh:*\n` +
-      `\`/chart BTC 1h\` - Bitcoin 1 jam\n` +
-      `\`/chart ETH 4h\` - Ethereum 4 jam\n` +
-      `\`/chart XAUUSD 1d\` - Gold harian\n\n` +
-      `*Timeframes:*\n` +
-      `• \`1m\` - 1 menit\n` +
-      `• \`5m\` - 5 menit\n` +
-      `• \`15m\` - 15 menit\n` +
-      `• \`1h\` - 1 jam\n` +
-      `• \`4h\` - 4 jam\n` +
-      `• \`1d\` - 1 hari`;
-
-    await bot.sendMessage(chatId, helpMessage, { parse_mode: "Markdown" });
+    await bot.sendMessage(chatId, MESSAGES.GUIDE_CHART, { parse_mode: "Markdown" });
   }
 }
 

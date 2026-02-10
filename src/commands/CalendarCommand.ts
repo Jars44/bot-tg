@@ -7,6 +7,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { MESSAGES } from "../config/messages.js";
 import type { Command } from "./types.js";
 import type { EconomicCalendarService } from "../services/EconomicCalendarService.js";
+import { withLoading } from "../utils/uiHelper.js";
 
 /**
  * View today's economic events
@@ -22,17 +23,17 @@ export class CalendarCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, MESSAGES.CALENDAR_FETCHING);
+    await withLoading(bot, chatId, async () => {
+      try {
+        const events = await this.calendarService.getTodayEvents();
+        const message = this.calendarService.formatEvents(events);
 
-    try {
-      const events = await this.calendarService.getTodayEvents();
-      const message = this.calendarService.formatEvents(events);
-
-      await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-    } catch (error) {
-      console.error("[CalendarCommand] Error:", error);
-      await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
-    }
+        await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      } catch (error) {
+        console.error("[CalendarCommand] Error:", error);
+        await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
+      }
+    });
   }
 }
 
@@ -50,31 +51,31 @@ export class HighImpactCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, MESSAGES.CALENDAR_HIGH_IMPACT_FETCHING);
+    await withLoading(bot, chatId, async () => {
+      try {
+        const events = await this.calendarService.getHighImpactEvents();
 
-    try {
-      const events = await this.calendarService.getHighImpactEvents();
-
-      if (events.length === 0) {
-        await bot.sendMessage(chatId, MESSAGES.CALENDAR_NO_EVENTS);
-        return;
-      }
-
-      let message = "*High Impact Events — Today*\n\n";
-
-      for (const event of events) {
-        const flag = this.getCountryFlag(event.country);
-        message += `• ${event.time} ${flag} ${event.title}\n`;
-        if (event.forecast || event.previous) {
-          message += `  F: ${event.forecast || "N/A"} | P: ${event.previous || "N/A"}\n`;
+        if (events.length === 0) {
+          await bot.sendMessage(chatId, MESSAGES.CALENDAR_NO_EVENTS);
+          return;
         }
-      }
 
-      await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-    } catch (error) {
-      console.error("[HighImpactCommand] Error:", error);
-      await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
-    }
+        let message = "*High Impact Events — Today*\n\n";
+
+        for (const event of events) {
+          const flag = this.getCountryFlag(event.country);
+          message += `• ${event.time} ${flag} ${event.title}\n`;
+          if (event.forecast || event.previous) {
+            message += `  F: ${event.forecast || "N/A"} | P: ${event.previous || "N/A"}\n`;
+          }
+        }
+
+        await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      } catch (error) {
+        console.error("[HighImpactCommand] Error:", error);
+        await bot.sendMessage(chatId, MESSAGES.CALENDAR_ERROR);
+      }
+    });
   }
 
   private getCountryFlag(country: string): string {

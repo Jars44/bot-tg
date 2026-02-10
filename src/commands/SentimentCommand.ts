@@ -5,6 +5,7 @@
 
 import TelegramBot from "node-telegram-bot-api";
 import { MESSAGES } from "../config/messages.js";
+import { sessionManager } from "../utils/SessionManager.js";
 import type { Command } from "./types.js";
 import type { SentimentAnalyzer } from "../services/SentimentAnalyzer.js";
 
@@ -13,7 +14,7 @@ import type { SentimentAnalyzer } from "../services/SentimentAnalyzer.js";
  * Usage: /sentimen [keyword]
  */
 export class SentimentCommand implements Command {
-  pattern = /^\/sentimen\s+(.+)$/;
+  pattern = /^\/sentimen(?:\s+(.+))?$/;
   private sentimentAnalyzer: SentimentAnalyzer;
 
   constructor(sentimentAnalyzer: SentimentAnalyzer) {
@@ -24,9 +25,9 @@ export class SentimentCommand implements Command {
     const chatId = msg.chat.id;
 
     if (!match || !match[1]) {
-      await bot.sendMessage(chatId, MESSAGES.SENTIMENT_FORMAT_ERROR, {
-        parse_mode: "Markdown",
-      });
+      await bot.sendMessage(chatId, MESSAGES.GUIDE_SENTIMENT, { parse_mode: "Markdown" });
+      const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_SENTIMENT);
+      sessionManager.startSentimentWizard(chatId, promptMsg.message_id);
       return;
     }
 
@@ -43,30 +44,5 @@ export class SentimentCommand implements Command {
       console.error("[SentimentCommand] Error:", error);
       await bot.sendMessage(chatId, MESSAGES.SENTIMENT_ERROR);
     }
-  }
-}
-
-/**
- * Help for sentiment command
- */
-export class SentimentHelpCommand implements Command {
-  pattern = /^\/sentimen$/;
-
-  async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
-    const chatId = msg.chat.id;
-
-    const message =
-      "*Sentiment Analysis*\n\n" +
-      "Analisis sentimen pasar berdasarkan berita terkini.\n\n" +
-      "*Format:*\n" +
-      "`/sentimen [keyword]`\n\n" +
-      "*Contoh:*\n" +
-      "`/sentimen bitcoin`\n" +
-      "`/sentimen ethereum`\n" +
-      "`/sentimen crypto`\n" +
-      "`/sentimen forex`\n\n" +
-      "_Analisis menggunakan keyword scoring dari headline berita._";
-
-    await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
   }
 }
