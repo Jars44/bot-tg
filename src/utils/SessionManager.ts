@@ -80,6 +80,20 @@ export interface RiskSessionData {
   messageId?: number;
 }
 
+/** Buy Wizard session data */
+export interface BuyWizardSessionData {
+  symbol?: string;
+  quantity?: number;
+  messageId?: number;
+}
+
+/** Sell Wizard session data */
+export interface SellWizardSessionData {
+  symbol?: string;
+  quantity?: number;
+  messageId?: number;
+}
+
 /** Weather menu wizard session data */
 export interface WeatherMenuSessionData {
   messageId: number;
@@ -107,6 +121,8 @@ export type SessionState =
   | { flow: "tpsl"; step: "tp" | "sl"; data: TpSlSessionData }
   | { flow: "market_hub"; step: "symbol_input" | "dashboard"; data: MarketHubSessionData }
   | { flow: "risk"; step: "capital" | "risk_percent" | "stop_loss" | "result"; data: RiskSessionData }
+  | { flow: "buy_wizard"; step: "symbol" | "quantity"; data: BuyWizardSessionData }
+  | { flow: "sell_wizard"; step: "symbol" | "quantity"; data: SellWizardSessionData }
   | { flow: "download"; step: "platform" | "format" | "url"; data: DownloadSessionData }
   | { flow: "weather_menu"; step: "city_input"; data: WeatherMenuSessionData }
   | { flow: "prayer_menu"; step: "city_input"; data: PrayerMenuSessionData }
@@ -404,6 +420,28 @@ export class SessionManager {
       flow: "smart_paste",
       step: "confirm",
       data: { url, messageId },
+    });
+  }
+
+  /**
+   * Start buy wizard flow
+   */
+  startBuyWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "buy_wizard",
+      step: "symbol",
+      data: { messageId },
+    });
+  }
+
+  /**
+   * Start sell wizard flow
+   */
+  startSellWizard(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: "sell_wizard",
+      step: "symbol",
+      data: { messageId },
     });
   }
 

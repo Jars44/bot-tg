@@ -85,7 +85,7 @@ export class ReminderCommand implements Command {
     if (!time) {
       await bot.sendMessage(
         chatId,
-        `⏰ *Pengingat Waktu*\n\n` +
+        `*Pengingat Waktu*\n\n` +
           `Membuat pengingat waktu personal yang akan dikirimkan pada jam yang ditentukan.\n\n` +
           `*Gunakan:* \`/ingatkan [HH:MM] [pesan]\`\n\n` +
           `*Contoh:*\n` +
@@ -101,7 +101,7 @@ export class ReminderCommand implements Command {
     if (!message) {
       await bot.sendMessage(
         chatId,
-        "❌ Format salah! Pesan tidak boleh kosong.\nContoh: `/ingatkan 12:00 Makan siang`",
+        "× Format salah. Pesan tidak boleh kosong.\nContoh: `/ingatkan 12:00 Makan siang`",
         { parse_mode: "Markdown" },
       );
       return;

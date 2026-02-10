@@ -31,7 +31,7 @@ export class NewsCommand implements Command {
         return;
       }
 
-      await bot.editMessageText(`📰 Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`, {
+      await bot.editMessageText(`Berita Terkini:\n${article.title}\n\n${article.description}\n\n${article.url}`, {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
       });

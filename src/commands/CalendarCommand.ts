@@ -21,7 +21,7 @@ export class CalendarCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, "📅 Mengambil data economic calendar...");
+    await bot.sendMessage(chatId, "⧗ Mengambil data economic calendar...");
 
     try {
       const events = await this.calendarService.getTodayEvents();
@@ -30,7 +30,7 @@ export class CalendarCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[CalendarCommand] Error:", error);
-      await bot.sendMessage(chatId, "❌ Gagal mengambil calendar. Silakan coba lagi.");
+      await bot.sendMessage(chatId, "× Gagal mengambil calendar. Silakan coba lagi.");
     }
   }
 }
@@ -49,17 +49,17 @@ export class HighImpactCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    await bot.sendMessage(chatId, "🔴 Mengambil high-impact events...");
+    await bot.sendMessage(chatId, "⧗ Mengambil high-impact events...");
 
     try {
       const events = await this.calendarService.getHighImpactEvents();
 
       if (events.length === 0) {
-        await bot.sendMessage(chatId, "📅 Tidak ada high-impact event hari ini.");
+        await bot.sendMessage(chatId, "Tidak ada high-impact event hari ini.");
         return;
       }
 
-      let message = "🔴 *High Impact Events - Today*\n\n";
+      let message = "*High Impact Events — Today*\n\n";
 
       for (const event of events) {
         const flag = this.getCountryFlag(event.country);
@@ -72,21 +72,21 @@ export class HighImpactCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[HighImpactCommand] Error:", error);
-      await bot.sendMessage(chatId, "❌ Gagal mengambil data. Silakan coba lagi.");
+      await bot.sendMessage(chatId, "× Gagal mengambil data. Silakan coba lagi.");
     }
   }
 
   private getCountryFlag(country: string): string {
     const flags: Record<string, string> = {
-      USD: "🇺🇸",
-      EUR: "🇪🇺",
-      GBP: "🇬🇧",
-      JPY: "🇯🇵",
-      CHF: "🇨🇭",
-      AUD: "🇦🇺",
-      CAD: "🇨🇦",
-      NZD: "🇳🇿",
+      USD: "US",
+      EUR: "EU",
+      GBP: "GB",
+      JPY: "JP",
+      CHF: "CH",
+      AUD: "AU",
+      CAD: "CA",
+      NZD: "NZ",
     };
-    return flags[country.toUpperCase()] || "🌍";
+    return flags[country.toUpperCase()] || country;
   }
 }

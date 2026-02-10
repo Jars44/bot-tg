@@ -23,14 +23,14 @@ export class MovieCommand implements Command {
     if (!keyword) {
       await bot.sendMessage(
         chatId,
-        `🎬 *Cari Film*\n\n` +
+        `*Cari Film*\n\n` +
           `Mencari informasi film dari database TMDB.\n\n` +
           `*Gunakan:* \`/film [judul film]\`\n\n` +
           `*Contoh:*\n` +
           `\`/film Avengers\`\n` +
           `\`/film Interstellar\`\n` +
           `\`/film The Dark Knight\`\n\n` +
-          `⚠️ _Fitur experimental - membutuhkan TMDB\\_API\\_KEY_`,
+          `⚠︎ _Fitur experimental — membutuhkan TMDB\\_API\\_KEY_`,
         { parse_mode: "Markdown" },
       );
       return;

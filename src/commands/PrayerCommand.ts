@@ -7,7 +7,7 @@ import type { Command } from "./types.js";
 import { PrayerService } from "../services/PrayerService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
-import { getBackToMenuButton } from "../utils/uiHelper.js";
+import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
 
 export class PrayerCommand implements Command {
   pattern = /^\/sholat(?:\s+(.+))?$/;
@@ -25,10 +25,10 @@ export class PrayerCommand implements Command {
     if (!city) {
       sessionManager.startLocationRequest(chatId, "prayer");
 
-      await bot.sendMessage(chatId, "🕌 *Jadwal Sholat*\n\nKetik nama kota atau kirim lokasimu:", {
+      await bot.sendMessage(chatId, "*Jadwal Sholat*\n\nKetik nama kota atau kirim lokasimu:", {
         parse_mode: "Markdown",
         reply_markup: {
-          keyboard: [[{ text: "📍 Kirim Lokasi", request_location: true }], [{ text: "❌ Batal" }]],
+          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: "× Batal" }]],
           resize_keyboard: true,
           one_time_keyboard: true,
         },
@@ -48,31 +48,34 @@ export class PrayerCommand implements Command {
       const times = await this.prayerService.getPrayerTimes(city);
 
       if (!times) {
-        await bot.editMessageText(MESSAGES.ERROR_PRAYER_INVALID, {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_PRAYER_INVALID);
+        if (!edited) {
+          await bot.sendMessage(chatId, MESSAGES.ERROR_PRAYER_INVALID);
+        }
         return;
       }
 
-      await bot.editMessageText(
-        `🕌 Jadwal Sholat di ${city}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`,
-        {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        },
-      );
-    } catch {
-      await bot.editMessageText(MESSAGES.ERROR_PRAYER(city), {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
+      const prayerMessage = `Jadwal Sholat di ${city}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, {
+        reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
+
+      if (!edited) {
+        await bot.sendMessage(chatId, prayerMessage, {
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
+        });
+      }
+    } catch (error) {
+      console.error("[PrayerCommand] Error:", error);
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_PRAYER(city));
+      if (!edited) {
+        await bot.sendMessage(chatId, MESSAGES.ERROR_PRAYER(city));
+      }
     }
   }
 
   async fetchAndSendPrayerTimesByCoords(bot: TelegramBot, chatId: number, lat: number, lon: number): Promise<void> {
-    const searchingMessage = await bot.sendMessage(chatId, "🔍 Mencari jadwal sholat...", {
+    const searchingMessage = await bot.sendMessage(chatId, "⧗ Mencari jadwal sholat...", {
       reply_markup: { remove_keyboard: true },
     });
 
@@ -80,26 +83,39 @@ export class PrayerCommand implements Command {
       const times = await this.prayerService.getPrayerTimesByCoords(lat, lon);
 
       if (!times) {
-        await bot.editMessageText("❌ Gagal mendapatkan jadwal sholat.", {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-        });
+        const edited = await safeEditMessage(
+          bot,
+          chatId,
+          searchingMessage.message_id,
+          "× Gagal mendapatkan jadwal sholat.",
+        );
+        if (!edited) {
+          await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.");
+        }
         return;
       }
 
-      await bot.editMessageText(
-        `🕌 Jadwal Sholat:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`,
-        {
-          chat_id: chatId,
-          message_id: searchingMessage.message_id,
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        },
-      );
-    } catch {
-      await bot.editMessageText("❌ Gagal mendapatkan jadwal sholat.", {
-        chat_id: chatId,
-        message_id: searchingMessage.message_id,
+      const prayerMessage = `Jadwal Sholat:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, {
+        reply_markup: { inline_keyboard: getBackToMenuButton() },
       });
+
+      if (!edited) {
+        await bot.sendMessage(chatId, prayerMessage, {
+          reply_markup: { inline_keyboard: getBackToMenuButton() },
+        });
+      }
+    } catch (error) {
+      console.error("[PrayerCommand] Error:", error);
+      const edited = await safeEditMessage(
+        bot,
+        chatId,
+        searchingMessage.message_id,
+        "× Gagal mendapatkan jadwal sholat.",
+      );
+      if (!edited) {
+        await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.");
+      }
     }
   }
 }

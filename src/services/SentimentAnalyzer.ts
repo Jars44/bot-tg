@@ -124,11 +124,11 @@ export class SentimentAnalyzer {
    * Format sentiment result for display
    */
   formatSentimentResult(result: SentimentResult): string {
-    const emoji = this.getSentimentEmoji(result.sentiment, result.score);
+    const indicator = this.getSentimentIndicator(result.sentiment, result.score);
     const scoreSign = result.score >= 0 ? "+" : "";
 
-    let message = `📊 *Sentiment Analysis: ${result.keyword}*\n\n`;
-    message += `${emoji} *${result.sentiment}* (${scoreSign}${result.score})\n\n`;
+    let message = `*Sentiment Analysis: ${result.keyword}*\n\n`;
+    message += `${indicator} *${result.sentiment}* (${scoreSign}${result.score})\n\n`;
     message += `${result.analysis}\n\n`;
 
     if (result.headlines.length > 0) {
@@ -145,18 +145,18 @@ export class SentimentAnalyzer {
   /**
    * Get appropriate emoji for sentiment
    */
-  private getSentimentEmoji(sentiment: string, score: number): string {
+  private getSentimentIndicator(sentiment: string, score: number): string {
     const absScore = Math.abs(score);
 
     if (sentiment === "Bullish") {
-      if (absScore >= 50) return "🚀";
-      if (absScore >= 30) return "📈";
-      return "🟢";
+      if (absScore >= 50) return "▲▲";
+      if (absScore >= 30) return "▲";
+      return "▲";
     } else if (sentiment === "Bearish") {
-      if (absScore >= 50) return "💥";
-      if (absScore >= 30) return "📉";
-      return "🔴";
+      if (absScore >= 50) return "▼▼";
+      if (absScore >= 30) return "▼";
+      return "▼";
     }
-    return "⚪";
+    return "•";
   }
 }

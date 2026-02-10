@@ -152,6 +152,10 @@ async function main(): Promise<void> {
   const calendarCommand = new CalendarCommand(economicCalendarService);
   const myAlertsCommand = new MyAlertsCommand();
 
+  // DI for FinanceMenuHandler
+  const rekapCommand = new RekapCommand(db);
+  const laporanCommand = new LaporanCommand(db);
+
   // Risk Wizard (with handlers)
   const riskInputHandler = new RiskInputHandler();
   const riskCommand = new RiskCommand(riskInputHandler);
@@ -234,7 +238,7 @@ async function main(): Promise<void> {
   const callbackHandlers: CallbackHandler[] = [
     // Menu navigation
     menuCommand, // menu_ prefix
-    new FinanceMenuHandler(), // fin_ prefix
+    new FinanceMenuHandler(expenseCommand, rekapCommand, laporanCommand), // fin_ prefix
     new TradingMenuHandler(portfolioCommand, calendarCommand, myAlertsCommand), // trade_ menu prefix (different from tconf_)
 
     // Market Hub

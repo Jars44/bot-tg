@@ -137,10 +137,10 @@ export class AlertScheduler {
     if (!this.bot) return;
 
     const message =
-      `🔔 *Price Alert Triggered!*\n\n` +
-      `📊 ${symbol}\n` +
-      `💰 Current Price: $${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
-      `🎯 Target: ${alert.condition} $${alert.targetPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      `*Price Alert Triggered*\n\n` +
+      `${symbol}\n` +
+      `Current Price: $${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
+      `→ Target: ${alert.condition} $${alert.targetPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
     try {
       await this.bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
@@ -195,11 +195,11 @@ export class AlertScheduler {
     if (!this.bot) return;
 
     const message =
-      `🐋 *Whale Alert!*\n\n` +
-      `📊 ${symbol}/USDT\n` +
-      `💰 Value: $${trade.valueUSD.toLocaleString("en-US", { minimumFractionDigits: 0 })}\n` +
-      `📦 Amount: ${trade.amount.toFixed(4)} ${symbol}\n` +
-      `💵 Price: $${trade.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      `*Whale Alert*\n\n` +
+      `${symbol}/USDT\n` +
+      `Value: $${trade.valueUSD.toLocaleString("en-US", { minimumFractionDigits: 0 })}\n` +
+      `Amount: ${trade.amount.toFixed(4)} ${symbol}\n` +
+      `Price: $${trade.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
     // Broadcast to subscribed chats
     for (const chatId of this.subscribedChats) {
@@ -259,9 +259,9 @@ export class AlertScheduler {
     }
 
     const message =
-      `⚖️ *Arbitrage Opportunity!*\n\n` +
-      `📊 ${symbol}/USDT\n` +
-      `📈 Spread: ${spreadPercent.toFixed(2)}%\n\n` +
+      `*Arbitrage Opportunity*\n\n` +
+      `${symbol}/USDT\n` +
+      `Spread: ${spreadPercent.toFixed(2)}%\n\n` +
       `*Prices:*\n${priceList}`;
 
     for (const chatId of this.subscribedChats) {
@@ -295,8 +295,8 @@ export class AlertScheduler {
 
       if (events.length === 0) return;
 
-      let message = `📅 *Economic Calendar - Today*\n\n`;
-      message += `🔴 *HIGH IMPACT EVENTS*\n\n`;
+      let message = `*Economic Calendar — Today*\n\n`;
+      message += `*HIGH IMPACT EVENTS*\n\n`;
 
       for (const event of events.slice(0, 5)) {
         message += `• ${event.time} ${this.getCountryFlag(event.country)} ${event.title}\n`;
@@ -322,17 +322,17 @@ export class AlertScheduler {
    */
   private getCountryFlag(country: string): string {
     const flags: Record<string, string> = {
-      USD: "🇺🇸",
-      EUR: "🇪🇺",
-      GBP: "🇬🇧",
-      JPY: "🇯🇵",
-      CHF: "🇨🇭",
-      AUD: "🇦🇺",
-      CAD: "🇨🇦",
-      NZD: "🇳🇿",
-      CNY: "🇨🇳",
+      USD: "US",
+      EUR: "EU",
+      GBP: "GB",
+      JPY: "JP",
+      CHF: "CH",
+      AUD: "AU",
+      CAD: "CA",
+      NZD: "NZ",
+      CNY: "CN",
     };
-    return flags[country] || "🌍";
+    return flags[country] || country;
   }
 
   /**
@@ -417,17 +417,17 @@ export class AlertScheduler {
         return;
       }
 
-      const emoji = type === "tp" ? "✅" : "🛑";
+      const indicator = type === "tp" ? "✓" : "⚠︎";
       const label = type === "tp" ? "Take Profit" : "Stop Loss";
       const pnl = tradeRecord.pnl ?? 0;
-      const pnlEmoji = pnl >= 0 ? "🟢" : "🔴";
+      const pnlIndicator = pnl >= 0 ? "▲" : "▼";
 
       const message =
-        `${emoji} *${label} Hit!*\n\n` +
-        `📊 ${symbol}\n` +
-        `💰 Exit Price: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
-        `📦 Quantity: ${tradeRecord.quantity}\n` +
-        `${pnlEmoji} P&L: ${pnl >= 0 ? "+" : ""}$${pnl.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+        `${indicator} *${label} Hit*\n\n` +
+        `${symbol}\n` +
+        `Exit Price: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
+        `Quantity: ${tradeRecord.quantity}\n` +
+        `${pnlIndicator} P&L: ${pnl >= 0 ? "+" : ""}$${pnl.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
         `_Position closed automatically._`;
 
       await this.bot.sendMessage(chatId, message, { parse_mode: "Markdown" });

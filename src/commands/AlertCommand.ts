@@ -34,7 +34,7 @@ export class AlertCommand implements Command {
     if (!match || !match[1] || !match[2]) {
       await bot.sendMessage(
         chatId,
-        `🔔 *Price Alert*\n\n` +
+        `*Price Alert*\n\n` +
           `Set notifikasi harga aset.\n` +
           `Format: \`/alert [Symbol] [Price]\`\n\n` +
           `Contoh:\n` +
@@ -50,7 +50,7 @@ export class AlertCommand implements Command {
     let condition = match[3] as "above" | "below" | ">" | "<" | undefined;
 
     if (isNaN(targetPrice) || targetPrice <= 0) {
-      await bot.sendMessage(chatId, "⚠️ Harga tidak valid.");
+      await bot.sendMessage(chatId, "⚠︎ Harga tidak valid.");
       return;
     }
 
@@ -82,17 +82,16 @@ export class AlertCommand implements Command {
 
         await bot.sendMessage(
           chatId,
-          `✅ *Alert Disimpan*\n` +
-            `---------------------------\n` +
-            `Asset:  ${symbol}\n` +
-            `Target: ${formatUSD(targetPrice)}\n` +
-            `Current:${formatUSD(currentPrice)}\n` +
+          `✓ *Alert Disimpan*\n\n` +
+            `Asset:   ${symbol}\n` +
+            `Target:  ${formatUSD(targetPrice)}\n` +
+            `Current: ${formatUSD(currentPrice)}\n\n` +
             `Trigger: Saat harga ${conditionText} target.`,
           { parse_mode: "Markdown" },
         );
       } catch (error) {
         console.error("[AlertCommand] Error:", error);
-        await bot.sendMessage(chatId, "⚠️ Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, "⚠︎ Gagal mengambil harga pasar.");
       }
     });
   }
@@ -108,7 +107,7 @@ export class AlertHelpCommand implements Command {
     const chatId = msg.chat.id;
     await bot.sendMessage(
       chatId,
-      `🔔 *Price Alert*\n\n` +
+      `*Price Alert*\n\n` +
         `Set notifikasi harga aset.\n` +
         `Format: \`/alert [Symbol] [Price]\`\n\n` +
         `Contoh:\n` +
@@ -129,11 +128,11 @@ export class MyAlertsCommand implements Command {
     const chatId = msg.chat.id;
 
     if (alerts.length === 0) {
-      await bot.sendMessage(chatId, "ℹ️ Belum ada alert aktif.");
+      await bot.sendMessage(chatId, "Belum ada alert aktif.");
       return;
     }
 
-    let message = "🔔 *Alert Aktif*\n---------------------------\n";
+    let message = "*Alert Aktif*\n\n";
 
     alerts.forEach((alert, index) => {
       const condition = alert.condition === "above" ? ">" : "<";

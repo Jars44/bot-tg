@@ -25,7 +25,7 @@ export class AnimeCommand implements Command {
     if (!keyword) {
       await bot.sendMessage(
         chatId,
-        `🎥 *Cari Anime*\n\n` +
+        `*Cari Anime*\n\n` +
           `Mencari informasi dan sinopsis anime dari MyAnimeList.\n\n` +
           `*Gunakan:* \`/anime [judul anime]\`\n\n` +
           `*Contoh:*\n` +
@@ -56,10 +56,10 @@ export class AnimeCommand implements Command {
         }
 
         // Build selection list
-        let message = `🔍 *Hasil untuk "${keyword}":*\n\n`;
+        let message = `*Hasil untuk "${keyword}":*\n\n`;
 
         results.forEach((anime, index) => {
-          const score = anime.score ? `⭐ ${anime.score}` : "";
+          const score = anime.score ? `${anime.score}` : "";
           message += `${index + 1}. *${anime.title}* (${anime.type}) ${score}\n`;
         });
 
@@ -94,12 +94,12 @@ export class AnimeCommand implements Command {
 
   private async showAnimeDetail(bot: TelegramBot, chatId: number, anime: AnimeResult): Promise<void> {
     const reply = `
-🎥 *${anime.title}* (${anime.type})
-📅 Tayang: ${anime.year ?? "N/A"}
-⭐ Skor: ${anime.score ?? "N/A"}
-🧾 ${anime.synopsis}...
+*${anime.title}* (${anime.type})
+Tayang: ${anime.year ?? "N/A"}
+Skor: ${anime.score ?? "N/A"}
+${anime.synopsis}...
 
-🔗 [Lihat di MAL](${anime.url})
+→ [Lihat di MAL](${anime.url})
 `;
 
     await bot.sendPhoto(chatId, anime.imageUrl, {
@@ -145,12 +145,12 @@ export class AnimeSelectionHandler implements CallbackHandler {
 
     // Show anime detail
     const reply = `
-🎥 *${anime.title}* (${anime.type})
-📅 Tayang: ${anime.year ?? "N/A"}
-⭐ Skor: ${anime.score ?? "N/A"}
-🧾 ${anime.synopsis}...
+*${anime.title}* (${anime.type})
+Tayang: ${anime.year ?? "N/A"}
+Skor: ${anime.score ?? "N/A"}
+${anime.synopsis}...
 
-🔗 [Lihat di MAL](${anime.url})
+→ [Lihat di MAL](${anime.url})
 `;
 
     await bot.sendPhoto(chatId, anime.imageUrl, {

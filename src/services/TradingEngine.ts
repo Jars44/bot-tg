@@ -81,9 +81,9 @@ export class TradingEngine {
         return {
           success: true,
           message:
-            `✅ Berhasil menambah posisi ${symbol.toUpperCase()}\n` +
-            `📊 Total: ${totalQuantity} @ $${averagePrice.toFixed(2)} (avg)\n` +
-            `💵 Sisa saldo: $${portfolio.cashBalance.toFixed(2)}`,
+            `✓ Menambah posisi ${symbol.toUpperCase()}\n` +
+            `Total: ${totalQuantity} @ $${averagePrice.toFixed(2)} (avg)\n` +
+            `Sisa saldo: $${portfolio.cashBalance.toFixed(2)}`,
           position: existingPosition,
           trade,
         };
@@ -115,10 +115,10 @@ export class TradingEngine {
       return {
         success: true,
         message:
-          `✅ Berhasil beli ${quantity} ${symbol.toUpperCase()}\n` +
-          `💰 Harga: $${price.toFixed(2)}\n` +
-          `💸 Total biaya: $${totalCost.toFixed(2)}\n` +
-          `💵 Sisa saldo: $${portfolio.cashBalance.toFixed(2)}`,
+          `✓ Beli ${quantity} ${symbol.toUpperCase()}\n` +
+          `Harga: $${price.toFixed(2)}\n` +
+          `Total: $${totalCost.toFixed(2)}\n` +
+          `Sisa saldo: $${portfolio.cashBalance.toFixed(2)}`,
         position,
         trade,
       };
@@ -173,10 +173,10 @@ export class TradingEngine {
         return {
           success: true,
           message:
-            `✅ Berhasil jual ${quantity} ${symbol.toUpperCase()}\n` +
-            `💰 Harga: $${price.toFixed(2)}\n` +
-            `${pnl >= 0 ? "📈" : "📉"} PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)} (${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%)\n` +
-            `💵 Saldo: $${(portfolio.cashBalance + netProceeds).toFixed(2)}`,
+            `✓ Jual ${quantity} ${symbol.toUpperCase()}\n` +
+            `Harga: $${price.toFixed(2)}\n` +
+            `${pnl >= 0 ? "▲" : "▼"} PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)} (${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%)\n` +
+            `Saldo: $${(portfolio.cashBalance + netProceeds).toFixed(2)}`,
           trade: trade ?? undefined,
           pnl,
         };
@@ -204,11 +204,11 @@ export class TradingEngine {
       return {
         success: true,
         message:
-          `✅ Berhasil jual ${quantity} ${symbol.toUpperCase()}\n` +
-          `💰 Harga: $${price.toFixed(2)}\n` +
-          `${pnl >= 0 ? "📈" : "📉"} PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)} (${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%)\n` +
-          `📊 Sisa posisi: ${position.quantity}\n` +
-          `💵 Saldo: $${portfolio.cashBalance.toFixed(2)}`,
+          `✓ Jual ${quantity} ${symbol.toUpperCase()}\n` +
+          `Harga: $${price.toFixed(2)}\n` +
+          `${pnl >= 0 ? "▲" : "▼"} PnL: ${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)} (${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%)\n` +
+          `Sisa posisi: ${position.quantity}\n` +
+          `Saldo: $${portfolio.cashBalance.toFixed(2)}`,
         trade,
         pnl,
       };
@@ -253,14 +253,14 @@ export class TradingEngine {
         }
       }
 
-      const pnlEmoji = totalPnL >= 0 ? "📈" : "📉";
+      const pnlIndicator = totalPnL >= 0 ? "▲" : "▼";
       const pnlSign = totalPnL >= 0 ? "+" : "";
 
       return {
         success: true,
         message:
-          `✅ Berhasil menutup ${successCount} dari ${positions.length} posisi\n` +
-          `${pnlEmoji} Total Realized PnL: ${pnlSign}$${totalPnL.toFixed(2)}\n\n` +
+          `✓ Menutup ${successCount} dari ${positions.length} posisi\n` +
+          `${pnlIndicator} Total Realized PnL: ${pnlSign}$${totalPnL.toFixed(2)}\n\n` +
           `Gunakan /portfolio untuk melihat saldo terbaru.`,
         trades: results,
       };
@@ -334,23 +334,23 @@ export class TradingEngine {
    * Format portfolio summary for display
    */
   formatPortfolioSummary(summary: PortfolioSummary): string {
-    const pnlEmoji = summary.unrealizedPnL >= 0 ? "📈" : "📉";
+    const pnlIndicator = summary.unrealizedPnL >= 0 ? "▲" : "▼";
     const pnlSign = summary.unrealizedPnL >= 0 ? "+" : "";
 
-    let message = `💼 *Paper Trading Portfolio*\n\n`;
-    message += `💵 Cash: $${summary.cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
-    message += `📊 Equity: $${summary.equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
-    message += `${pnlEmoji} Unrealized PnL: ${pnlSign}$${summary.unrealizedPnL.toFixed(2)} (${pnlSign}${summary.unrealizedPnLPercent.toFixed(2)}%)\n`;
+    let message = `*Paper Trading Portfolio*\n\n`;
+    message += `Cash: $${summary.cashBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
+    message += `Equity: $${summary.equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
+    message += `${pnlIndicator} Unrealized PnL: ${pnlSign}$${summary.unrealizedPnL.toFixed(2)} (${pnlSign}${summary.unrealizedPnLPercent.toFixed(2)}%)\n`;
 
     if (summary.positions.length > 0) {
-      message += `\n*Open Positions:*\n`;
+      message += `\n*Open Positions*\n`;
 
       for (const pos of summary.positions) {
-        const posPnlEmoji = pos.unrealizedPnL >= 0 ? "🟢" : "🔴";
+        const posIndicator = pos.unrealizedPnL >= 0 ? "▲" : "▼";
         const posPnlSign = pos.unrealizedPnL >= 0 ? "+" : "";
 
-        message += `${posPnlEmoji} ${pos.symbol}: ${pos.quantity} @ $${pos.entryPrice.toFixed(2)}\n`;
-        message += `   → $${pos.marketValue.toFixed(2)} (${posPnlSign}${pos.unrealizedPnLPercent.toFixed(2)}%)\n`;
+        message += `• ${pos.symbol}: ${pos.quantity} @ $${pos.entryPrice.toFixed(2)}\n`;
+        message += `   ${posIndicator} $${pos.marketValue.toFixed(2)} (${posPnlSign}${pos.unrealizedPnLPercent.toFixed(2)}%)\n`;
       }
     } else {
       message += `\n_Tidak ada posisi terbuka_`;

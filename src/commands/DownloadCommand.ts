@@ -16,11 +16,11 @@ import { sessionManager, DownloadSessionData } from "../utils/SessionManager.js"
 
 // Platform configurations
 const PLATFORMS = {
-  youtube: { emoji: "🎬", name: "YouTube" },
-  tiktok: { emoji: "🎵", name: "TikTok" },
-  instagram: { emoji: "📸", name: "Instagram" },
-  twitter: { emoji: "🐦", name: "Twitter/X" },
-  other: { emoji: "🌐", name: "Lainnya" },
+  youtube: { label: "YouTube" },
+  tiktok: { label: "TikTok" },
+  instagram: { label: "Instagram" },
+  twitter: { label: "Twitter/X" },
+  other: { label: "Lainnya" },
 } as const;
 
 type PlatformKey = keyof typeof PLATFORMS;
@@ -34,26 +34,24 @@ export class DownloadCommand implements Command {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    // Build platform keyboard
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [
       [
-        { text: `${PLATFORMS.youtube.emoji} YouTube`, callback_data: "dl_platform_youtube" },
-        { text: `${PLATFORMS.tiktok.emoji} TikTok`, callback_data: "dl_platform_tiktok" },
+        { text: "YouTube", callback_data: "dl_platform_youtube" },
+        { text: "TikTok", callback_data: "dl_platform_tiktok" },
       ],
       [
-        { text: `${PLATFORMS.instagram.emoji} Instagram`, callback_data: "dl_platform_instagram" },
-        { text: `${PLATFORMS.twitter.emoji} Twitter/X`, callback_data: "dl_platform_twitter" },
+        { text: "Instagram", callback_data: "dl_platform_instagram" },
+        { text: "Twitter/X", callback_data: "dl_platform_twitter" },
       ],
-      [{ text: `${PLATFORMS.other.emoji} Platform Lainnya`, callback_data: "dl_platform_other" }],
-      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+      [{ text: "Lainnya", callback_data: "dl_platform_other" }],
+      [{ text: "× Batal", callback_data: "dl_cancel" }],
     ];
 
-    const message = await bot.sendMessage(chatId, `⬇️ *Universal Downloader*\n\nPilih platform yang ingin diunduh:`, {
+    const message = await bot.sendMessage(chatId, `*Download*\n\nPilih platform:`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: keyboard },
     });
 
-    // Save session
     sessionManager.setState(chatId, {
       flow: "download",
       step: "platform",
@@ -85,7 +83,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
     // Handle cancel
     if (data === "dl_cancel") {
       sessionManager.clearState(chatId);
-      await bot.editMessageText("❌ Download dibatalkan.", {
+      await bot.editMessageText("× Download dibatalkan.", {
         chat_id: chatId,
         message_id: messageId,
       });
@@ -119,18 +117,18 @@ export class DownloadCallbackHandler implements CallbackHandler {
   private async showPlatformMenu(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [
       [
-        { text: `${PLATFORMS.youtube.emoji} YouTube`, callback_data: "dl_platform_youtube" },
-        { text: `${PLATFORMS.tiktok.emoji} TikTok`, callback_data: "dl_platform_tiktok" },
+        { text: "YouTube", callback_data: "dl_platform_youtube" },
+        { text: "TikTok", callback_data: "dl_platform_tiktok" },
       ],
       [
-        { text: `${PLATFORMS.instagram.emoji} Instagram`, callback_data: "dl_platform_instagram" },
-        { text: `${PLATFORMS.twitter.emoji} Twitter/X`, callback_data: "dl_platform_twitter" },
+        { text: "Instagram", callback_data: "dl_platform_instagram" },
+        { text: "Twitter/X", callback_data: "dl_platform_twitter" },
       ],
-      [{ text: `${PLATFORMS.other.emoji} Platform Lainnya`, callback_data: "dl_platform_other" }],
-      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+      [{ text: "Lainnya", callback_data: "dl_platform_other" }],
+      [{ text: "× Batal", callback_data: "dl_cancel" }],
     ];
 
-    await bot.editMessageText(`⬇️ *Universal Downloader*\n\nPilih platform yang ingin diunduh:`, {
+    await bot.editMessageText(`*Download*\n\nPilih platform:`, {
       chat_id: chatId,
       message_id: messageId,
       parse_mode: "Markdown",
@@ -157,22 +155,19 @@ export class DownloadCallbackHandler implements CallbackHandler {
 
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [
       [
-        { text: "🎬 Video", callback_data: "dl_format_video" },
-        { text: "🎵 Audio Only", callback_data: "dl_format_audio" },
+        { text: "Video", callback_data: "dl_format_video" },
+        { text: "Audio", callback_data: "dl_format_audio" },
       ],
-      [{ text: "⬅️ Kembali", callback_data: "dl_back_platform" }],
-      [{ text: "❌ Batal", callback_data: "dl_cancel" }],
+      [{ text: "← Kembali", callback_data: "dl_back_platform" }],
+      [{ text: "× Batal", callback_data: "dl_cancel" }],
     ];
 
-    await bot.editMessageText(
-      `⬇️ *Download dari ${platformInfo.emoji} ${platformInfo.name}*\n\nPilih format yang diinginkan:`,
-      {
-        chat_id: chatId,
-        message_id: messageId,
-        parse_mode: "Markdown",
-        reply_markup: { inline_keyboard: keyboard },
-      },
-    );
+    await bot.editMessageText(`*Download → ${platformInfo.label}*\n\nPilih format:`, {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: keyboard },
+    });
 
     sessionManager.setState(chatId, {
       flow: "download",
@@ -194,18 +189,16 @@ export class DownloadCallbackHandler implements CallbackHandler {
     if (state?.flow !== "download") return;
 
     const platformInfo = PLATFORMS[(state.data as DownloadSessionData).platform || "other"];
-    const formatText = format === "video" ? "🎬 Video" : "🎵 Audio";
+    const formatText = format === "video" ? "Video" : "Audio";
 
     await bot.editMessageText(
-      `⬇️ *Download ${platformInfo.emoji} ${platformInfo.name}*\n\n` +
-        `Format: ${formatText}\n\n` +
-        `📎 *Kirim link yang ingin diunduh:*`,
+      `*Download → ${platformInfo.label} → ${formatText}*\n\n` + `Kirim link yang ingin diunduh:`,
       {
         chat_id: chatId,
         message_id: messageId,
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [[{ text: "❌ Batal", callback_data: "dl_cancel" }]],
+          inline_keyboard: [[{ text: "× Batal", callback_data: "dl_cancel" }]],
         },
       },
     );
@@ -274,13 +267,13 @@ export class DownloadInputHandler implements MessageHandler {
    * Public so SmartPasteHandler can reuse it
    */
   async processDownload(bot: TelegramBot, chatId: number, url: string, isAudioOnly: boolean): Promise<void> {
-    const statusMsg = await bot.sendMessage(chatId, "🔍 Menganalisis URL...");
+    const statusMsg = await bot.sendMessage(chatId, "⧗ Menganalisis URL...");
     await bot.sendChatAction(chatId, "typing");
 
     let result: DownloadResult;
 
     try {
-      await bot.editMessageText("⬇️ Memproses media...", {
+      await bot.editMessageText("⧗ Memproses media...", {
         chat_id: chatId,
         message_id: statusMsg.message_id,
       });
@@ -294,12 +287,12 @@ export class DownloadInputHandler implements MessageHandler {
 
       if (result.isAudio) {
         await bot.sendAudio(chatId, result.url, {
-          caption: `🎵 Downloaded via ${source}`,
+          caption: `✓ Audio via ${source}`,
           title: result.filename,
         });
       } else {
         await bot.sendVideo(chatId, result.url, {
-          caption: `🎬 Downloaded via ${source}`,
+          caption: `✓ Video via ${source}`,
         });
       }
     } catch (error) {
@@ -308,9 +301,9 @@ export class DownloadInputHandler implements MessageHandler {
       try {
         const directUrl = await this.downloadService.getDirectUrl(url, isAudioOnly);
         await bot.editMessageText(
-          `⚠️ *Tidak dapat mengirim file langsung.*\n\n` +
+          `⚠︎ *Tidak dapat mengirim file langsung.*\n\n` +
             `Alasan: ${errorMessage.split("\n")[0]}\n\n` +
-            `🔗 Download langsung:\n${directUrl}`,
+            `→ Download langsung:\n${directUrl}`,
           {
             chat_id: chatId,
             message_id: statusMsg.message_id,
@@ -318,7 +311,7 @@ export class DownloadInputHandler implements MessageHandler {
           },
         );
       } catch {
-        await bot.editMessageText(`❌ ${errorMessage}`, {
+        await bot.editMessageText(`× ${errorMessage}`, {
           chat_id: chatId,
           message_id: statusMsg.message_id,
         });

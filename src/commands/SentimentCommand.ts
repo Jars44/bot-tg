@@ -23,7 +23,7 @@ export class SentimentCommand implements Command {
     const chatId = msg.chat.id;
 
     if (!match || !match[1]) {
-      await bot.sendMessage(chatId, "❌ Format salah!\n\nGunakan: `/sentimen [keyword]`\nContoh: `/sentimen bitcoin`", {
+      await bot.sendMessage(chatId, "× Format salah.\n\nGunakan: `/sentimen [keyword]`\nContoh: `/sentimen bitcoin`", {
         parse_mode: "Markdown",
       });
       return;
@@ -31,7 +31,7 @@ export class SentimentCommand implements Command {
 
     const keyword = match[1].trim();
 
-    await bot.sendMessage(chatId, `🔍 Menganalisis sentimen untuk "${keyword}"...`);
+    await bot.sendMessage(chatId, `⧗ Menganalisis sentimen untuk "${keyword}"...`);
 
     try {
       const result = await this.sentimentAnalyzer.analyzeSentiment(keyword);
@@ -40,7 +40,7 @@ export class SentimentCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[SentimentCommand] Error:", error);
-      await bot.sendMessage(chatId, "❌ Gagal menganalisis sentimen. Silakan coba lagi.");
+      await bot.sendMessage(chatId, "× Gagal menganalisis sentimen. Silakan coba lagi.");
     }
   }
 }
@@ -55,7 +55,7 @@ export class SentimentHelpCommand implements Command {
     const chatId = msg.chat.id;
 
     const message =
-      "📊 *Sentiment Analysis*\n\n" +
+      "*Sentiment Analysis*\n\n" +
       "Analisis sentimen pasar berdasarkan berita terkini.\n\n" +
       "*Format:*\n" +
       "`/sentimen [keyword]`\n\n" +

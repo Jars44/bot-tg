@@ -135,6 +135,6 @@ export class WeatherService {
     const { weather, locationName } = result;
     const dayTime = weather.is_day ? "Siang" : "Malam";
 
-    return `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+    return `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
   }
 }

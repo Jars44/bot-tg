@@ -54,7 +54,7 @@ export class ExpenseCommand implements Command, MessageHandler {
       },
     };
 
-    await bot.sendMessage(chatId, "💰 *Input Transaksi*\n\nPilih jenis transaksi:", {
+    await bot.sendMessage(chatId, "*Input Transaksi*\n\nPilih jenis transaksi:", {
       ...options,
       parse_mode: "Markdown",
     });
@@ -84,7 +84,7 @@ export class ExpenseCommand implements Command, MessageHandler {
 
           const typeLabel = type === "expense" ? "Pengeluaran" : "Pemasukan";
 
-          await bot.editMessageText(`📝 *${typeLabel}*\n\nMasukkan nominal transaksi (Angka):\n_Contoh: 50000_`, {
+          await bot.editMessageText(`*${typeLabel}*\n\nMasukkan nominal transaksi (angka):\n_Contoh: 50000_`, {
             chat_id: chatId,
             message_id: query.message.message_id,
             parse_mode: "Markdown",
@@ -108,7 +108,7 @@ export class ExpenseCommand implements Command, MessageHandler {
               amount: stateData.amount,
             });
 
-            await bot.editMessageText("📝 Masukkan deskripsi kategori:", {
+            await bot.editMessageText("Masukkan deskripsi kategori:", {
               chat_id: chatId,
               message_id: query.message.message_id,
               parse_mode: "Markdown",
@@ -123,14 +123,14 @@ export class ExpenseCommand implements Command, MessageHandler {
             const typeLabel = stateData.type === "expense" ? "Pengeluaran" : "Pemasukan";
 
             const message =
-              `✅ *TRANSAKSI BERHASIL*\n` +
-              `---------------------------\n` +
-              `Type:   ${typeLabel}\n` +
-              `Jumlah: Rp${stateData.amount.toLocaleString("id-ID")}\n` +
+              `✓ *TRANSAKSI BERHASIL*\n\n` +
+              `\`\`\`\n` +
+              `Type:     ${typeLabel}\n` +
+              `Jumlah:   Rp${stateData.amount.toLocaleString("id-ID")}\n` +
               `Kategori: ${category}\n` +
-              `---------------------------\n` +
-              `📊 *Ringkasan Saldo:*\n` +
-              `Masuk: Rp${summary.totalIncome.toLocaleString("id-ID")}\n` +
+              `\`\`\`\n\n` +
+              `*Ringkasan Saldo*\n` +
+              `Masuk:  Rp${summary.totalIncome.toLocaleString("id-ID")}\n` +
               `Keluar: Rp${summary.totalExpense.toLocaleString("id-ID")}\n` +
               `Total:  Rp${summary.balance.toLocaleString("id-ID")}`;
 
@@ -179,7 +179,7 @@ export class ExpenseCommand implements Command, MessageHandler {
       const amount = parseFloat(text.replace(/[^0-9.]/g, ""));
 
       if (isNaN(amount) || amount <= 0) {
-        await bot.sendMessage(chatId, "⚠️ Nominal tidak valid. Masukkan angka positif.");
+        await bot.sendMessage(chatId, "⚠︎ Nominal tidak valid. Masukkan angka positif.");
         return;
       }
 
@@ -223,7 +223,7 @@ export class ExpenseCommand implements Command, MessageHandler {
       }
 
       // Show category buttons instead of text prompt
-      await bot.sendMessage(chatId, `💵 Nominal: Rp${amount.toLocaleString("id-ID")}\n\nPilih kategori:`, {
+      await bot.sendMessage(chatId, `Nominal: Rp${amount.toLocaleString("id-ID")}\n\nPilih kategori:`, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard,
@@ -238,7 +238,7 @@ export class ExpenseCommand implements Command, MessageHandler {
       const description = text.trim();
 
       if (!description) {
-        await bot.sendMessage(chatId, "⚠️ Deskripsi wajib diisi.");
+        await bot.sendMessage(chatId, "⚠︎ Deskripsi wajib diisi.");
         return;
       }
 
@@ -254,14 +254,14 @@ export class ExpenseCommand implements Command, MessageHandler {
       const typeLabel = stateData.type === "expense" ? "Pengeluaran" : "Pemasukan";
 
       const message =
-        `✅ *TRANSAKSI BERHASIL*\n` +
-        `---------------------------\n` +
-        `Type:   ${typeLabel}\n` +
-        `Jumlah: Rp${stateData.amount.toLocaleString("id-ID")}\n` +
+        `✓ *TRANSAKSI BERHASIL*\n\n` +
+        `\`\`\`\n` +
+        `Type:      ${typeLabel}\n` +
+        `Jumlah:    Rp${stateData.amount.toLocaleString("id-ID")}\n` +
         `Deskripsi: ${description}\n` +
-        `---------------------------\n` +
-        `📊 *Ringkasan Saldo:*\n` +
-        `Masuk: Rp${summary.totalIncome.toLocaleString("id-ID")}\n` +
+        `\`\`\`\n\n` +
+        `*Ringkasan Saldo*\n` +
+        `Masuk:  Rp${summary.totalIncome.toLocaleString("id-ID")}\n` +
         `Keluar: Rp${summary.totalExpense.toLocaleString("id-ID")}\n` +
         `Total:  Rp${summary.balance.toLocaleString("id-ID")}`;
 
@@ -287,20 +287,18 @@ export class LaporanCommand implements Command {
     const summary = await this.db.getTransactionSummary(chatId);
     const recentTransactions = await this.db.getTransactionsByUser(chatId, { limit: 5 });
 
-    let message = `📊 *Laporan Keuangan*\n\n`;
+    let message = `*Laporan Keuangan*\n\n`;
     message += `Masuk:  Rp${summary.totalIncome.toLocaleString("id-ID")}\n`;
     message += `Keluar: Rp${summary.totalExpense.toLocaleString("id-ID")}\n`;
     message += `Saldo:  Rp${summary.balance.toLocaleString("id-ID")}\n`;
     message += `Total Transaksi: ${summary.count}\n`;
 
     if (recentTransactions.length > 0) {
-      message += `\n*Transaksi Terakhir:*\n`;
-      message += `---------------------------\n`;
+      message += `\n*Transaksi Terakhir*\n`;
 
       for (const tx of recentTransactions) {
         const typeSymbol = tx.type === "expense" ? "OUT" : "IN";
-        // const date = new Date(tx.createdAt).toLocaleDateString("id-ID");
-        message += `• [${typeSymbol}] Rp${tx.amount.toLocaleString("id-ID")} - ${tx.description}\n`;
+        message += `• [${typeSymbol}] Rp${tx.amount.toLocaleString("id-ID")} — ${tx.description}\n`;
       }
     }
 
@@ -336,7 +334,7 @@ export class RekapCommand implements Command, CallbackHandler {
       },
     };
 
-    await bot.sendMessage(chatId, "📊 *Pilih Periode Laporan:*", {
+    await bot.sendMessage(chatId, "*Pilih Periode Laporan:*", {
       ...options,
       parse_mode: "Markdown",
     });
@@ -357,13 +355,13 @@ export class RekapCommand implements Command, CallbackHandler {
 
     if (type === "daily") {
       transactions = await this.db.getTransactionsByDateRange(chatId, startOfDay, endOfToday);
-      title = `📅 *Laporan Harian* (${now.toLocaleDateString("id-ID")})`;
+      title = `*Laporan Harian* (${now.toLocaleDateString("id-ID")})`;
     } else if (type === "monthly") {
       transactions = await this.db.getTransactionsByDateRange(chatId, startOfMonth, Date.now());
-      title = `🗓️ *Laporan Bulanan* (${now.toLocaleDateString("id-ID", { month: "long", year: "numeric" })})`;
+      title = `*Laporan Bulanan* (${now.toLocaleDateString("id-ID", { month: "long", year: "numeric" })})`;
     } else if (type === "all") {
       transactions = await this.db.getTransactionsByUser(chatId);
-      title = "📊 *Laporan Total*";
+      title = "*Laporan Total*";
     }
 
     if (transactions.length === 0) {
@@ -382,7 +380,7 @@ export class RekapCommand implements Command, CallbackHandler {
     const balance = totalIncome - totalExpense;
 
     let message = `${title}\n\n`;
-    message += `💰 *Saldo:* Rp${balance.toLocaleString("id-ID")}\n`;
+    message += `*Saldo:* Rp${balance.toLocaleString("id-ID")}\n`;
     message += `Masuk: Rp${totalIncome.toLocaleString("id-ID")}\n`;
     message += `Keluar: Rp${totalExpense.toLocaleString("id-ID")}\n\n`;
 

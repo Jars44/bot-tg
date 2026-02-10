@@ -32,7 +32,7 @@ export class PortfolioCommand implements Command {
         await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
       } catch (error) {
         console.error("[PortfolioCommand] Error:", error);
-        await bot.sendMessage(chatId, "⚠️ Gagal mengambil data portfolio. Silakan coba lagi.");
+        await bot.sendMessage(chatId, "× Gagal mengambil data portfolio. Silakan coba lagi.");
       }
     });
   }
@@ -56,7 +56,7 @@ export class BuyCommand implements Command {
     if (!match || !match[1] || !match[2]) {
       await bot.sendMessage(
         chatId,
-        `🛒 *Order: BUY*\n\n` +
+        `*Order: BUY*\n\n` +
           `Format: \`/buy [Symbol] [Qty]\`\n\n` +
           `Contoh:\n` +
           `\`/buy BTC 0.01\`\n` +
@@ -71,7 +71,7 @@ export class BuyCommand implements Command {
     const quantity = parseFloat(match[2]);
 
     if (isNaN(quantity) || quantity <= 0) {
-      await bot.sendMessage(chatId, "⚠️ Quantity harus angka positif.");
+      await bot.sendMessage(chatId, "⚠︎ Quantity harus angka positif.");
       return;
     }
 
@@ -84,14 +84,14 @@ export class BuyCommand implements Command {
 
         // Show confirmation dialog (Receipt Style)
         const confirmMessage =
-          `📝 *KONFIRMASI ORDER*\n` +
-          `---------------------------\n` +
-          `Type:   *BUY*\n` +
-          `Symbol: *${symbol}*\n` +
-          `Qty:    *${quantity}*\n` +
-          `Price:  *${formatUSD(price)}*\n` +
-          `Total:  *${formatUSD(total)}*\n` +
-          `---------------------------\n` +
+          `*KONFIRMASI ORDER*\n\n` +
+          `\`\`\`\n` +
+          `Type:   BUY\n` +
+          `Symbol: ${symbol}\n` +
+          `Qty:    ${quantity}\n` +
+          `Price:  ${formatUSD(price)}\n` +
+          `Total:  ${formatUSD(total)}\n` +
+          `\`\`\`\n\n` +
           `Lanjutkan transaksi?`;
 
         const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
@@ -111,7 +111,7 @@ export class BuyCommand implements Command {
         });
       } catch (error) {
         console.error("[BuyCommand] Error fetching price:", error);
-        await bot.sendMessage(chatId, "⚠️ Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, "× Gagal mengambil harga pasar.");
       }
     });
   }
@@ -135,7 +135,7 @@ export class SellCommand implements Command {
     if (!match || !match[1] || !match[2]) {
       await bot.sendMessage(
         chatId,
-        `🛒 *Order: SELL*\n\n` +
+        `*Order: SELL*\n\n` +
           `Format: \`/sell [Symbol] [Qty]\`\n\n` +
           `Contoh:\n` +
           `\`/sell BTC 0.01\`\n` +
@@ -149,7 +149,7 @@ export class SellCommand implements Command {
     const quantity = parseFloat(match[2]);
 
     if (isNaN(quantity) || quantity <= 0) {
-      await bot.sendMessage(chatId, "⚠️ Quantity harus angka positif.");
+      await bot.sendMessage(chatId, "⚠︎ Quantity harus angka positif.");
       return;
     }
 
@@ -162,14 +162,14 @@ export class SellCommand implements Command {
 
         // Show confirmation dialog (Receipt Style)
         const confirmMessage =
-          `📝 *KONFIRMASI ORDER*\n` +
-          `---------------------------\n` +
-          `Type:   *SELL*\n` +
-          `Symbol: *${symbol}*\n` +
-          `Qty:    *${quantity}*\n` +
-          `Price:  *${formatUSD(price)}*\n` +
-          `Total:  *${formatUSD(total)}*\n` +
-          `---------------------------\n` +
+          `*KONFIRMASI ORDER*\n\n` +
+          `\`\`\`\n` +
+          `Type:   SELL\n` +
+          `Symbol: ${symbol}\n` +
+          `Qty:    ${quantity}\n` +
+          `Price:  ${formatUSD(price)}\n` +
+          `Total:  ${formatUSD(total)}\n` +
+          `\`\`\`\n\n` +
           `Lanjutkan transaksi?`;
 
         const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
@@ -189,7 +189,7 @@ export class SellCommand implements Command {
         });
       } catch (error) {
         console.error("[SellCommand] Error fetching price:", error);
-        await bot.sendMessage(chatId, "⚠️ Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, "× Gagal mengambil harga pasar.");
       }
     });
   }
@@ -213,12 +213,12 @@ export class CloseCommand implements Command {
     if (!match || !match[1]) {
       await bot.sendMessage(
         chatId,
-        `⚠️ *Close Position*\n\n` +
+        `*Close Position*\n\n` +
           `Menutup posisi aset secara instan.\n` +
           `Format: \`/close [Symbol]\`\n\n` +
           `Contoh:\n` +
-          `\`/close BTC\` - Jual SEMUA Bitcoin\n` +
-          `\`/close ALL\` - Jual SEMUA Aset`,
+          `\`/close BTC\` — Jual semua Bitcoin\n` +
+          `\`/close ALL\` — Jual semua aset`,
         { parse_mode: "Markdown" },
       );
       return;
@@ -234,7 +234,7 @@ export class CloseCommand implements Command {
           const activePositions = summary.positions.filter((p) => p.quantity > 0);
 
           if (activePositions.length === 0) {
-            await bot.sendMessage(chatId, "ℹ️ Tidak ada posisi terbuka.");
+            await bot.sendMessage(chatId, "Tidak ada posisi terbuka.");
             return;
           }
 
@@ -242,13 +242,13 @@ export class CloseCommand implements Command {
 
           // Show confirmation dialog for closing ALL
           const confirmMessage =
-            `⚠️ *KONFIRMASI: CLOSE ALL*\n` +
-            `---------------------------\n` +
-            `Action: *LIQUIDATE ALL*\n` +
-            `Posisi: *${activePositions.length}*\n` +
-            `Est. Value: *${formatUSD(totalValue)}*\n` +
-            `---------------------------\n` +
-            `Tindakan ini akan menjual SEMUA aset anda pada harga pasar.`;
+            `⚠︎ *KONFIRMASI: CLOSE ALL*\n\n` +
+            `\`\`\`\n` +
+            `Action:     LIQUIDATE ALL\n` +
+            `Posisi:     ${activePositions.length}\n` +
+            `Est. Value: ${formatUSD(totalValue)}\n` +
+            `\`\`\`\n\n` +
+            `Tindakan ini akan menjual semua aset pada harga pasar.`;
 
           const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
             parse_mode: "Markdown",
@@ -272,7 +272,7 @@ export class CloseCommand implements Command {
           });
         } catch (error) {
           console.error("[CloseCommand] Error fetching portfolio:", error);
-          await bot.sendMessage(chatId, "⚠️ Gagal memproses permintaan.");
+          await bot.sendMessage(chatId, "× Gagal memproses permintaan.");
         }
       });
       return;
@@ -288,7 +288,7 @@ export class CloseCommand implements Command {
         const position = summary.positions.find((p) => p.symbol === symbol);
 
         if (!position || position.quantity <= 0) {
-          await bot.sendMessage(chatId, `⚠️ Tidak ada posisi ${symbol} terbuka.`);
+          await bot.sendMessage(chatId, `× Tidak ada posisi ${symbol} terbuka.`);
           return;
         }
 
@@ -299,13 +299,13 @@ export class CloseCommand implements Command {
 
         // Show confirmation dialog
         const confirmMessage =
-          `⚠️ *KONFIRMASI: CLOSE POSISI*\n` +
-          `---------------------------\n` +
-          `Action: *CLOSE ${symbol}*\n` +
-          `Qty:    *${quantity}*\n` +
-          `Price:  *${formatUSD(price)}*\n` +
-          `Est. Total: *${formatUSD(total)}*\n` +
-          `---------------------------\n`;
+          `⚠︎ *KONFIRMASI: CLOSE POSISI*\n\n` +
+          `\`\`\`\n` +
+          `Action:     CLOSE ${symbol}\n` +
+          `Qty:        ${quantity}\n` +
+          `Price:      ${formatUSD(price)}\n` +
+          `Est. Total: ${formatUSD(total)}\n` +
+          `\`\`\``;
 
         const sentMessage = await bot.sendMessage(chatId, confirmMessage, {
           parse_mode: "Markdown",
@@ -329,7 +329,7 @@ export class CloseCommand implements Command {
         });
       } catch (error) {
         console.error("[CloseCommand] Error fetching position/price:", error);
-        await bot.sendMessage(chatId, "⚠️ Gagal memproses permintaan.");
+        await bot.sendMessage(chatId, "× Gagal memproses permintaan.");
       }
     });
   }
@@ -365,7 +365,7 @@ export class TradeConfirmHandler implements CallbackHandler {
     if (decision === "no") {
       // Cancel trade
       sessionManager.clearState(chatId);
-      await bot.editMessageText("❌ Transaksi dibatalkan.", {
+      await bot.editMessageText("× Transaksi dibatalkan.", {
         chat_id: chatId,
         message_id: messageId,
       });
@@ -388,7 +388,7 @@ export class TradeConfirmHandler implements CallbackHandler {
             parse_mode: "Markdown",
           });
 
-          await bot.answerCallbackQuery(query.id, { text: result.success ? "✅ Berhasil" : "❌ Gagal" });
+          await bot.answerCallbackQuery(query.id, { text: result.success ? "✓ Berhasil" : "× Gagal" });
           return;
         }
 
@@ -408,12 +408,12 @@ export class TradeConfirmHandler implements CallbackHandler {
           parse_mode: "Markdown",
         });
 
-        await bot.answerCallbackQuery(query.id, { text: "✅ Order Tereksekusi" });
+        await bot.answerCallbackQuery(query.id, { text: "✓ Order Tereksekusi" });
 
         // For BUY orders, offer TP/SL protection
         if (action === "buy" && result.success && result.position) {
           const protectionMessage =
-            `🛡️ *Take Profit / Stop Loss*\n\n` +
+            `*Take Profit / Stop Loss*\n\n` +
             `Entry: $${tradeData.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
             `Lindungi posisi anda dengan TP/SL.`;
 
@@ -436,7 +436,7 @@ export class TradeConfirmHandler implements CallbackHandler {
       } catch (error) {
         console.error("[TradeConfirmHandler] Error:", error);
         sessionManager.clearState(chatId);
-        await bot.editMessageText("⚠️ Gagal memproses order.", {
+        await bot.editMessageText("× Gagal memproses order.", {
           chat_id: chatId,
           message_id: messageId,
         });
@@ -456,13 +456,13 @@ export class HistoryCommand implements Command {
     const chatId = msg.chat.id;
 
     try {
-      let message = "📜 *Riwayat Trading*\n\n";
+      let message = "*Riwayat Trading*\n\n";
       message += "_Gunakan /portfolio untuk melihat posisi aktif._";
 
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[HistoryCommand] Error:", error);
-      await bot.sendMessage(chatId, "⚠️ Gagal mengambil riwayat.");
+      await bot.sendMessage(chatId, "× Gagal mengambil riwayat.");
     }
   }
 }

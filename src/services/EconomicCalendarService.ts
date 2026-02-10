@@ -97,10 +97,10 @@ export class EconomicCalendarService {
    */
   formatEvents(events: EconomicEvent[]): string {
     if (events.length === 0) {
-      return "📅 Tidak ada event ekonomi penting hari ini.";
+      return "Tidak ada event ekonomi penting hari ini.";
     }
 
-    let message = "📅 *Economic Calendar - Today*\n\n";
+    let message = "*Economic Calendar — Today*\n\n";
 
     // Group by impact
     const highImpact = events.filter((e) => e.impact === "high");
@@ -108,7 +108,7 @@ export class EconomicCalendarService {
     const lowImpact = events.filter((e) => e.impact === "low");
 
     if (highImpact.length > 0) {
-      message += "🔴 *HIGH IMPACT*\n";
+      message += "*HIGH IMPACT*\n";
       for (const event of highImpact) {
         message += this.formatEventLine(event);
       }
@@ -116,7 +116,7 @@ export class EconomicCalendarService {
     }
 
     if (mediumImpact.length > 0) {
-      message += "🟡 *MEDIUM IMPACT*\n";
+      message += "*MEDIUM IMPACT*\n";
       for (const event of mediumImpact.slice(0, 5)) {
         message += this.formatEventLine(event);
       }
@@ -124,7 +124,7 @@ export class EconomicCalendarService {
     }
 
     if (lowImpact.length > 0 && highImpact.length + mediumImpact.length < 5) {
-      message += "🟢 *LOW IMPACT*\n";
+      message += "*LOW IMPACT*\n";
       for (const event of lowImpact.slice(0, 3)) {
         message += this.formatEventLine(event);
       }
@@ -174,17 +174,17 @@ export class EconomicCalendarService {
    */
   private getCountryFlag(country: string): string {
     const flags: Record<string, string> = {
-      USD: "🇺🇸",
-      EUR: "🇪🇺",
-      GBP: "🇬🇧",
-      JPY: "🇯🇵",
-      CHF: "🇨🇭",
-      AUD: "🇦🇺",
-      CAD: "🇨🇦",
-      NZD: "🇳🇿",
-      CNY: "🇨🇳",
-      INR: "🇮🇳",
+      USD: "US",
+      EUR: "EU",
+      GBP: "GB",
+      JPY: "JP",
+      CHF: "CH",
+      AUD: "AU",
+      CAD: "CA",
+      NZD: "NZ",
+      CNY: "CN",
+      INR: "IN",
     };
-    return flags[country.toUpperCase()] || "🌍";
+    return flags[country.toUpperCase()] || country;
   }
 }

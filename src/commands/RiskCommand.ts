@@ -29,7 +29,7 @@ export class RiskInputHandler {
     const value = parseFloat(text);
 
     if (isNaN(value) || value <= 0) {
-      await bot.sendMessage(chatId, "⚠️ Input tidak valid. Masukkan angka positif.");
+      await bot.sendMessage(chatId, "⚠︎ Input tidak valid. Masukkan angka positif.");
       return;
     }
 
@@ -39,14 +39,14 @@ export class RiskInputHandler {
       sessionManager.updateRiskData(chatId, { capital: value });
       sessionManager.setRiskStep(chatId, "risk_percent");
 
-      await bot.sendMessage(chatId, `💰 Modal: ${formatUSD(value)}\n\nPilih persentase risiko per trade:`, {
+      await bot.sendMessage(chatId, `Modal: ${formatUSD(value)}\n\nPilih persentase risiko per trade:`, {
         reply_markup: { inline_keyboard: createRiskPercentButtons() },
       });
     } else if (state.step === "risk_percentage") {
       sessionManager.updateRiskData(chatId, { riskPercent: value });
       sessionManager.setRiskStep(chatId, "stop_loss");
 
-      await bot.sendMessage(chatId, `⚠️ Risiko: ${value}%\n\nTentukan Stop Loss (pips):`, {
+      await bot.sendMessage(chatId, `Risiko: ${value}%\n\nTentukan Stop Loss (pips):`, {
         reply_markup: { inline_keyboard: createStopLossButtons() },
       });
     } else if (state.step === "stop_loss") {
@@ -69,14 +69,14 @@ export class RiskInputHandler {
     const positionSize = riskAmount / ((data.stopLossPips || 1) * 10);
 
     const message =
-      `🧮 *HASIL KALKULASI RISIKO*\n` +
-      `---------------------------\n` +
-      `Modal:    ${formatUSD(data.capital || 0)}\n` +
-      `Risiko:   ${data.riskPercent || 0}% (${formatUSD(riskAmount)})\n` +
-      `Stop Loss:${data.stopLossPips || 0} pips\n` +
-      `---------------------------\n` +
-      `✅ *REKOMENDASI LOT*\n` +
-      `👉 *${positionSize.toFixed(2)} Lot*`;
+      `*HASIL KALKULASI RISIKO*\n\n` +
+      `\`\`\`\n` +
+      `Modal:     ${formatUSD(data.capital || 0)}\n` +
+      `Risiko:    ${data.riskPercent || 0}% (${formatUSD(riskAmount)})\n` +
+      `Stop Loss: ${data.stopLossPips || 0} pips\n` +
+      `\`\`\`\n\n` +
+      `✓ *REKOMENDASI LOT*\n` +
+      `→ *${positionSize.toFixed(2)} Lot*`;
 
     await bot.sendMessage(chatId, message, {
       parse_mode: "Markdown",
@@ -100,16 +100,12 @@ export class RiskCommand implements Command, CallbackHandler {
     // Start wizard
     sessionManager.startRiskWizard(chatId);
 
-    await bot.sendMessage(
-      chatId,
-      `🧮 *Kalkulator Risiko*\n` + `---------------------------\n` + `Pilih modal trading anda:`,
-      {
-        reply_markup: {
-          inline_keyboard: createCapitalButtons(),
-        },
-        parse_mode: "Markdown",
+    await bot.sendMessage(chatId, `*Kalkulator Risiko*\n\nPilih modal trading anda:`, {
+      reply_markup: {
+        inline_keyboard: createCapitalButtons(),
       },
-    );
+      parse_mode: "Markdown",
+    });
   }
 
   async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
@@ -124,7 +120,7 @@ export class RiskCommand implements Command, CallbackHandler {
     if (action.startsWith("cap_")) {
       // Capital Selection
       if (action === "cap_custom") {
-        await safeEditMessage(bot, chatId, messageId, "✏️ Masukkan jumlah modal (USD):");
+        await safeEditMessage(bot, chatId, messageId, "Masukkan jumlah modal (USD):");
         // The SessionInputHandler will catch the next text message
         return;
       }
@@ -133,13 +129,13 @@ export class RiskCommand implements Command, CallbackHandler {
       sessionManager.updateRiskData(chatId, { capital: value });
       sessionManager.setRiskStep(chatId, "risk_percent");
 
-      await safeEditMessage(bot, chatId, messageId, `💰 Modal: ${formatUSD(value)}\n\nPilih persentase risiko:`, {
+      await safeEditMessage(bot, chatId, messageId, `Modal: ${formatUSD(value)}\n\nPilih persentase risiko:`, {
         reply_markup: { inline_keyboard: createRiskPercentButtons() },
       });
     } else if (action.startsWith("pct_")) {
       // Percentage Selection
       if (action === "pct_custom") {
-        await safeEditMessage(bot, chatId, messageId, "✏️ Masukkan persen risiko (contoh: 1.5):");
+        await safeEditMessage(bot, chatId, messageId, "Masukkan persen risiko (contoh: 1.5):");
         return;
       }
 
@@ -147,13 +143,13 @@ export class RiskCommand implements Command, CallbackHandler {
       sessionManager.updateRiskData(chatId, { riskPercent: value }); // FIXED
       sessionManager.setRiskStep(chatId, "stop_loss");
 
-      await safeEditMessage(bot, chatId, messageId, `⚠️ Risiko: ${value}%\n\nTentukan Stop Loss (pips):`, {
+      await safeEditMessage(bot, chatId, messageId, `Risiko: ${value}%\n\nTentukan Stop Loss (pips):`, {
         reply_markup: { inline_keyboard: createStopLossButtons() },
       });
     } else if (action.startsWith("sl_")) {
       // Stop Loss Selection
       if (action === "sl_custom") {
-        await safeEditMessage(bot, chatId, messageId, "✏️ Masukkan Stop Loss (pips):");
+        await safeEditMessage(bot, chatId, messageId, "Masukkan Stop Loss (pips):");
         return;
       }
 
@@ -172,33 +168,21 @@ export class RiskCommand implements Command, CallbackHandler {
       sessionManager.clearState(chatId);
     } else if (action === "restart") {
       sessionManager.startRiskWizard(chatId);
-      await safeEditMessage(
-        bot,
-        chatId,
-        messageId,
-        `🧮 *Kalkulator Risiko*\n---------------------------\nPilih modal trading anda:`,
-        {
-          reply_markup: { inline_keyboard: createCapitalButtons() },
-          parse_mode: "Markdown",
-        },
-      );
+      await safeEditMessage(bot, chatId, messageId, `*Kalkulator Risiko*\n\nPilih modal trading anda:`, {
+        reply_markup: { inline_keyboard: createCapitalButtons() },
+        parse_mode: "Markdown",
+      });
     } else if (action === "cancel") {
       sessionManager.clearState(chatId);
-      await safeEditMessage(bot, chatId, messageId, "❌ Kalkulator ditutup.");
+      await safeEditMessage(bot, chatId, messageId, "× Kalkulator ditutup.");
     } else if (action.startsWith("back_")) {
       // Back navigation logic could be added here
       // For now, simplify to restart
       sessionManager.startRiskWizard(chatId);
-      await safeEditMessage(
-        bot,
-        chatId,
-        messageId,
-        `🧮 *Kalkulator Risiko*\n---------------------------\nPilih modal trading anda:`,
-        {
-          reply_markup: { inline_keyboard: createCapitalButtons() },
-          parse_mode: "Markdown",
-        },
-      );
+      await safeEditMessage(bot, chatId, messageId, `*Kalkulator Risiko*\n\nPilih modal trading anda:`, {
+        reply_markup: { inline_keyboard: createCapitalButtons() },
+        parse_mode: "Markdown",
+      });
     }
 
     await bot.answerCallbackQuery(query.id);

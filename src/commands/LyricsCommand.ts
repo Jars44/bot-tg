@@ -22,7 +22,7 @@ export class LyricsCommand implements Command {
     if (!input) {
       await bot.sendMessage(
         chatId,
-        `🎵 *Cari Lirik Lagu*\n\n` +
+        `*Cari Lirik Lagu*\n\n` +
           `Mencari teks lirik lagu lengkap dari berbagai artis.\n\n` +
           `*Gunakan:* \`/lirik [Artis] - [Judul]\`\n\n` +
           `*Contoh:*\n` +
@@ -38,7 +38,7 @@ export class LyricsCommand implements Command {
     // Parse "Artist - Title" format
     const parts = input.split(" - ");
     if (parts.length !== 2) {
-      await bot.sendMessage(chatId, "❌ Format salah!\nGunakan: `/lirik [Artis] - [Judul]`", {
+      await bot.sendMessage(chatId, "× Format salah.\nGunakan: `/lirik [Artis] - [Judul]`", {
         parse_mode: "Markdown",
       });
       return;
@@ -64,7 +64,7 @@ export class LyricsCommand implements Command {
         return;
       }
 
-      await bot.editMessageText(`🎵 *${title}* - ${artist}\n\n${lyrics}`, {
+      await bot.editMessageText(`*${title}* — ${artist}\n\n${lyrics}`, {
         chat_id: chatId,
         message_id: searchingMessage.message_id,
         parse_mode: "Markdown",

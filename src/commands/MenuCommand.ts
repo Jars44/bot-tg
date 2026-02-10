@@ -22,6 +22,7 @@ import type { PortfolioCommand } from "./TradeCommand.js";
 import type { CalendarCommand } from "./CalendarCommand.js";
 import type { MyAlertsCommand } from "./AlertCommand.js";
 import type { QuoteService } from "../services/QuoteService.js";
+import type { ExpenseCommand, LaporanCommand, RekapCommand } from "./ExpenseCommand.js";
 
 /**
  * Main menu command handler
@@ -45,7 +46,7 @@ export class MenuCommand implements Command, CallbackHandler {
     const chatId = msg.chat.id;
     const text = msg.text || "";
 
-    let messageText = `Jarvis Bot Dashboard\n` + `---------------------------\n` + `Pilih layanan yang tersedia:`;
+    let messageText = `Jarvis Bot Dashboard\n` + `\n` + `Pilih layanan yang tersedia:`;
 
     // Add welcome message for /start command
     if (text.startsWith("/start")) {
@@ -136,13 +137,13 @@ export class MenuCommand implements Command, CallbackHandler {
         // Interactive inputs - Prompt user
         let prompt = "";
         if (action === "anime") {
-          prompt = "🎬 Masukkan judul Anime:";
+          prompt = "Masukkan judul Anime:";
           sessionManager.startAnimeSearch(chatId, messageId);
         } else if (action === "lyrics") {
-          prompt = "🎵 Masukkan judul lagu (Artist - Title):";
+          prompt = "Masukkan judul lagu (Artist - Title):";
           sessionManager.startLyricsSearch(chatId, messageId);
         } else if (action === "movie") {
-          prompt = "🎬 Masukkan judul Film:";
+          prompt = "Masukkan judul Film:";
           sessionManager.startMovieSearch(chatId, messageId);
         }
 
@@ -164,7 +165,7 @@ export class MenuCommand implements Command, CallbackHandler {
         try {
           const quote = await this.quoteService.getQuoteOfTheDay();
           if (quote) {
-            await safeEditMessage(bot, chatId, messageId, `💬 _"${quote.body}"_\n\n— *${quote.author}*`, {
+            await safeEditMessage(bot, chatId, messageId, `_"${quote.body}"_\n\n— *${quote.author}*`, {
               parse_mode: "Markdown",
               reply_markup: { inline_keyboard: getBackToMenuButton() },
             });
@@ -184,9 +185,9 @@ export class MenuCommand implements Command, CallbackHandler {
       case "weather":
         // Wizard flow: Ask for city name
         sessionManager.startWeatherMenu(chatId, messageId);
-        await safeEditMessage(bot, chatId, messageId, "🌤 Silakan ketik nama kota untuk melihat cuaca:", {
+        await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat cuaca:", {
           reply_markup: {
-            inline_keyboard: createGrid([{ text: "❌ Batal", callback_data: "menu_back" }]),
+            inline_keyboard: createGrid([{ text: "× Batal", callback_data: "menu_back" }]),
           },
         });
         break;
@@ -194,9 +195,9 @@ export class MenuCommand implements Command, CallbackHandler {
       case "prayer":
         // Wizard flow: Ask for city name
         sessionManager.startPrayerMenu(chatId, messageId);
-        await safeEditMessage(bot, chatId, messageId, "🕌 Silakan ketik nama kota untuk melihat jadwal sholat:", {
+        await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat jadwal sholat:", {
           reply_markup: {
-            inline_keyboard: createGrid([{ text: "❌ Batal", callback_data: "menu_back" }]),
+            inline_keyboard: createGrid([{ text: "× Batal", callback_data: "menu_back" }]),
           },
         });
         break;
@@ -236,10 +237,36 @@ export class TradingMenuHandler implements CallbackHandler {
 
     switch (action) {
       case "buy":
-        await bot.sendMessage(chatId, "Gunakan perintah manual: /buy [Symbol] [Qty]");
+        // Start buy wizard - prompt for symbol
+        sessionManager.startBuyWizard(chatId, messageId);
+        await safeEditMessage(
+          bot,
+          chatId,
+          messageId,
+          "*Buy Wizard*\n\nMasukkan simbol aset (contoh: BTC, ETH, AAPL):",
+          {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [[{ text: "× Batal", callback_data: "menu_back" }]],
+            },
+          },
+        );
         break;
       case "sell":
-        await bot.sendMessage(chatId, "Gunakan perintah manual: /sell [Symbol] [Qty]");
+        // Start sell wizard - prompt for symbol
+        sessionManager.startSellWizard(chatId, messageId);
+        await safeEditMessage(
+          bot,
+          chatId,
+          messageId,
+          "*Sell Wizard*\n\nMasukkan simbol aset (contoh: BTC, ETH, AAPL):",
+          {
+            parse_mode: "Markdown",
+            reply_markup: {
+              inline_keyboard: [[{ text: "× Batal", callback_data: "menu_back" }]],
+            },
+          },
+        );
         break;
       case "portfolio":
         await bot.deleteMessage(chatId, messageId);
@@ -269,21 +296,37 @@ export class TradingMenuHandler implements CallbackHandler {
 export class FinanceMenuHandler implements CallbackHandler {
   prefix = "fin_";
 
+  // Dependencies
+  private catatCommand: ExpenseCommand;
+  private rekapCommand: RekapCommand;
+  private laporanCommand: LaporanCommand;
+
+  constructor(catatCommand: ExpenseCommand, rekapCommand: RekapCommand, laporanCommand: LaporanCommand) {
+    this.catatCommand = catatCommand;
+    this.rekapCommand = rekapCommand;
+    this.laporanCommand = laporanCommand;
+  }
+
   async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
     const chatId = query.message?.chat.id;
-    if (!chatId) return;
+    const messageId = query.message?.message_id;
+
+    if (!chatId || !messageId) return;
 
     const action = data.replace("fin_", "");
 
     switch (action) {
       case "catat":
-        await bot.sendMessage(chatId, "Gunakan perintah: /catat");
+        await bot.deleteMessage(chatId, messageId);
+        await this.catatCommand.execute(bot, createMockMessage(query));
         break;
       case "rekap":
-        await bot.sendMessage(chatId, "Gunakan perintah: /rekap");
+        await bot.deleteMessage(chatId, messageId);
+        await this.rekapCommand.execute(bot, createMockMessage(query));
         break;
       case "laporan":
-        await bot.sendMessage(chatId, "Gunakan perintah: /laporan");
+        await bot.deleteMessage(chatId, messageId);
+        await this.laporanCommand.execute(bot, createMockMessage(query));
         break;
     }
 
