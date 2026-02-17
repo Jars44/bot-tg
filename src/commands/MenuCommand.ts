@@ -21,6 +21,7 @@ import type { HelpCommand } from "./HelpCommand.js";
 import type { PortfolioCommand } from "./TradeCommand.js";
 import type { CalendarCommand } from "./CalendarCommand.js";
 import type { MyAlertsCommand } from "./AlertCommand.js";
+import type { GeoGuessrCommand } from "./GeoGuessrCommand.js";
 import type { QuoteService } from "../services/QuoteService.js";
 import type { ExpenseCommand, LaporanCommand, RekapCommand } from "./ExpenseCommand.js";
 
@@ -34,11 +35,18 @@ export class MenuCommand implements Command, CallbackHandler {
   // Dependencies injected via constructor
   private newsCommand: NewsCommand;
   private helpCommand: HelpCommand;
+  private geoGuessrCommand: GeoGuessrCommand;
   private quoteService: QuoteService;
 
-  constructor(newsCommand: NewsCommand, helpCommand: HelpCommand, quoteService: QuoteService) {
+  constructor(
+    newsCommand: NewsCommand,
+    helpCommand: HelpCommand,
+    geoGuessrCommand: GeoGuessrCommand,
+    quoteService: QuoteService,
+  ) {
     this.newsCommand = newsCommand;
     this.helpCommand = helpCommand;
+    this.geoGuessrCommand = geoGuessrCommand;
     this.quoteService = quoteService;
   }
 
@@ -129,6 +137,12 @@ export class MenuCommand implements Command, CallbackHandler {
         // Direct execution of HelpCommand
         await bot.deleteMessage(chatId, messageId);
         await this.helpCommand.execute(bot, createMockMessage(query));
+        break;
+
+      case "geoguessr":
+        // Direct execution of GeoGuessrCommand
+        await bot.deleteMessage(chatId, messageId);
+        await this.geoGuessrCommand.execute(bot, createMockMessage(query));
         break;
 
       case "anime":

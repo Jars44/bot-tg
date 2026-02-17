@@ -136,6 +136,19 @@ export interface ReminderSessionData {
   messageId: number;
 }
 
+/** GeoGuessr game session data */
+export interface GeoGuessrSessionData {
+  targetCountry: string;
+  targetState: string | null;
+  targetCity: string | null;
+  formattedAddress: string;
+  lat: number;
+  lng: number;
+  attempts: number;
+  messageId: number;
+  score: number;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
@@ -158,6 +171,7 @@ export type SessionState =
   | { flow: "sentiment"; step: "input"; data: SentimentSessionData }
   | { flow: "alert"; step: "input"; data: AlertSessionData }
   | { flow: "reminder"; step: "input"; data: ReminderSessionData }
+  | { flow: "geoguessr"; step: "guessing"; data: GeoGuessrSessionData }
   | null;
 
 /** Session with metadata */
@@ -193,6 +207,7 @@ export const SESSION_FLOWS = {
   SENTIMENT: "sentiment",
   ALERT: "alert",
   REMINDER: "reminder",
+  GEOGUESSR: "geoguessr",
 } as const;
 
 /**

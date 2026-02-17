@@ -124,6 +124,7 @@ export const MENU_EXPERIMENTAL_BUTTONS = [
   { text: "Anime", callback_data: "menu_anime" },
   { text: "Lirik", callback_data: "menu_lyrics" },
   { text: "Film", callback_data: "menu_movie" },
+  { text: "GeoGuessr", callback_data: "menu_geoguessr" },
   { text: "Help", callback_data: "menu_help" },
 ];
 

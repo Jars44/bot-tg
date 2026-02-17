@@ -97,6 +97,14 @@ export const CONFIG = {
     BEARISH: ["crash", "plunge", "crisis", "dump", "sell-off", "bearish", "decline", "drop", "fall", "recession"],
     BULLISH: ["surge", "record", "bull", "rally", "breakout", "bullish", "gain", "rise", "soar", "moon"],
   },
+
+  /** AI Chat Configuration */
+  AI: {
+    /** Maximum conversation history pairs (user+model) to keep in memory */
+    MAX_HISTORY_PAIRS: 5,
+    /** Model name for Gemini */
+    MODEL: "gemini-2.0-flash-exp",
+  },
 } as const;
 
 /** Environment variable keys */
@@ -104,6 +112,7 @@ export const ENV_KEYS = {
   BOT_TOKEN: "BOT_TOKEN",
   TMDB_API_KEY: "TMDB_API_KEY",
   GNEWS_API_TOKEN: "GNEWS_API_TOKEN",
+  GEMINI_API_KEY: "GEMINI_API_KEY",
 } as const;
 
 /** Get environment variable with validation */

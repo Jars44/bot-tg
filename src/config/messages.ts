@@ -258,4 +258,40 @@ Informasi dan sinopsis dari MyAnimeList.
 \`/anime Attack on Titan\`
 \`/anime One Piece\`
 \`/anime Jujutsu Kaisen\``,
+
+  // GeoGuessr Game
+  GEOGUESSR_SEARCHING: "⧗ Mencari lokasi misterius...",
+  GEOGUESSR_PROMPT:
+    "📍 **Tebak Lokasi**\n\nLihat pin di atas. Balas pesan ini dengan nama *Negara*, *Provinsi*, atau *Kota* dari lokasi tersebut.\n\n_Ketik /nyerah untuk menyerah._",
+  GEOGUESSR_CORRECT_CITY: (city: string, country: string, points: number) =>
+    `✓ **Tepat sekali!**\n\nLokasi: *${city}, ${country}*\n+${points} poin`,
+  GEOGUESSR_CORRECT_STATE: (state: string, country: string, points: number) =>
+    `✓ **Benar!**\n\nProvinsi/Negara bagian: *${state}, ${country}*\n+${points} poin`,
+  GEOGUESSR_CORRECT_COUNTRY: (country: string, points: number) =>
+    `✓ **Hampir!**\n\nNegara: *${country}*\n+${points} poin`,
+  GEOGUESSR_WRONG: (attempts: number) =>
+    `× **Kurang tepat!**\n\nPercobaan ke-${attempts}. Coba lagi atau ketik /nyerah.`,
+  GEOGUESSR_GIVE_UP: (city: string | null, state: string | null, country: string, address: string) => {
+    const location = city || state || country;
+    return `**Menyerah**\n\nJawaban: *${location}, ${country}*\n\n_${address}_`;
+  },
+  GEOGUESSR_ERROR: "× Gagal memproses permainan. Silakan coba lagi.",
+  GEOGUESSR_NO_ACTIVE_GAME: "× Tidak ada permainan aktif. Gunakan /geoguessr untuk memulai.",
+
+  GUIDE_GEOGUESSR: `**Tebak Lokasi (GeoGuessr)**
+
+Permainan tebak lokasi berdasarkan pin peta.
+
+**Cara Bermain:**
+1. Gunakan \`/geoguessr\` untuk memulai
+2. Bot akan mengirim pin lokasi di peta
+3. Balas dengan nama Negara, Provinsi, atau Kota
+4. Ketik \`/nyerah\` untuk menyerah
+
+**Poin:**
+• Tebak Kota tepat: +10 poin
+• Tebak Provinsi: +5 poin
+• Tebak Negara: +2 poin
+
+_Lokasi random: 60% Indonesia, 40% dunia._`,
 } as const;

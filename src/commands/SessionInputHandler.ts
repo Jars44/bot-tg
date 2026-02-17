@@ -28,6 +28,8 @@ import { SentimentCommand } from "./SentimentCommand.js";
 import { AlertCommand } from "./AlertCommand.js";
 import { ReminderCommand } from "./ReminderCommand.js";
 import { BuyCommand, SellCommand } from "./TradeCommand.js";
+import { GeoGuessrService } from "../services/GeoGuessrService.js";
+import { MESSAGES } from "../config/messages.js";
 
 /**
  * Handles text input during active sessions (e.g. asking for location, song title)
@@ -47,6 +49,7 @@ export class SessionInputHandler implements MessageHandler {
   private reminderCommand: ReminderCommand;
   private buyCommand: BuyCommand;
   private sellCommand: SellCommand;
+  private geoGuessrService: GeoGuessrService;
 
   constructor(
     animeCommand: AnimeCommand,
@@ -78,6 +81,7 @@ export class SessionInputHandler implements MessageHandler {
     this.reminderCommand = reminderCommand;
     this.buyCommand = buyCommand;
     this.sellCommand = sellCommand;
+    this.geoGuessrService = new GeoGuessrService();
   }
 
   /**
@@ -105,7 +109,8 @@ export class SessionInputHandler implements MessageHandler {
       state.flow === SESSION_FLOWS.ALERT ||
       state.flow === SESSION_FLOWS.REMINDER ||
       state.flow === SESSION_FLOWS.BUY_WIZARD ||
-      state.flow === SESSION_FLOWS.SELL_WIZARD
+      state.flow === SESSION_FLOWS.SELL_WIZARD ||
+      state.flow === SESSION_FLOWS.GEOGUESSR
     );
   }
 
@@ -217,6 +222,60 @@ export class SessionInputHandler implements MessageHandler {
       const parts = text.split(/\s+/);
       const match = ["/sell " + text, parts[0], parts[1]] as RegExpMatchArray;
       await this.sellCommand.execute(bot, msg, match);
+    } else if (state.flow === SESSION_FLOWS.GEOGUESSR) {
+      // Handle GeoGuessr guess
+      if (state.step === "guessing") {
+        const data = state.data;
+        data.attempts += 1;
+
+        // Check answer using fuzzy matching
+        const answerKey = {
+          country: data.targetCountry,
+          state: data.targetState,
+          city: data.targetCity,
+          formattedAddress: data.formattedAddress,
+        };
+
+        const result = this.geoGuessrService.matchAnswer(text, answerKey);
+
+        if (result.match) {
+          // Correct answer!
+          let responseMessage = "";
+
+          if (result.level === "city") {
+            responseMessage = MESSAGES.GEOGUESSR_CORRECT_CITY(
+              data.targetCity || "",
+              data.targetCountry,
+              result.points || 10,
+            );
+          } else if (result.level === "state") {
+            responseMessage = MESSAGES.GEOGUESSR_CORRECT_STATE(
+              data.targetState || "",
+              data.targetCountry,
+              result.points || 5,
+            );
+          } else if (result.level === "country") {
+            responseMessage = MESSAGES.GEOGUESSR_CORRECT_COUNTRY(data.targetCountry, result.points || 2);
+          }
+
+          await bot.sendMessage(chatId, responseMessage, { parse_mode: "Markdown" });
+
+          // Clear session
+          sessionManager.clearState(chatId);
+        } else {
+          // Wrong answer
+          await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_WRONG(data.attempts), { parse_mode: "Markdown" });
+
+          // Update attempts count in session
+          sessionManager.setState(chatId, {
+            ...state,
+            data: {
+              ...data,
+              attempts: data.attempts,
+            },
+          });
+        }
+      }
     }
   }
 }

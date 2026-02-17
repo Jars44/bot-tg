@@ -75,6 +75,7 @@ import { SentimentCommand } from "./commands/SentimentCommand.js";
 import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.js";
 import { ChartCommand, ChartCallbackHandler } from "./commands/ChartCommand.js";
 import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js";
+import { GeoGuessrCommand, GiveUpCommand } from "./commands/GeoGuessrCommand.js";
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
@@ -149,7 +150,8 @@ async function main(): Promise<void> {
   // DI for MenuCommand
   const newsCommand = new NewsCommand(newsService);
   const helpCommand = new HelpCommand();
-  const menuCommand = new MenuCommand(newsCommand, helpCommand, quoteService);
+  const geoGuessrCommand = new GeoGuessrCommand();
+  const menuCommand = new MenuCommand(newsCommand, helpCommand, geoGuessrCommand, quoteService);
 
   // Market Hub Command (with DI)
   const marketCommand = new MarketCommand(tradingEngine);
@@ -231,8 +233,11 @@ async function main(): Promise<void> {
     new HighImpactCommand(economicCalendarService), // /highimpact
 
     // Charting
-    // Charting
     chartCommand, // /chart [symbol] [timeframe]
+
+    // Mini-Games
+    geoGuessrCommand, // /geoguessr
+    new GiveUpCommand(), // /nyerah
   ];
 
   // Message handlers (for non-command messages)
