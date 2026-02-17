@@ -85,7 +85,7 @@ export const CONFIG = {
     WHALE_THRESHOLD_USD: 500000,
     /** Arbitrage opportunity threshold percentage */
     ARBITRAGE_THRESHOLD_PCT: 1.5,
-    
+
     /** Price check interval in milliseconds (1 minute) */
     CHECK_INTERVAL_MS: 60 * 1000,
     /** Conversation state expiry in milliseconds (10 minutes) */
@@ -103,7 +103,7 @@ export const CONFIG = {
     /** Maximum conversation history pairs (user+model) to keep in memory */
     MAX_HISTORY_PAIRS: 5,
     /** Model name for Gemini */
-    MODEL: "gemini-2.0-flash-exp",
+    MODEL: "gemini-2.5-flash",
   },
 } as const;
 

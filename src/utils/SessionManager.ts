@@ -149,6 +149,14 @@ export interface GeoGuessrSessionData {
   score: number;
 }
 
+/** AI Chat session data */
+export interface AiChatSessionData {
+  history: Array<{
+    role: "user" | "model";
+    parts: Array<{ text: string }>;
+  }>;
+}
+
 /** All possible session states */
 export type SessionState =
   | { flow: "expense"; step: "type" | "amount" | "category" | "custom"; data: ExpenseSessionData }
@@ -172,6 +180,7 @@ export type SessionState =
   | { flow: "alert"; step: "input"; data: AlertSessionData }
   | { flow: "reminder"; step: "input"; data: ReminderSessionData }
   | { flow: "geoguessr"; step: "guessing"; data: GeoGuessrSessionData }
+  | { flow: "ai_chat"; step: "chatting"; data: AiChatSessionData }
   | null;
 
 /** Session with metadata */
@@ -208,6 +217,7 @@ export const SESSION_FLOWS = {
   ALERT: "alert",
   REMINDER: "reminder",
   GEOGUESSR: "geoguessr",
+  AI_CHAT: "ai_chat",
 } as const;
 
 /**
@@ -556,6 +566,39 @@ export class SessionManager {
       flow: SESSION_FLOWS.REMINDER,
       step: "input",
       data: { messageId },
+    });
+  }
+
+  /**
+   * Start AI chat session
+   */
+  startAiChat(chatId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.AI_CHAT,
+      step: "chatting",
+      data: { history: [] },
+    });
+  }
+
+  /**
+   * Update AI chat history
+   * Maintains only the last MAX_HISTORY_PAIRS (10 messages = 5 user+model pairs)
+   */
+  updateAiChatHistory(chatId: number, role: "user" | "model", text: string): void {
+    const current = this.getState(chatId);
+    if (current?.flow !== SESSION_FLOWS.AI_CHAT) return;
+
+    const newMessage = { role, parts: [{ text }] };
+    const updatedHistory = [...current.data.history, newMessage];
+
+    // Keep only the last 10 messages (5 pairs)
+    const MAX_MESSAGES = 10;
+    const trimmedHistory = updatedHistory.slice(-MAX_MESSAGES);
+
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.AI_CHAT,
+      step: "chatting",
+      data: { history: trimmedHistory },
     });
   }
 

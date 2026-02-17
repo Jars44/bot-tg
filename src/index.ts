@@ -76,6 +76,7 @@ import { CalendarCommand, HighImpactCommand } from "./commands/CalendarCommand.j
 import { ChartCommand, ChartCallbackHandler } from "./commands/ChartCommand.js";
 import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js";
 import { GeoGuessrCommand, GiveUpCommand } from "./commands/GeoGuessrCommand.js";
+import { AiStartCommand, AiStopCommand } from "./commands/AiChatCommand.js";
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
@@ -86,6 +87,13 @@ async function main(): Promise<void> {
 
   // Setup global error handlers
   setupErrorHandlers();
+
+  // Validate bot token format
+  const token = getEnvVar(ENV_KEYS.BOT_TOKEN);
+  if (!token || token.length < 20 || !token.includes(":")) {
+    throw new Error("❌ Invalid or missing BOT_TOKEN. Check your .env file.");
+  }
+  console.log("[Bot] Token format validated");
 
   // Initialize database
   const db = new JsonDb();
@@ -124,10 +132,35 @@ async function main(): Promise<void> {
   const chartService = new ChartService(financeDataService);
   console.log("[Bot] Financial services initialized");
 
-  // Initialize bot
-  const token = getEnvVar(ENV_KEYS.BOT_TOKEN);
-  const bot = new TelegramBot(token, { polling: true });
-  console.log("[Bot] Telegram bot initialized");
+  // Initialize bot with polling options
+  const bot = new TelegramBot(token, {
+    polling: {
+      interval: 1000,
+      autoStart: true,
+      params: {
+        timeout: 10,
+        allowed_updates: ["message", "callback_query"],
+      },
+    },
+  });
+  console.log("[Bot] Telegram bot initialized with polling");
+
+  // Handle polling errors
+  bot.on("polling_error", (error) => {
+    const err = error as any;
+    if (err.code === "EFATAL") {
+      console.error("[Bot] Polling error EFATAL:", err.message);
+      console.log("[Bot] Attempting to restart polling...");
+      // Bot will automatically restart polling
+    } else {
+      console.error("[Bot] Polling error:", error);
+    }
+  });
+
+  // Handle bot errors
+  bot.on("error", (error) => {
+    console.error("[Bot] Bot error:", error);
+  });
 
   // Initialize commands with DI
   const reminderCommand = new ReminderCommand(db);
@@ -238,6 +271,10 @@ async function main(): Promise<void> {
     // Mini-Games
     geoGuessrCommand, // /geoguessr
     new GiveUpCommand(), // /nyerah
+
+    // AI Chat
+    new AiStartCommand(), // /ai or /chat
+    new AiStopCommand(), // /exit or /stopai
   ];
 
   // Message handlers (for non-command messages)

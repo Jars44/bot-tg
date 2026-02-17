@@ -29,7 +29,9 @@ import { AlertCommand } from "./AlertCommand.js";
 import { ReminderCommand } from "./ReminderCommand.js";
 import { BuyCommand, SellCommand } from "./TradeCommand.js";
 import { GeoGuessrService } from "../services/GeoGuessrService.js";
+import { AiService } from "../services/AiService.js";
 import { MESSAGES } from "../config/messages.js";
+import { withLoading } from "../utils/uiHelper.js";
 
 /**
  * Handles text input during active sessions (e.g. asking for location, song title)
@@ -50,6 +52,7 @@ export class SessionInputHandler implements MessageHandler {
   private buyCommand: BuyCommand;
   private sellCommand: SellCommand;
   private geoGuessrService: GeoGuessrService;
+  private aiService: AiService;
 
   constructor(
     animeCommand: AnimeCommand,
@@ -82,6 +85,7 @@ export class SessionInputHandler implements MessageHandler {
     this.buyCommand = buyCommand;
     this.sellCommand = sellCommand;
     this.geoGuessrService = new GeoGuessrService();
+    this.aiService = new AiService();
   }
 
   /**
@@ -110,7 +114,8 @@ export class SessionInputHandler implements MessageHandler {
       state.flow === SESSION_FLOWS.REMINDER ||
       state.flow === SESSION_FLOWS.BUY_WIZARD ||
       state.flow === SESSION_FLOWS.SELL_WIZARD ||
-      state.flow === SESSION_FLOWS.GEOGUESSR
+      state.flow === SESSION_FLOWS.GEOGUESSR ||
+      state.flow === SESSION_FLOWS.AI_CHAT
     );
   }
 
@@ -274,6 +279,37 @@ export class SessionInputHandler implements MessageHandler {
               attempts: data.attempts,
             },
           });
+        }
+      }
+    } else if (state.flow === SESSION_FLOWS.AI_CHAT) {
+      // Handle AI Chat
+      if (state.step === "chatting") {
+        try {
+          // Show typing indicator
+          await withLoading(
+            bot,
+            chatId,
+            async () => {
+              // Get AI response with conversation history
+              const response = await this.aiService.chatWithContext(text, state.data.history);
+
+              // Save user message to history
+              sessionManager.updateAiChatHistory(chatId, "user", text);
+
+              // Save AI response to history
+              sessionManager.updateAiChatHistory(chatId, "model", response);
+
+              // Send response to user
+              await bot.sendMessage(chatId, response, {
+                parse_mode: "Markdown",
+              });
+            },
+            "typing",
+          );
+        } catch (error) {
+          console.error("[SessionInputHandler] AI Chat error:", error);
+          const errorMessage = error instanceof Error ? error.message : MESSAGES.AI_ERROR;
+          await bot.sendMessage(chatId, errorMessage);
         }
       }
     }

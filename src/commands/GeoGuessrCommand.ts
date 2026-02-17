@@ -28,37 +28,51 @@ export class GeoGuessrCommand implements Command {
         bot,
         chatId,
         async () => {
-          // Generate random location
-          const location = this.geoGuessrService.generateRandomLocation();
+          try {
+            // Generate random location
+            const location = this.geoGuessrService.generateRandomLocation();
 
-          // Get answer key via reverse geocoding
-          const answerKey = await this.geoGuessrService.getAnswerKey(location.lat, location.lng);
+            // Get answer key via reverse geocoding
+            const answerKey = await this.geoGuessrService.getAnswerKey(location.lat, location.lng);
 
-          // Send location pin
-          const locationMessage = await bot.sendLocation(chatId, location.lat, location.lng);
+            // Send location pin
+            const locationMessage = await bot.sendLocation(chatId, location.lat, location.lng);
 
-          // Send prompt
-          const promptMessage = await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_PROMPT, {
-            parse_mode: "Markdown",
-            reply_to_message_id: locationMessage.message_id,
-          });
+            // Send prompt
+            const promptMessage = await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_PROMPT, {
+              parse_mode: "Markdown",
+              reply_to_message_id: locationMessage.message_id,
+            });
 
-          // Start session with answer key
-          sessionManager.setState(chatId, {
-            flow: SESSION_FLOWS.GEOGUESSR,
-            step: "guessing",
-            data: {
-              targetCountry: answerKey.country,
-              targetState: answerKey.state,
-              targetCity: answerKey.city,
-              formattedAddress: answerKey.formattedAddress,
-              lat: location.lat,
-              lng: location.lng,
-              attempts: 0,
-              messageId: promptMessage.message_id,
-              score: 0,
-            },
-          });
+            // Start session with answer key
+            sessionManager.setState(chatId, {
+              flow: SESSION_FLOWS.GEOGUESSR,
+              step: "guessing",
+              data: {
+                targetCountry: answerKey.country,
+                targetState: answerKey.state,
+                targetCity: answerKey.city,
+                formattedAddress: answerKey.formattedAddress,
+                lat: location.lat,
+                lng: location.lng,
+                attempts: 0,
+                messageId: promptMessage.message_id,
+                score: 0,
+              },
+            });
+          } catch (innerError) {
+            // Specific error handling during location fetch
+            console.error("[GeoGuessrCommand] Inner error:", innerError);
+            const errorMsg = innerError instanceof Error ? innerError.message : String(innerError);
+
+            if (errorMsg.includes("Failed to fetch location data")) {
+              await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_ERROR_API);
+            } else if (errorMsg.includes("No data available")) {
+              await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_ERROR_LOCATION);
+            } else {
+              await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_ERROR);
+            }
+          }
         },
         "find_location",
       );
@@ -78,27 +92,38 @@ export class GiveUpCommand implements Command {
 
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
-    const state = sessionManager.getState(chatId);
 
-    // Check if there's an active GeoGuessr game
-    if (!state || state.flow !== SESSION_FLOWS.GEOGUESSR) {
-      await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_NO_ACTIVE_GAME);
-      return;
+    try {
+      const state = sessionManager.getState(chatId);
+
+      // Check if there's an active GeoGuessr game
+      if (!state || state.flow !== SESSION_FLOWS.GEOGUESSR) {
+        await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_NO_ACTIVE_GAME);
+        return;
+      }
+
+      try {
+        const data = state.data;
+
+        // Reveal answer
+        const answerMessage = MESSAGES.GEOGUESSR_GIVE_UP(
+          data.targetCity,
+          data.targetState,
+          data.targetCountry,
+          data.formattedAddress,
+        );
+
+        await bot.sendMessage(chatId, answerMessage, { parse_mode: "Markdown" });
+      } catch (revealError) {
+        console.error("[GiveUpCommand] Error during answer reveal:", revealError);
+        await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_ERROR_LOCATION);
+      }
+
+      // Always clear session, even on error
+      sessionManager.clearState(chatId);
+    } catch (error) {
+      console.error("[GiveUpCommand] Error:", error);
+      await bot.sendMessage(chatId, MESSAGES.ERROR_GENERIC);
     }
-
-    const data = state.data;
-
-    // Reveal answer
-    const answerMessage = MESSAGES.GEOGUESSR_GIVE_UP(
-      data.targetCity,
-      data.targetState,
-      data.targetCountry,
-      data.formattedAddress,
-    );
-
-    await bot.sendMessage(chatId, answerMessage, { parse_mode: "Markdown" });
-
-    // Clear session
-    sessionManager.clearState(chatId);
   }
 }

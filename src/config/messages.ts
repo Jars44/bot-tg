@@ -119,6 +119,7 @@ Mencari rating, sinopsis, dan info rilis film.
 • /menu — Pusat navigasi utama
 • /chart — Grafik candlestick crypto/forex
 • /portfolio — Saldo, aset, dan profit/loss
+• /ai — Mode percakapan AI
 • /help — Bantuan
 
 *Ibadah & Lokasi*
@@ -146,6 +147,7 @@ Mencari rating, sinopsis, dan info rilis film.
 • /anime — Cari info anime
 • /lirik — Cari lirik lagu
 • /film — Cari info film
+• /geoguessr — Tebak lokasi dari pin peta
 
 *Eksperimental*
 • /download — Unduh video/audio
@@ -276,6 +278,8 @@ Informasi dan sinopsis dari MyAnimeList.
     return `**Menyerah**\n\nJawaban: *${location}, ${country}*\n\n_${address}_`;
   },
   GEOGUESSR_ERROR: "× Gagal memproses permainan. Silakan coba lagi.",
+  GEOGUESSR_ERROR_LOCATION: "× Gagal mendapatkan data lokasi. Silakan coba lagi.",
+  GEOGUESSR_ERROR_API: "× Layanan lokasi tidak tersedia. Coba lagi nanti.",
   GEOGUESSR_NO_ACTIVE_GAME: "× Tidak ada permainan aktif. Gunakan /geoguessr untuk memulai.",
 
   GUIDE_GEOGUESSR: `**Tebak Lokasi (GeoGuessr)**
@@ -294,4 +298,32 @@ Permainan tebak lokasi berdasarkan pin peta.
 • Tebak Negara: +2 poin
 
 _Lokasi random: 60% Indonesia, 40% dunia._`,
+
+  // AI Chat Mode
+  AI_MODE_ACTIVATED:
+    "**Mode AI Aktif**\n\nSilakan tanya apa saja. Jarvis akan membalas sebagai asisten AI.\n\n_Ketik /exit untuk kembali ke menu utama._",
+  AI_MODE_DEACTIVATED: "**Mode AI dinonaktifkan**\n\nKembali ke sistem utama.",
+  AI_NO_ACTIVE_SESSION: "× Tidak ada sesi AI aktif.",
+  AI_ERROR: "× Gagal mendapatkan respons AI. Silakan coba lagi.",
+  AI_ERROR_QUOTA: "× Kuota API AI habis. Coba lagi nanti.",
+  AI_ERROR_SETUP: "× Konfigurasi AI tidak valid. Hubungi administrator.",
+  AI_THINKING: "⧗ Berpikir...",
+  AI_ACTIVATE_ERROR: "× Gagal mengaktifkan mode AI. Silakan coba lagi.",
+
+  GUIDE_AI: `**Mode AI Chat**
+
+Percakapan dengan asisten AI menggunakan Google Gemini.
+
+**Cara Menggunakan:**
+1. Gunakan \`/ai\` atau \`/chat\` untuk memulai
+2. Kirim pesan apa saja untuk berdiskusi
+3. Bot akan menjaga konteks percakapan
+4. Ketik \`/exit\` untuk keluar
+
+**Fitur:**
+• Memahami konteks percakapan
+• Menjawab dalam Bahasa Indonesia atau Inggris
+• Dapat membantu berbagai topik
+
+_Riwayat percakapan disimpan selama sesi aktif._`,
 } as const;
