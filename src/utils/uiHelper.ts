@@ -149,7 +149,7 @@ export const TRADING_BUTTONS = [
   { text: "Sell", callback_data: "trade_sell" },
   { text: "Alerts", callback_data: "trade_alerts" },
   { text: "Calendar", callback_data: "trade_calendar" },
-  { text: "← Kembali", callback_data: "menu_back" },
+  { text: "Kembali", callback_data: "menu_back" },
 ];
 
 /**
@@ -166,7 +166,7 @@ export const FINANCE_BUTTONS = [
   { text: "Catat", callback_data: "fin_catat" },
   { text: "Rekap", callback_data: "fin_rekap" },
   { text: "Laporan", callback_data: "fin_laporan" },
-  { text: "← Kembali", callback_data: "menu_back" },
+  { text: "Kembali", callback_data: "menu_back" },
 ];
 
 /**
@@ -210,13 +210,13 @@ export function createPaginationButtons(
   const buttons: TelegramBot.InlineKeyboardButton[] = [];
 
   if (current > 1) {
-    buttons.push({ text: "← Prev", callback_data: `${prefix}page_${current - 1}` });
+    buttons.push({ text: "Sebelumnya", callback_data: `${prefix}page_${current - 1}` });
   }
 
   buttons.push({ text: `${current}/${total}`, callback_data: `${prefix}page_current` });
 
   if (current < total) {
-    buttons.push({ text: "Next →", callback_data: `${prefix}page_${current + 1}` });
+    buttons.push({ text: "Berikutnya", callback_data: `${prefix}page_${current + 1}` });
   }
 
   return [buttons];
@@ -230,17 +230,17 @@ export function createMarketDashboard(symbol: string): TelegramBot.InlineKeyboar
   return [
     [
       { text: "Chart", callback_data: `mkt_chart_${symbol}` },
-      { text: "Sentiment", callback_data: `mkt_sent_${symbol}` },
+      { text: "Sentimen", callback_data: `mkt_sent_${symbol}` },
     ],
     [
-      { text: "Calc Risk", callback_data: `mkt_risk_${symbol}` },
-      { text: "Set Alert", callback_data: `mkt_alert_${symbol}` },
+      { text: "Risk", callback_data: `mkt_risk_${symbol}` },
+      { text: "Alert", callback_data: `mkt_alert_${symbol}` },
     ],
     [
-      { text: "SELL", callback_data: `mkt_sell_${symbol}` },
-      { text: "BUY", callback_data: `mkt_buy_${symbol}` },
+      { text: "Jual", callback_data: `mkt_sell_${symbol}` },
+      { text: "Beli", callback_data: `mkt_buy_${symbol}` },
     ],
-    [{ text: "← Kembali", callback_data: "menu_back" }],
+    [{ text: "Kembali", callback_data: "menu_back" }],
   ];
 }
 
@@ -258,8 +258,8 @@ export function createCapitalButtons(): TelegramBot.InlineKeyboardButton[][] {
       { text: "$5,000", callback_data: "risk_cap_5000" },
       { text: "$10,000", callback_data: "risk_cap_10000" },
     ],
-    [{ text: "Custom", callback_data: "risk_cap_custom" }],
-    [{ text: "× Batal", callback_data: "risk_cancel" }],
+    [{ text: "Kustom", callback_data: "risk_cap_custom" }],
+    [{ text: "Batal", callback_data: "risk_cancel" }],
   ];
 }
 
@@ -277,8 +277,8 @@ export function createRiskPercentButtons(): TelegramBot.InlineKeyboardButton[][]
       { text: "3%", callback_data: "risk_pct_3" },
       { text: "5%", callback_data: "risk_pct_5" },
     ],
-    [{ text: "Custom", callback_data: "risk_pct_custom" }],
-    [{ text: "← Kembali", callback_data: "risk_back_capital" }],
+    [{ text: "Kustom", callback_data: "risk_pct_custom" }],
+    [{ text: "Kembali", callback_data: "risk_back_capital" }],
   ];
 }
 
@@ -296,8 +296,8 @@ export function createStopLossButtons(): TelegramBot.InlineKeyboardButton[][] {
       { text: "50 pips", callback_data: "risk_sl_50" },
       { text: "100 pips", callback_data: "risk_sl_100" },
     ],
-    [{ text: "Custom", callback_data: "risk_sl_custom" }],
-    [{ text: "← Kembali", callback_data: "risk_back_percent" }],
+    [{ text: "Kustom", callback_data: "risk_sl_custom" }],
+    [{ text: "Kembali", callback_data: "risk_back_percent" }],
   ];
 }
 
@@ -315,14 +315,14 @@ export function createRiskResultButtons(): TelegramBot.InlineKeyboardButton[][] 
  * Get a standard "Back to Menu" inline keyboard button row
  */
 export function getBackToMenuButton(): TelegramBot.InlineKeyboardButton[][] {
-  return [[{ text: "← Menu Utama", callback_data: "menu_back" }]];
+  return [[{ text: "Menu Utama", callback_data: "menu_back" }]];
 }
 
 /**
  * Append a "Menu Utama" button row to an existing inline keyboard
  */
 export function appendMenuButton(keyboard: TelegramBot.InlineKeyboardButton[][]): TelegramBot.InlineKeyboardButton[][] {
-  return [...keyboard, [{ text: "← Menu Utama", callback_data: "menu_back" }]];
+  return [...keyboard, [{ text: "Menu Utama", callback_data: "menu_back" }]];
 }
 
 /**

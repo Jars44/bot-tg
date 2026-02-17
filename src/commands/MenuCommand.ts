@@ -194,7 +194,7 @@ export class MenuCommand implements Command, CallbackHandler {
         sessionManager.startWeatherMenu(chatId, messageId);
         await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat cuaca:", {
           reply_markup: {
-            inline_keyboard: createGrid([{ text: "× Batal", callback_data: "menu_back" }]),
+            inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
           },
         });
         break;
@@ -204,7 +204,7 @@ export class MenuCommand implements Command, CallbackHandler {
         sessionManager.startPrayerMenu(chatId, messageId);
         await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat jadwal sholat:", {
           reply_markup: {
-            inline_keyboard: createGrid([{ text: "× Batal", callback_data: "menu_back" }]),
+            inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
           },
         });
         break;
@@ -254,7 +254,7 @@ export class TradingMenuHandler implements CallbackHandler {
           {
             parse_mode: "Markdown",
             reply_markup: {
-              inline_keyboard: [[{ text: "× Batal", callback_data: "menu_back" }]],
+              inline_keyboard: [[{ text: "Batal", callback_data: "menu_back" }]],
             },
           },
         );
@@ -270,7 +270,7 @@ export class TradingMenuHandler implements CallbackHandler {
           {
             parse_mode: "Markdown",
             reply_markup: {
-              inline_keyboard: [[{ text: "× Batal", callback_data: "menu_back" }]],
+              inline_keyboard: [[{ text: "Batal", callback_data: "menu_back" }]],
             },
           },
         );

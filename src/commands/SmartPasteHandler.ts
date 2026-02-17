@@ -55,10 +55,10 @@ export class SmartPasteHandler implements MessageHandler {
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "🎬 Video", callback_data: "sp_video" },
-            { text: "🎵 Audio", callback_data: "sp_audio" },
+            { text: "Video", callback_data: "sp_video" },
+            { text: "Audio", callback_data: "sp_audio" },
           ],
-          [{ text: "❌ Batal", callback_data: "sp_cancel" }],
+          [{ text: "Batal", callback_data: "sp_cancel" }],
         ],
       },
     });

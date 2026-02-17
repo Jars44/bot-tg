@@ -1,7 +1,8 @@
 /**
  * All user-facing message strings (Indonesian)
  * Centralized for easy modification and localization
- * Tone: Direct, Neutral, Precise — Monochrome Minimalist
+ * Tone: Professional Hybrid — Clean, Trust-worthy, Minimalist
+ * Status Indicators Only: ✓, ×, ⚠︎, ⧗
  */
 
 export const MESSAGES = {
@@ -170,90 +171,91 @@ Mencari rating, sinopsis, dan info rilis film.
   // Risk
   RISK_INVALID_INPUT: "⚠︎ Input tidak valid. Masukkan angka positif.",
   // Smart Paste
-  SMART_PASTE_CONFIRM: (url: string) => `🔗 Link terdeteksi, ingin download?\n\n\`${url}\``,
-  SMART_PASTE_SESSION_EXPIRED: "⏳ Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.",
-  SMART_PASTE_CANCELLED: "❌ Download dibatalkan.",
+  SMART_PASTE_CONFIRM: (url: string) => `✓ Link terdeteksi. Pilih format untuk download:\n\n\`${url}\``,
+  SMART_PASTE_SESSION_EXPIRED: "⧗ Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.",
+  SMART_PASTE_CANCELLED: "× Download dibatalkan.",
 
   // Sticker Guide
   GUIDE_STICKER: `**Buat Stiker**
 
-Membuat stiker Telegram instan dari teks yang kamu kirim.
+Membuat stiker Telegram instan dari teks.
 
-**Penggunaan Manual:**
-\`/stiker [teks]\`
+**Gunakan:**
+\`/stiker [teks]
 
 **Contoh:**
-\`/stiker Hello World!\`
-\`/stiker Selamat Ulang Tahun\`
-\`/stiker GOAL!!!\`
+\`/stiker Hello World!
+\`/stiker Selamat Ulang Tahun
+\`/stiker GOAL!!!
 
 _Limit: {limit} stiker per hari._`,
-  // Guides
-  GUIDE_CHART: `📊 *Technical Chart*
+  GUIDE_CHART: `**Grafik Candlestick**
 
 Gunakan: \`/chart [symbol] [timeframe]\`
 
-*Contoh:*
-\`/chart BTC 1h\` - Bitcoin 1 jam
-\`/chart ETH 4h\` - Ethereum 4 jam
-\`/chart XAUUSD 1d\` - Gold harian
+**Contoh:**
+\`/chart BTC 1h\` — Bitcoin 1 jam
+\`/chart ETH 4h\` — Ethereum 4 jam
+\`/chart XAUUSD 1d\` — Gold per hari
 
-*Timeframes:*
-• \`1m\` - 1 menit
-• \`5m\` - 5 menit
-• \`15m\` - 15 menit
-• \`1h\` - 1 jam
-• \`4h\` - 4 jam
-• \`1d\` - 1 hari`,
+**Timeframes:**
+• \`1m\` — 1 menit
+• \`5m\` — 5 menit
+• \`15m\` — 15 menit
+• \`1h\` — 1 jam
+• \`4h\` — 4 jam
+• \`1d\` — 1 hari`,
 
-  GUIDE_SENTIMENT: `*Sentiment Analysis*
+  GUIDE_SENTIMENT: `**Analisis Sentimen**
 
-Analisis sentimen pasar berdasarkan berita terkini.
+Analisis sentimen pasar berdasarkan berita.
 
-*Format:*
+**Gunakan:**
 \`/sentimen [keyword]\`
 
-*Contoh:*
+**Contoh:**
 \`/sentimen bitcoin\`
 \`/sentimen ethereum\`
 \`/sentimen crypto\`
 \`/sentimen forex\`
 
-_Analisis menggunakan keyword scoring dari headline berita._`,
+_Menggunakan keyword scoring dari headline berita._`,
 
-  GUIDE_ALERT: `*Price Alert*
+  GUIDE_ALERT: `**Alert Harga Aset**
 
-Set notifikasi harga aset.
-Format: \`/alert [Symbol] [Price]\`
+Atur notifikasi ketika harga mencapai target.
 
-Contoh:
+**Gunakan:**
+\`/alert [Symbol] [Harga]\`
+
+**Contoh:**
 \`/alert BTC 50000\`
 \`/alert ETH 3000\``,
 
-  GUIDE_REMINDER: `*Pengingat Waktu*
+  GUIDE_REMINDER: `**Pengingat Waktu**
 
-Membuat pengingat waktu personal yang akan dikirimkan pada jam yang ditentukan.
+Buat pengingat personal yang dikirimkan pada jam tertentu.
 
-*Gunakan:* \`/ingatkan [HH:MM] [pesan]\`
+**Gunakan:**
+\`/ingatkan [HH:MM] [pesan]\`
 
-*Contoh:*
+**Contoh:**
 \`/ingatkan 12:00 Makan siang\`
 \`/ingatkan 08:30 Meeting pagi\`
 \`/ingatkan 17:00 Pulang kerja\`
 
-_Format waktu: 24 jam (contoh: 14:30 untuk jam 2:30 siang)_`,
+_Format: 24 jam (14:30 = jam 2:30 siang)_`,
 
-  GUIDE_ANIME: `*Cari Anime*
+  GUIDE_ANIME: `**Cari Anime**
 
-Mencari informasi dan sinopsis anime dari MyAnimeList.
+Informasi dan sinopsis dari MyAnimeList.
 
-*Gunakan:* \`/anime [judul anime]\`
+**Gunakan:**
+\`/anime [judul]\`
 
-*Contoh:*
+**Contoh:**
 \`/anime Naruto\`
 \`/anime Attack on Titan\`
 \`/anime One Piece\`
-\`/anime Jujutsu Kaisen\`
-
-_Hasil pencarian akan menampilkan daftar pilihan jika ada lebih dari satu hasil._`,
+\`/anime Jujutsu Kaisen\``,
 } as const;

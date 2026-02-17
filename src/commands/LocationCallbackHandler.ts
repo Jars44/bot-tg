@@ -34,14 +34,14 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await bot.editMessageText("❌ Koordinat tidak valid.", {
+          await bot.editMessageText("× Koordinat tidak valid.", {
             chat_id: chatId,
             message_id: messageId,
           });
           return;
         }
 
-        await bot.editMessageText("🔍 Mencari cuaca...", {
+        await bot.editMessageText("⧗ Mencari cuaca...", {
           chat_id: chatId,
           message_id: messageId,
         });
@@ -49,7 +49,7 @@ export class LocationCallbackHandler implements CallbackHandler {
         const result = await this.weatherService.getWeatherByCoords(lat, lon);
 
         if (!result) {
-          await bot.editMessageText("❌ Gagal mendapatkan data cuaca.", {
+          await bot.editMessageText("× Gagal mendapatkan data cuaca.", {
             chat_id: chatId,
             message_id: messageId,
           });
@@ -60,7 +60,7 @@ export class LocationCallbackHandler implements CallbackHandler {
         const dayTime = weather.is_day ? "Siang" : "Malam";
 
         await bot.editMessageText(
-          `🌤 Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
+          `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
           {
             chat_id: chatId,
             message_id: messageId,
@@ -72,14 +72,14 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await bot.editMessageText("❌ Koordinat tidak valid.", {
+          await bot.editMessageText("× Koordinat tidak valid.", {
             chat_id: chatId,
             message_id: messageId,
           });
           return;
         }
 
-        await bot.editMessageText("🔍 Mencari jadwal sholat...", {
+        await bot.editMessageText("⧗ Mencari jadwal sholat...", {
           chat_id: chatId,
           message_id: messageId,
         });
@@ -95,7 +95,7 @@ export class LocationCallbackHandler implements CallbackHandler {
     } catch (error) {
       console.error("[LocationCallbackHandler] Error:", error);
       try {
-        await bot.editMessageText("❌ Gagal memproses lokasi.", {
+        await bot.editMessageText("× Gagal memproses lokasi.", {
           chat_id: chatId,
           message_id: messageId,
         });

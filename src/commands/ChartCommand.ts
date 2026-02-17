@@ -34,14 +34,14 @@ export class ChartCommand implements Command {
     // Validate timeframe
     const validTimeframes = Object.keys(FinanceDataService.TIMEFRAMES);
     if (!validTimeframes.includes(timeframe)) {
-      await bot.sendMessage(chatId, `❌ Timeframe tidak valid.\n\nGunakan: ${validTimeframes.join(", ")}`, {
+      await bot.sendMessage(chatId, `× Timeframe tidak valid.\n\nGunakan: ${validTimeframes.join(", ")}`, {
         parse_mode: "Markdown",
       });
       return;
     }
 
     // Send loading message
-    const loadingMsg = await bot.sendMessage(chatId, `📊 Generating chart for ${symbol} (${timeframe})...`);
+    const loadingMsg = await bot.sendMessage(chatId, `⧗ Membuat grafik ${symbol} (${timeframe})...`);
 
     try {
       // Generate chart
@@ -52,14 +52,14 @@ export class ChartCommand implements Command {
 
       // Send chart image
       await bot.sendPhoto(chatId, chartBuffer, {
-        caption: `📊 *${symbol}* | ${timeframe.toUpperCase()}\n\n_Candlestick chart with SMA(20)_`,
+        caption: `*${symbol}* | ${timeframe.toUpperCase()}\n\n_Grafik candlestick dengan Bollinger Bands & RSI_`,
         parse_mode: "Markdown",
       });
     } catch (error) {
       console.error(`[ChartCommand] Error generating chart:`, error);
 
       // Edit loading message with error
-      await bot.editMessageText(`❌ Gagal membuat chart untuk ${symbol}. Pastikan symbol valid.`, {
+      await bot.editMessageText(`× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`, {
         chat_id: chatId,
         message_id: loadingMsg.message_id,
       });
@@ -97,18 +97,18 @@ export class ChartCallbackHandler implements CallbackHandler {
 
     const symbol = data.replace("chart:", "");
 
-    await bot.answerCallbackQuery(query.id, { text: `📊 Generating ${symbol} chart...` });
+    await bot.answerCallbackQuery(query.id, { text: `⧗ Membuat grafik ${symbol}...` });
 
     try {
       const chartBuffer = await this.chartService.generateChart(symbol, "1h");
 
       await bot.sendPhoto(chatId, chartBuffer, {
-        caption: `📊 *${symbol}* | 1H\n\n_Candlestick chart with SMA(20)_`,
+        caption: `*${symbol}* | 1H\n\n_Grafik candlestick dengan Bollinger Bands & RSI_`,
         parse_mode: "Markdown",
       });
     } catch (error) {
       console.error(`[ChartCallbackHandler] Error generating chart:`, error);
-      await bot.sendMessage(chatId, `❌ Failed to generate chart for ${symbol}.`);
+      await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}.`);
     }
   }
 }

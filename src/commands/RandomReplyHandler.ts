@@ -96,12 +96,12 @@ export class RandomReplyHandler implements MessageHandler {
     // Handle compliments
     if (this.isCompliment(text)) {
       const RESPONSES = [
-        "Makasih, jadi malu deh 🤭",
-        "Iya dong, jelas! 🥰",
-        "Aww makasih ya 😝",
-        "Hehe makasih bang! 😹",
-        "Kelazz! 🥶",
-        "Menyala abangkuh 🔥",
+        "Makasih!",
+        "Terimakasih.",
+        "Senang membantu.",
+        "Sama-sama!",
+        "Apresiasi Anda.",
+        "Dengan senang hati.",
       ];
       const randomResponse = RESPONSES[Math.floor(Math.random() * RESPONSES.length)];
       await bot.sendMessage(chatId, randomResponse);

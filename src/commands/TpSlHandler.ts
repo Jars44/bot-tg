@@ -37,9 +37,9 @@ export class TpSlInputHandler implements MessageHandler {
     const text = msg.text?.trim();
 
     // Cancel button
-    if (text === "❌ Batal") {
+    if (text === "Batal") {
       await sessionManager.clearState(chatId);
-      await bot.sendMessage(chatId, "👍 Dibatalkan.", { reply_markup: { remove_keyboard: true } });
+      await bot.sendMessage(chatId, "✓ Dibatalkan.", { reply_markup: { remove_keyboard: true } });
       return;
     }
 
@@ -47,7 +47,7 @@ export class TpSlInputHandler implements MessageHandler {
     const tpslData = state.data as TpSlSessionData;
 
     if (isNaN(price) || price <= 0) {
-      await bot.sendMessage(chatId, "❌ Harga tidak valid. Masukkan angka positif.");
+      await bot.sendMessage(chatId, "× Harga tidak valid. Masukkan angka positif.");
       return;
     }
 
@@ -63,13 +63,13 @@ export class TpSlInputHandler implements MessageHandler {
 
       await bot.sendMessage(
         chatId,
-        `✅ Take Profit: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
-          `🛑 Masukkan harga *Stop Loss* untuk ${tpslData.symbol}:\n` +
+        `✓ Take Profit: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+          `Masukkan harga *Stop Loss* untuk ${tpslData.symbol}:\n` +
           `_Harga entry: $${tpslData.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}_`,
         {
           parse_mode: "Markdown",
           reply_markup: {
-            keyboard: [[{ text: "❌ Batal" }]],
+            keyboard: [[{ text: "Batal" }]],
             resize_keyboard: true,
             one_time_keyboard: true,
           },
@@ -88,12 +88,12 @@ export class TpSlInputHandler implements MessageHandler {
 
         await bot.sendMessage(
           chatId,
-          `🛡️ *Protection Set!*\n\n` +
-            `📊 ${tpslData.symbol}\n` +
-            `💵 Entry: $${tpslData.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
-            `${takeProfit ? `✅ Take Profit: $${takeProfit.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` : ""}` +
-            `🛑 Stop Loss: $${stopLoss.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
-            `_Position akan auto-close jika harga mencapai level ini._`,
+          `*Pengaman Diatur*\n\n` +
+            `${tpslData.symbol}\n` +
+            `Entry: $${tpslData.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
+            `${takeProfit ? `Take Profit: $${takeProfit.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` : ""}` +
+            `Stop Loss: $${stopLoss.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+            `_Posisi akan auto-close jika harga mencapai level ini._`,
           {
             parse_mode: "Markdown",
             reply_markup: { remove_keyboard: true },
@@ -101,7 +101,7 @@ export class TpSlInputHandler implements MessageHandler {
         );
       } catch (error) {
         console.error("[TpSlHandler] Error setting TP/SL:", error);
-        await bot.sendMessage(chatId, "❌ Gagal menyimpan TP/SL. Silakan coba lagi.", {
+        await bot.sendMessage(chatId, "× Gagal menyimpan TP/SL. Silakan coba lagi.", {
           reply_markup: { remove_keyboard: true },
         });
         await sessionManager.clearState(chatId);
@@ -170,13 +170,13 @@ export class TpSlCallbackHandler implements CallbackHandler {
 
       await bot.sendMessage(
         chatId,
-        `🛡️ *Set Protection for ${symbol}*\n\n` +
-          `💵 Entry Price: $${entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
-          `✅ Masukkan harga *Take Profit*:`,
+        `*Atur Pengaman untuk ${symbol}*\n\n` +
+          `Harga Masuk: $${entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+          `Masukkan harga *Take Profit*:`,
         {
           parse_mode: "Markdown",
           reply_markup: {
-            keyboard: [[{ text: "❌ Batal" }]],
+            keyboard: [[{ text: "Batal" }]],
             resize_keyboard: true,
             one_time_keyboard: true,
           },

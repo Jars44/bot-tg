@@ -44,7 +44,7 @@ export class DownloadCommand implements Command {
         { text: "Twitter/X", callback_data: "dl_platform_twitter" },
       ],
       [{ text: "Lainnya", callback_data: "dl_platform_other" }],
-      [{ text: "× Batal", callback_data: "dl_cancel" }],
+      [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
     const message = await bot.sendMessage(chatId, `*Download*\n\nPilih platform:`, {
@@ -125,7 +125,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
         { text: "Twitter/X", callback_data: "dl_platform_twitter" },
       ],
       [{ text: "Lainnya", callback_data: "dl_platform_other" }],
-      [{ text: "× Batal", callback_data: "dl_cancel" }],
+      [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
     await bot.editMessageText(`*Download*\n\nPilih platform:`, {
@@ -158,8 +158,8 @@ export class DownloadCallbackHandler implements CallbackHandler {
         { text: "Video", callback_data: "dl_format_video" },
         { text: "Audio", callback_data: "dl_format_audio" },
       ],
-      [{ text: "← Kembali", callback_data: "dl_back_platform" }],
-      [{ text: "× Batal", callback_data: "dl_cancel" }],
+      [{ text: "Kembali", callback_data: "dl_back_platform" }],
+      [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
     await bot.editMessageText(`*Download → ${platformInfo.label}*\n\nPilih format:`, {

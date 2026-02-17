@@ -53,29 +53,29 @@ export class LocationHandler implements MessageHandler {
           } else if (pendingCommand === "prayer") {
             const timings = await this.prayerService.formattedTimingsByCoords(location.latitude, location.longitude);
             // Remove keyboard
-            await bot.sendMessage(chatId, "✅ Location received! Fetching prayer times...", {
+            await bot.sendMessage(chatId, "✓ Lokasi diterima. Mengambil jadwal sholat...", {
               reply_markup: { remove_keyboard: true },
             });
             await bot.sendMessage(chatId, timings, { parse_mode: "Markdown" });
           }
         } catch (error) {
           console.error("[LocationHandler] Error executing pending command:", error);
-          await bot.sendMessage(chatId, "❌ Failed to fetch data for your location.");
+          await bot.sendMessage(chatId, "× Gagal mengambil data untuk lokasi Anda.");
         }
         return;
       }
 
       // Scenario A: Unsolicited Location (Menu Flow)
       // Remove any existing keyboard just in case
-      await bot.sendMessage(chatId, "📍 Location received! What would you like to check?", {
+      await bot.sendMessage(chatId, "Lokasi diterima. Apa yang ingin Anda periksa?", {
         reply_markup: {
           remove_keyboard: true,
           inline_keyboard: [
             [
-              { text: "🌤 Weather", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
-              { text: "🕌 Prayer Times", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
+              { text: "Cuaca", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
+              { text: "Sholat", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
             ],
-            // [ { text: "🕋 Qibla (Coming Soon)", callback_data: "loc_qibla" } ]
+            // [ { text: "Qibla (Segera hadir)", callback_data: "loc_qibla" } ]
           ],
         },
       });
