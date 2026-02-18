@@ -34,7 +34,7 @@ export const CONFIG = {
     BMKG_BASE: "https://data.bmkg.go.id/DataMKG/TEWS/",
     NOMINATIM: "https://nominatim.openstreetmap.org",
     OPEN_METEO: "https://api.open-meteo.com/v1",
-    LYRICS: "https://api.lyrics.ovh/v1",
+    LYRICS: "https://lrclib.net/api/search",
     FAVQS: "https://favqs.com/api/qotd",
     GNEWS: "https://gnews.io/api/v4",
     ALADHAN: "https://api.aladhan.com/v1",

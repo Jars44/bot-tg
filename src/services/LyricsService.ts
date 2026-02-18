@@ -1,5 +1,5 @@
 /**
- * Lyrics service using lyrics.ovh API
+ * Lyrics service using lrclib.net API
  */
 
 import { HttpClient } from "./HttpClient.js";
@@ -9,8 +9,16 @@ export interface LyricsResult {
   lyrics: string;
 }
 
-interface LyricsResponse {
-  lyrics: string;
+interface LrcLibResult {
+  id: number;
+  name: string;
+  trackName: string;
+  artistName: string;
+  albumName: string;
+  duration: number;
+  instrumental: boolean;
+  plainLyrics: string;
+  syncedLyrics: string;
 }
 
 export class LyricsService {
@@ -25,18 +33,24 @@ export class LyricsService {
       const encodedArtist = encodeURIComponent(artist);
       const encodedTitle = encodeURIComponent(title);
 
-      const response = await this.http.get<LyricsResponse>(`${CONFIG.API.LYRICS}/${encodedArtist}/${encodedTitle}`);
+      // lrclib.net search endpoint: /api/search?artist_name=...&track_name=...
+      const results = await this.http.get<LrcLibResult[]>(
+        `${CONFIG.API.LYRICS}?artist_name=${encodedArtist}&track_name=${encodedTitle}`,
+      );
 
-      if (!response.lyrics) {
+      if (!Array.isArray(results) || results.length === 0) {
+        return null;
+      }
+
+      // Pick the first result with plainLyrics
+      const result = results.find((r) => r.plainLyrics);
+      if (!result?.plainLyrics) {
         return null;
       }
 
       // Clean up excessive line breaks
       // Normalize newlines
-      let text = response.lyrics.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
-      // Remove common header junk
-      text = text.replace(/^Paroles de la chanson .+$/gm, "");
+      let text = result.plainLyrics.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
       // Smart newline reduction
       // Check if text is "double spaced" (more double newlines than single newlines)
