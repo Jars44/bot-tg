@@ -89,10 +89,7 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
 
     const state = sessionManager.getState(chatId);
     if (!isSmartPasteSession(state)) {
-      await bot.editMessageText(MESSAGES.SMART_PASTE_SESSION_EXPIRED, {
-        chat_id: chatId,
-        message_id: messageId,
-      });
+      await safeEditMessage(bot, chatId, messageId, MESSAGES.SMART_PASTE_SESSION_EXPIRED);
       return;
     }
 
@@ -101,10 +98,7 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
     // Handle cancel
     if (data === "sp_cancel") {
       sessionManager.clearState(chatId);
-      await bot.editMessageText(MESSAGES.SMART_PASTE_CANCELLED, {
-        chat_id: chatId,
-        message_id: messageId,
-      });
+      await safeEditMessage(bot, chatId, messageId, MESSAGES.SMART_PASTE_CANCELLED);
       return;
     }
 

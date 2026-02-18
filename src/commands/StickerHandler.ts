@@ -12,6 +12,7 @@ import { JsonDb } from "../database/JsonDb.js";
 import { MESSAGES } from "../config/messages.js";
 import { CONFIG } from "../config/index.js";
 import { delay } from "../utils/helpers.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 export class StickerHandler implements MessageHandler {
   private stickerService: StickerService;
@@ -114,10 +115,8 @@ export class StickerHandler implements MessageHandler {
       console.error("[StickerHandler] Failed to process image:", err);
 
       if (loadingMessage) {
-        await bot.editMessageText(MESSAGES.ERROR_STICKER, {
-          chat_id: chatId,
-          message_id: loadingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, loadingMessage.message_id, MESSAGES.ERROR_STICKER);
+        if (!edited) await bot.sendMessage(chatId, MESSAGES.ERROR_STICKER);
       } else {
         await bot.sendMessage(chatId, MESSAGES.ERROR_STICKER);
       }

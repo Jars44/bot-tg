@@ -56,14 +56,15 @@ export class PrayerCommand implements Command {
       }
 
       const prayerMessage = `Jadwal Sholat di ${city}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, {
-        reply_markup: { inline_keyboard: getBackToMenuButton() },
-      });
+
+      // Only add back button if triggered from menu
+      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, prayerMessage, {
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        });
+        await bot.sendMessage(chatId, prayerMessage, editOptions);
       }
     } catch (error) {
       console.error("[PrayerCommand] Error:", error);
@@ -96,14 +97,15 @@ export class PrayerCommand implements Command {
       }
 
       const prayerMessage = `Jadwal Sholat:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, {
-        reply_markup: { inline_keyboard: getBackToMenuButton() },
-      });
+
+      // Only add back button if triggered from menu
+      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, prayerMessage, {
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        });
+        await bot.sendMessage(chatId, prayerMessage, editOptions);
       }
     } catch (error) {
       console.error("[PrayerCommand] Error:", error);

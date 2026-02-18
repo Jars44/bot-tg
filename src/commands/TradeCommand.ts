@@ -8,7 +8,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 import { sessionManager, type TradeSessionData } from "../utils/SessionManager.js";
-import { createConfirmButtons, formatUSD, withLoading } from "../utils/uiHelper.js";
+import { createConfirmButtons, formatUSD, withLoading, safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 
 /**
@@ -370,10 +370,7 @@ export class TradeConfirmHandler implements CallbackHandler {
     if (decision === "no") {
       // Cancel trade
       sessionManager.clearState(chatId);
-      await bot.editMessageText("× Transaksi dibatalkan.", {
-        chat_id: chatId,
-        message_id: messageId,
-      });
+      await safeEditMessage(bot, chatId, messageId, "× Transaksi dibatalkan.");
       await bot.answerCallbackQuery(query.id, { text: "Dibatalkan" });
       return;
     }
@@ -387,9 +384,7 @@ export class TradeConfirmHandler implements CallbackHandler {
 
           sessionManager.clearState(chatId);
 
-          await bot.editMessageText(result.message, {
-            chat_id: chatId,
-            message_id: messageId,
+          await safeEditMessage(bot, chatId, messageId, result.message, {
             parse_mode: "Markdown",
           });
 
@@ -407,9 +402,7 @@ export class TradeConfirmHandler implements CallbackHandler {
         // Clear session
         sessionManager.clearState(chatId);
 
-        await bot.editMessageText(result.message, {
-          chat_id: chatId,
-          message_id: messageId,
+        await safeEditMessage(bot, chatId, messageId, result.message, {
           parse_mode: "Markdown",
         });
 
@@ -441,10 +434,7 @@ export class TradeConfirmHandler implements CallbackHandler {
       } catch (error) {
         console.error("[TradeConfirmHandler] Error:", error);
         sessionManager.clearState(chatId);
-        await bot.editMessageText("× Gagal memproses order.", {
-          chat_id: chatId,
-          message_id: messageId,
-        });
+        await safeEditMessage(bot, chatId, messageId, "× Gagal memproses order.");
         await bot.answerCallbackQuery(query.id, { text: "Gagal" });
       }
     });

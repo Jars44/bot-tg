@@ -9,6 +9,7 @@ import { StickerService } from "../services/StickerService.js";
 import { TempCleanerService } from "../services/TempCleanerService.js";
 import { JsonDb } from "../database/JsonDb.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 import { CONFIG } from "../config/index.js";
 import { delay } from "../utils/helpers.js";
@@ -116,9 +117,7 @@ export class StickerCommand implements Command, CallbackHandler {
       ],
     };
 
-    await bot.editMessageText(MESSAGES.STICKER_IMAGE_PROMPT, {
-      chat_id: chatId,
-      message_id: messageId,
+    await safeEditMessage(bot, chatId, messageId, MESSAGES.STICKER_IMAGE_PROMPT, {
       reply_markup: keyboard,
       parse_mode: "Markdown",
     });
@@ -144,9 +143,7 @@ export class StickerCommand implements Command, CallbackHandler {
       ],
     };
 
-    await bot.editMessageText(MESSAGES.GUIDE_PROMPT_STICKER, {
-      chat_id: chatId,
-      message_id: messageId,
+    await safeEditMessage(bot, chatId, messageId, MESSAGES.GUIDE_PROMPT_STICKER, {
       reply_markup: keyboard,
     });
 
@@ -172,9 +169,7 @@ export class StickerCommand implements Command, CallbackHandler {
       ],
     };
 
-    await bot.editMessageText(MESSAGES.STICKER_MENU, {
-      chat_id: chatId,
-      message_id: messageId,
+    await safeEditMessage(bot, chatId, messageId, MESSAGES.STICKER_MENU, {
       reply_markup: keyboard,
       parse_mode: "Markdown",
     });
@@ -191,10 +186,7 @@ export class StickerCommand implements Command, CallbackHandler {
    * Handle cancel button
    */
   private async handleCancel(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
-    await bot.editMessageText("× Pembuatan stiker dibatalkan.", {
-      chat_id: chatId,
-      message_id: messageId,
-    });
+    await safeEditMessage(bot, chatId, messageId, "× Pembuatan stiker dibatalkan.");
 
     await sessionManager.clearState(chatId);
   }
@@ -250,10 +242,8 @@ export class StickerCommand implements Command, CallbackHandler {
       console.error("[StickerCommand] Failed to create text sticker:", err);
 
       if (loadingMessage) {
-        await bot.editMessageText(MESSAGES.ERROR_STICKER, {
-          chat_id: chatId,
-          message_id: loadingMessage.message_id,
-        });
+        const edited = await safeEditMessage(bot, chatId, loadingMessage.message_id, MESSAGES.ERROR_STICKER);
+        if (!edited) await bot.sendMessage(chatId, MESSAGES.ERROR_STICKER);
       } else {
         await bot.sendMessage(chatId, MESSAGES.ERROR_STICKER);
       }

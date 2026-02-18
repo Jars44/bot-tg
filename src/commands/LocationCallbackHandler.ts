@@ -8,6 +8,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { CallbackHandler } from "./types.js";
 import { WeatherService } from "../services/WeatherService.js";
 import { PrayerService } from "../services/PrayerService.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 export class LocationCallbackHandler implements CallbackHandler {
   prefix = "loc_";
@@ -34,37 +35,27 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await bot.editMessageText("× Koordinat tidak valid.", {
-            chat_id: chatId,
-            message_id: messageId,
-          });
+          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
           return;
         }
 
-        await bot.editMessageText("⧗ Mencari cuaca...", {
-          chat_id: chatId,
-          message_id: messageId,
-        });
+        await safeEditMessage(bot, chatId, messageId, "⧗ Mencari cuaca...");
 
         const result = await this.weatherService.getWeatherByCoords(lat, lon);
 
         if (!result) {
-          await bot.editMessageText("× Gagal mendapatkan data cuaca.", {
-            chat_id: chatId,
-            message_id: messageId,
-          });
+          await safeEditMessage(bot, chatId, messageId, "× Gagal mendapatkan data cuaca.");
           return;
         }
 
         const { weather, locationName } = result;
         const dayTime = weather.is_day ? "Siang" : "Malam";
 
-        await bot.editMessageText(
+        await safeEditMessage(
+          bot,
+          chatId,
+          messageId,
           `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
-          {
-            chat_id: chatId,
-            message_id: messageId,
-          },
         );
       } else if (data.startsWith("loc_prayer_")) {
         const parts = data.replace("loc_prayer_", "").split("_");
@@ -72,36 +63,21 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await bot.editMessageText("× Koordinat tidak valid.", {
-            chat_id: chatId,
-            message_id: messageId,
-          });
+          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
           return;
         }
 
-        await bot.editMessageText("⧗ Mencari jadwal sholat...", {
-          chat_id: chatId,
-          message_id: messageId,
-        });
+        await safeEditMessage(bot, chatId, messageId, "⧗ Mencari jadwal sholat...");
 
         const timings = await this.prayerService.formattedTimingsByCoords(lat, lon);
 
-        await bot.editMessageText(timings, {
-          chat_id: chatId,
-          message_id: messageId,
+        await safeEditMessage(bot, chatId, messageId, timings, {
           parse_mode: "Markdown",
         });
       }
     } catch (error) {
       console.error("[LocationCallbackHandler] Error:", error);
-      try {
-        await bot.editMessageText("× Gagal memproses lokasi.", {
-          chat_id: chatId,
-          message_id: messageId,
-        });
-      } catch {
-        // Ignore secondary edit errors
-      }
+      await safeEditMessage(bot, chatId, messageId, "× Gagal memproses lokasi.");
     }
   }
 }

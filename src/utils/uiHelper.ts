@@ -344,9 +344,13 @@ export async function safeEditMessage(
     });
     return true;
   } catch (error) {
-    // Message was deleted or is stale - need to send new message
+    // Message was deleted, is stale, or can't be edited - need to send new message
     const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes("message to edit not found") || errorMessage.includes("message is not modified")) {
+    if (
+      errorMessage.includes("message to edit not found") ||
+      errorMessage.includes("message is not modified") ||
+      errorMessage.includes("message can't be edited")
+    ) {
       return false;
     }
     throw error;

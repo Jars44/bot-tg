@@ -64,15 +64,15 @@ export class WeatherCommand implements Command {
       const dayTime = weather.is_day ? "Siang" : "Malam";
       const weatherMessage = `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, {
-        reply_markup: { inline_keyboard: getBackToMenuButton() },
-      });
+      // Only add back button if triggered from menu
+      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
 
       if (!edited) {
         // Loading message was deleted, send new message
-        await bot.sendMessage(chatId, weatherMessage, {
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        });
+        await bot.sendMessage(chatId, weatherMessage, editOptions);
       }
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);
@@ -108,14 +108,14 @@ export class WeatherCommand implements Command {
       const dayTime = weather.is_day ? "Siang" : "Malam";
       const weatherMessage = `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, {
-        reply_markup: { inline_keyboard: getBackToMenuButton() },
-      });
+      // Only add back button if triggered from menu
+      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+
+      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, weatherMessage, {
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
-        });
+        await bot.sendMessage(chatId, weatherMessage, editOptions);
       }
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);

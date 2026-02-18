@@ -5,6 +5,8 @@
  * Status Indicators Only: ✓, ×, ⚠︎, ⧗
  */
 
+import { escapeMarkdown } from "../utils/sanitize.js";
+
 export const MESSAGES = {
   // General
   WELCOME: "Jarvis Bot\nAkses menu utama dengan /menu atau /help untuk panduan.",
@@ -173,7 +175,7 @@ Mencari rating, sinopsis, dan info rilis film.
   // Risk
   RISK_INVALID_INPUT: "⚠︎ Input tidak valid. Masukkan angka positif.",
   // Smart Paste
-  SMART_PASTE_CONFIRM: (url: string) => `✓ Link terdeteksi. Pilih format untuk download:\n\n\`${url}\``,
+  SMART_PASTE_CONFIRM: (url: string) => `✓ Link terdeteksi. Pilih format untuk download:\n\n\`${escapeMarkdown(url)}\``,
   SMART_PASTE_SESSION_EXPIRED: "⧗ Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.",
   SMART_PASTE_CANCELLED: "× Download dibatalkan.",
 
@@ -266,16 +268,16 @@ Informasi dan sinopsis dari MyAnimeList.
   GEOGUESSR_PROMPT:
     "📍 **Tebak Lokasi**\n\nLihat pin di atas. Balas pesan ini dengan nama *Negara*, *Provinsi*, atau *Kota* dari lokasi tersebut.\n\n_Ketik /nyerah untuk menyerah._",
   GEOGUESSR_CORRECT_CITY: (city: string, country: string, points: number) =>
-    `✓ **Tepat sekali!**\n\nLokasi: *${city}, ${country}*\n+${points} poin`,
+    `✓ **Tepat sekali!**\n\nLokasi: *${escapeMarkdown(city)}, ${escapeMarkdown(country)}*\n+${points} poin`,
   GEOGUESSR_CORRECT_STATE: (state: string, country: string, points: number) =>
-    `✓ **Benar!**\n\nProvinsi/Negara bagian: *${state}, ${country}*\n+${points} poin`,
+    `✓ **Benar!**\n\nProvinsi/Negara bagian: *${escapeMarkdown(state)}, ${escapeMarkdown(country)}*\n+${points} poin`,
   GEOGUESSR_CORRECT_COUNTRY: (country: string, points: number) =>
-    `✓ **Hampir!**\n\nNegara: *${country}*\n+${points} poin`,
+    `✓ **Hampir!**\n\nNegara: *${escapeMarkdown(country)}*\n+${points} poin`,
   GEOGUESSR_WRONG: (attempts: number) =>
     `× **Kurang tepat!**\n\nPercobaan ke-${attempts}. Coba lagi atau ketik /nyerah.`,
   GEOGUESSR_GIVE_UP: (city: string | null, state: string | null, country: string, address: string) => {
     const location = city || state || country;
-    return `**Menyerah**\n\nJawaban: *${location}, ${country}*\n\n_${address}_`;
+    return `**Menyerah**\n\nJawaban: *${escapeMarkdown(location)}, ${escapeMarkdown(country)}*\n\n_${escapeMarkdown(address)}_`;
   },
   GEOGUESSR_ERROR: "× Gagal memproses permainan. Silakan coba lagi.",
   GEOGUESSR_ERROR_LOCATION: "× Gagal mendapatkan data lokasi. Silakan coba lagi.",

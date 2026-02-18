@@ -8,6 +8,7 @@ import type { Command, CallbackHandler } from "./types.js";
 import type { ChartService } from "../services/ChartService.js";
 import { FinanceDataService } from "../services/FinanceDataService.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 
 export class ChartCommand implements Command {
@@ -59,10 +60,12 @@ export class ChartCommand implements Command {
       console.error(`[ChartCommand] Error generating chart:`, error);
 
       // Edit loading message with error
-      await bot.editMessageText(`× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`, {
-        chat_id: chatId,
-        message_id: loadingMsg.message_id,
-      });
+      await safeEditMessage(
+        bot,
+        chatId,
+        loadingMsg.message_id,
+        `× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`,
+      );
     }
   }
 }

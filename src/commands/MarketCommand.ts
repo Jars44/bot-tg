@@ -174,10 +174,7 @@ export class MarketCallbackHandler implements CallbackHandler {
     switch (command) {
       case "chart": {
         // UX Improvement: Show chart inline with back button
-        await bot.editMessageText(`⧗ Membuat grafik untuk ${symbol}...`, {
-          chat_id: chatId,
-          message_id: messageId,
-        });
+        await safeEditMessage(bot, chatId, messageId, `⧗ Membuat grafik untuk ${symbol}...`);
 
         try {
           const chartBuffer = await this.chartService.generateChart(symbol, "1d");
@@ -206,18 +203,13 @@ export class MarketCallbackHandler implements CallbackHandler {
 
       case "sent": {
         // UX Improvement: Show sentiment analysis
-        await bot.editMessageText(`🧠 Analyzing sentiment for ${symbol}...`, {
-          chat_id: chatId,
-          message_id: messageId,
-        });
+        await safeEditMessage(bot, chatId, messageId, `🧠 Analyzing sentiment for ${symbol}...`);
 
         try {
           const result = await this.sentimentAnalyzer.analyzeSentiment(symbol);
           const message = this.sentimentAnalyzer.formatSentimentResult(result);
 
-          await bot.editMessageText(message + `\n\n_Klik untuk kembali_`, {
-            chat_id: chatId,
-            message_id: messageId,
+          await safeEditMessage(bot, chatId, messageId, message + `\n\n_Klik untuk kembali_`, {
             parse_mode: "Markdown",
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
@@ -236,13 +228,14 @@ export class MarketCallbackHandler implements CallbackHandler {
 
       case "risk": {
         // UX Improvement: Quick access to risk calculator with symbol context
-        await bot.editMessageText(
+        await safeEditMessage(
+          bot,
+          chatId,
+          messageId,
           `🧮 *Risk Calculator*\n\nSymbol: ${symbol}\n\n` +
             `Ketik: \`/risk [capital] [risk%] [sl_pips]\`\n` +
             `Contoh: \`/risk 10000 2 50\``,
           {
-            chat_id: chatId,
-            message_id: messageId,
             parse_mode: "Markdown",
             reply_markup: {
               inline_keyboard: [
@@ -260,7 +253,10 @@ export class MarketCallbackHandler implements CallbackHandler {
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
-          await bot.editMessageText(
+          await safeEditMessage(
+            bot,
+            chatId,
+            messageId,
             `*Set Alert: ${symbol}*\n\n` +
               `Harga saat ini: ${formatUSD(priceData.price)}\n\n` +
               `Ketik: \`/alert ${symbol} [target] [kondisi]\`\n\n` +
@@ -268,8 +264,6 @@ export class MarketCallbackHandler implements CallbackHandler {
               `\`/alert ${symbol} ${(priceData.price * 1.05).toFixed(2)} >\`\n` +
               `_(Alert jika naik 5%)_`,
             {
-              chat_id: chatId,
-              message_id: messageId,
               parse_mode: "Markdown",
               reply_markup: {
                 inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
@@ -291,14 +285,15 @@ export class MarketCallbackHandler implements CallbackHandler {
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
-          await bot.editMessageText(
+          await safeEditMessage(
+            bot,
+            chatId,
+            messageId,
             `*Beli ${symbol}*\n\n` +
               `Harga saat ini: ${formatUSD(priceData.price)}\n\n` +
               `Ketik: \`/buy ${symbol} [qty]\`\n\n` +
               `Contoh: \`/buy ${symbol} 0.01\``,
             {
-              chat_id: chatId,
-              message_id: messageId,
               parse_mode: "Markdown",
               reply_markup: {
                 inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
@@ -320,7 +315,10 @@ export class MarketCallbackHandler implements CallbackHandler {
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
-          await bot.editMessageText(
+          await safeEditMessage(
+            bot,
+            chatId,
+            messageId,
             `*Jual ${symbol}*\n\n` +
               `Harga saat ini: ${formatUSD(priceData.price)}\n\n` +
               `Ketik: \`/sell ${symbol} [qty]\`\n\n` +

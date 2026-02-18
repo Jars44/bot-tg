@@ -13,6 +13,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler, MessageHandler } from "./types.js";
 import { DownloadService, DownloadResult } from "../services/DownloadService.js";
 import { sessionManager, DownloadSessionData } from "../utils/SessionManager.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 // Platform configurations
 const PLATFORMS = {
@@ -83,10 +84,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
     // Handle cancel
     if (data === "dl_cancel") {
       sessionManager.clearState(chatId);
-      await bot.editMessageText("× Download dibatalkan.", {
-        chat_id: chatId,
-        message_id: messageId,
-      });
+      await safeEditMessage(bot, chatId, messageId, "× Download dibatalkan.");
       return;
     }
 
@@ -128,9 +126,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
       [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
-    await bot.editMessageText(`*Download*\n\nPilih platform:`, {
-      chat_id: chatId,
-      message_id: messageId,
+    await safeEditMessage(bot, chatId, messageId, `*Download*\n\nPilih platform:`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: keyboard },
     });
@@ -162,9 +158,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
       [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
-    await bot.editMessageText(`*Download → ${platformInfo.label}*\n\nPilih format:`, {
-      chat_id: chatId,
-      message_id: messageId,
+    await safeEditMessage(bot, chatId, messageId, `*Download → ${platformInfo.label}*\n\nPilih format:`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: keyboard },
     });
@@ -191,11 +185,12 @@ export class DownloadCallbackHandler implements CallbackHandler {
     const platformInfo = PLATFORMS[(state.data as DownloadSessionData).platform || "other"];
     const formatText = format === "video" ? "Video" : "Audio";
 
-    await bot.editMessageText(
+    await safeEditMessage(
+      bot,
+      chatId,
+      messageId,
       `*Download → ${platformInfo.label} → ${formatText}*\n\n` + `Kirim link yang ingin diunduh:`,
       {
-        chat_id: chatId,
-        message_id: messageId,
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [[{ text: "× Batal", callback_data: "dl_cancel" }]],
@@ -273,10 +268,7 @@ export class DownloadInputHandler implements MessageHandler {
     let result: DownloadResult;
 
     try {
-      await bot.editMessageText("⧗ Memproses media...", {
-        chat_id: chatId,
-        message_id: statusMsg.message_id,
-      });
+      await safeEditMessage(bot, chatId, statusMsg.message_id, "⧗ Memproses media...");
 
       result = await this.downloadService.downloadMedia(url, isAudioOnly);
 
@@ -300,21 +292,17 @@ export class DownloadInputHandler implements MessageHandler {
 
       try {
         const directUrl = await this.downloadService.getDirectUrl(url, isAudioOnly);
-        await bot.editMessageText(
+        await safeEditMessage(
+          bot,
+          chatId,
+          statusMsg.message_id,
           `⚠︎ *Tidak dapat mengirim file langsung.*\n\n` +
             `Alasan: ${errorMessage.split("\n")[0]}\n\n` +
             `→ Download langsung:\n${directUrl}`,
-          {
-            chat_id: chatId,
-            message_id: statusMsg.message_id,
-            parse_mode: "Markdown",
-          },
+          { parse_mode: "Markdown" },
         );
       } catch {
-        await bot.editMessageText(`× ${errorMessage}`, {
-          chat_id: chatId,
-          message_id: statusMsg.message_id,
-        });
+        await safeEditMessage(bot, chatId, statusMsg.message_id, `× ${errorMessage}`);
       }
     }
   }

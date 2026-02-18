@@ -147,9 +147,9 @@ async function main(): Promise<void> {
 
   // Handle polling errors
   bot.on("polling_error", (error) => {
-    const err = error as any;
-    if (err.code === "EFATAL") {
-      console.error("[Bot] Polling error EFATAL:", err.message);
+    const errorObj = error as unknown as Record<string, unknown>;
+    if (errorObj.code === "EFATAL") {
+      console.error("[Bot] Polling error EFATAL:", errorObj.message);
       console.log("[Bot] Attempting to restart polling...");
       // Bot will automatically restart polling
     } else {

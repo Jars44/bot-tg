@@ -156,11 +156,13 @@ export class SessionInputHandler implements MessageHandler {
     } else if (state.flow === SESSION_FLOWS.RISK) {
       await this.riskInputHandler.handle(bot, msg, state);
     } else if (isWeatherMenuSession(state)) {
-      sessionManager.clearState(chatId);
+      // Don't clear session yet - let the command know it came from menu
       await this.weatherCommand.fetchAndSendWeather(bot, chatId, text);
-    } else if (isPrayerMenuSession(state)) {
       sessionManager.clearState(chatId);
+    } else if (isPrayerMenuSession(state)) {
+      // Don't clear session yet - let the command know it came from menu
       await this.prayerCommand.fetchAndSendPrayerTimes(bot, chatId, text);
+      sessionManager.clearState(chatId);
     } else if (state.flow === SESSION_FLOWS.CHART) {
       sessionManager.clearState(chatId);
       // Chart expects: /chart [symbol] [timeframe]
@@ -299,10 +301,8 @@ export class SessionInputHandler implements MessageHandler {
               // Save AI response to history
               sessionManager.updateAiChatHistory(chatId, "model", response);
 
-              // Send response to user
-              await bot.sendMessage(chatId, response, {
-                parse_mode: "Markdown",
-              });
+              // Send response to user (plain text, not Markdown - AI content may have unescaped special chars)
+              await bot.sendMessage(chatId, response);
             },
             "typing",
           );

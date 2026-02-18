@@ -8,6 +8,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler, MessageHandler } from "./types.js";
 import type { JsonDb } from "../database/JsonDb.js";
 import type { TransactionType } from "../database/types.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 const EXPENSE_CATEGORIES: Record<string, string> = {
   food: "Makanan",
@@ -84,11 +85,13 @@ export class ExpenseCommand implements Command, MessageHandler {
 
           const typeLabel = type === "expense" ? "Pengeluaran" : "Pemasukan";
 
-          await bot.editMessageText(`*${typeLabel}*\n\nMasukkan nominal transaksi (angka):\n_Contoh: 50000_`, {
-            chat_id: chatId,
-            message_id: query.message.message_id,
-            parse_mode: "Markdown",
-          });
+          await safeEditMessage(
+            bot,
+            chatId,
+            query.message.message_id,
+            `*${typeLabel}*\n\nMasukkan nominal transaksi (angka):\n_Contoh: 50000_`,
+            { parse_mode: "Markdown" },
+          );
         }
 
         // Handle category selection
@@ -108,9 +111,7 @@ export class ExpenseCommand implements Command, MessageHandler {
               amount: stateData.amount,
             });
 
-            await bot.editMessageText("Masukkan deskripsi kategori:", {
-              chat_id: chatId,
-              message_id: query.message.message_id,
+            await safeEditMessage(bot, chatId, query.message.message_id, "Masukkan deskripsi kategori:", {
               parse_mode: "Markdown",
             });
           } else {
@@ -134,9 +135,7 @@ export class ExpenseCommand implements Command, MessageHandler {
               `Keluar: Rp${summary.totalExpense.toLocaleString("id-ID")}\n` +
               `Total:  Rp${summary.balance.toLocaleString("id-ID")}`;
 
-            await bot.editMessageText(message, {
-              chat_id: chatId,
-              message_id: query.message.message_id,
+            await safeEditMessage(bot, chatId, query.message.message_id, message, {
               parse_mode: "Markdown",
             });
           }
@@ -365,9 +364,7 @@ export class RekapCommand implements Command, CallbackHandler {
     }
 
     if (transactions.length === 0) {
-      await bot.editMessageText(`${title}\n\n_Tidak ada data transaksi._`, {
-        chat_id: chatId,
-        message_id: query.message.message_id,
+      await safeEditMessage(bot, chatId, query.message.message_id, `${title}\n\n_Tidak ada data transaksi._`, {
         parse_mode: "Markdown",
       });
       await bot.answerCallbackQuery(query.id);
@@ -408,9 +405,7 @@ export class RekapCommand implements Command, CallbackHandler {
       }
     }
 
-    await bot.editMessageText(message, {
-      chat_id: chatId,
-      message_id: query.message.message_id,
+    await safeEditMessage(bot, chatId, query.message.message_id, message, {
       parse_mode: "Markdown",
     });
 

@@ -6,7 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { QuoteService } from "../services/QuoteService.js";
 import { MESSAGES } from "../config/messages.js";
-import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 export class QuoteCommand implements Command {
   pattern = /^\/quote$/;
@@ -32,13 +32,13 @@ export class QuoteCommand implements Command {
         return;
       }
 
-      const quoteText = `"${quote.body}"\n\n- ${quote.author}`;
+      const quoteText = `_"${quote.body}"_\n\n— *${quote.author}*`;
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, quoteText, {
-        reply_markup: { inline_keyboard: getBackToMenuButton() },
+        parse_mode: "Markdown",
       });
       if (!edited) {
         await bot.sendMessage(chatId, quoteText, {
-          reply_markup: { inline_keyboard: getBackToMenuButton() },
+          parse_mode: "Markdown",
         });
       }
     } catch (error) {

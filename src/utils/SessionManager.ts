@@ -603,6 +603,16 @@ export class SessionManager {
   }
 
   /**
+   * Check if user should show menu back button
+   * Returns true if the command was triggered from the menu
+   */
+  shouldShowMenuButton(chatId: number): boolean {
+    const state = this.getState(chatId);
+    // Show menu button only if in a menu wizard flow
+    return state !== null && (state.flow === SESSION_FLOWS.WEATHER_MENU || state.flow === SESSION_FLOWS.PRAYER_MENU);
+  }
+
+  /**
    * Cleanup expired sessions (call periodically)
    */
   cleanup(): number {
