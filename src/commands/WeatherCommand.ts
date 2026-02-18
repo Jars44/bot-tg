@@ -8,6 +8,7 @@ import { WeatherService } from "../services/WeatherService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class WeatherCommand implements Command {
   pattern = /^\/cuaca(?:\s+(.+))?$/;
@@ -61,7 +62,7 @@ export class WeatherCommand implements Command {
 
       const { weather, locationName } = result;
       const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
@@ -114,7 +115,7 @@ export class WeatherCommand implements Command {
 
       const { weather, locationName } = result;
       const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);

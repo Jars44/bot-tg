@@ -9,6 +9,7 @@ import { AnimeService, type AnimeResult } from "../services/AnimeService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { createNumberedButtons, safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class AnimeCommand implements Command {
   pattern = /^\/anime(?:\s+(.+))?$/;
@@ -51,11 +52,11 @@ export class AnimeCommand implements Command {
       }
 
       // Build selection list
-      let message = `*Hasil untuk "${keyword}":*\n\n`;
+      let message = `*Hasil untuk "${toTitleCase(keyword)}":*\n\n`;
 
       results.forEach((anime, index) => {
         const score = anime.score ? `${anime.score}` : "";
-        message += `${index + 1}. *${anime.title}* (${anime.type}) ${score}\n`;
+        message += `${index + 1}. *${toTitleCase(anime.title)}* (${anime.type}) ${score}\n`;
       });
 
       message += "\n_Pilih nomor untuk melihat detail:_";
@@ -102,7 +103,7 @@ export class AnimeCommand implements Command {
 
   private async showAnimeDetail(bot: TelegramBot, chatId: number, anime: AnimeResult): Promise<void> {
     const reply = `
-*${anime.title}* (${anime.type})
+*${toTitleCase(anime.title)}* (${anime.type})
 Tayang: ${anime.year ?? "N/A"}
 Skor: ${anime.score ?? "N/A"}
 ${anime.synopsis}...
@@ -153,7 +154,7 @@ export class AnimeSelectionHandler implements CallbackHandler {
 
     // Show anime detail
     const reply = `
-*${anime.title}* (${anime.type})
+*${toTitleCase(anime.title)}* (${anime.type})
 Tayang: ${anime.year ?? "N/A"}
 Skor: ${anime.score ?? "N/A"}
 ${anime.synopsis}...

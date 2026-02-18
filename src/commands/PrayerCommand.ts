@@ -8,6 +8,7 @@ import { PrayerService } from "../services/PrayerService.js";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class PrayerCommand implements Command {
   pattern = /^\/sholat(?:\s+(.+))?$/;
@@ -54,7 +55,7 @@ export class PrayerCommand implements Command {
         return;
       }
 
-      const prayerMessage = `Jadwal Sholat di ${city}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
+      const prayerMessage = `Jadwal Sholat di ${toTitleCase(city)}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);

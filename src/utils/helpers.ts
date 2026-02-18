@@ -3,6 +3,17 @@
  */
 
 /**
+ * Capitalize each word in a string (title case)
+ */
+export function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+/**
  * Promisified delay
  */
 export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));

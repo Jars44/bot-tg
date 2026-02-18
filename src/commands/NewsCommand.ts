@@ -7,6 +7,7 @@ import type { Command } from "./types.js";
 import { NewsService } from "../services/NewsService.js";
 import { MESSAGES } from "../config/messages.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class NewsCommand implements Command {
   pattern = /^\/berita$/;
@@ -36,7 +37,8 @@ export class NewsCommand implements Command {
 
       for (const article of articles) {
         // Ensure title is not too long for the link text
-        const title = article.title.length > 150 ? article.title.substring(0, 147) + "..." : article.title;
+        const rawTitle = article.title.length > 150 ? article.title.substring(0, 147) + "..." : article.title;
+        const title = toTitleCase(rawTitle);
 
         if (article.url && article.url.startsWith("http")) {
           newsText += `• [${title}](${article.url})\n`;

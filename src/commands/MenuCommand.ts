@@ -15,6 +15,7 @@ import {
   getBackToMenuButton,
 } from "../utils/uiHelper.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { toTitleCase } from "../utils/helpers.js";
 import { MESSAGES } from "../config/messages.js";
 import type { NewsCommand } from "./NewsCommand.js";
 import type { HelpCommand } from "./HelpCommand.js";
@@ -186,7 +187,7 @@ export class MenuCommand implements Command, CallbackHandler {
         try {
           const quote = await this.quoteService.getQuoteOfTheDay();
           if (quote) {
-            await safeEditMessage(bot, chatId, messageId, `_"${quote.body}"_\n\n— *${quote.author}*`, {
+            await safeEditMessage(bot, chatId, messageId, `_"${quote.body}"_\n\n— *${toTitleCase(quote.author)}*`, {
               parse_mode: "Markdown",
               reply_markup: { inline_keyboard: getBackToMenuButton() },
             });

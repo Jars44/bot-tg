@@ -8,6 +8,7 @@ import { LyricsService } from "../services/LyricsService.js";
 import { MESSAGES } from "../config/messages.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class LyricsCommand implements Command {
   pattern = /^\/lirik(?:\s+(.+))?$/;
@@ -62,7 +63,7 @@ export class LyricsCommand implements Command {
         return;
       }
 
-      const lyricsText = `*${title}* — ${artist}\n\n${lyrics}`;
+      const lyricsText = `*${toTitleCase(title)}* — ${toTitleCase(artist)}\n\n${lyrics}`;
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, lyricsText, {
         parse_mode: "Markdown",
       });

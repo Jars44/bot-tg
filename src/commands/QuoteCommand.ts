@@ -7,6 +7,7 @@ import type { Command } from "./types.js";
 import { QuoteService } from "../services/QuoteService.js";
 import { MESSAGES } from "../config/messages.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class QuoteCommand implements Command {
   pattern = /^\/quote$/;
@@ -32,7 +33,7 @@ export class QuoteCommand implements Command {
         return;
       }
 
-      const quoteText = `_"${quote.body}"_\n\n— *${quote.author}*`;
+      const quoteText = `_"${quote.body}"_\n\n— *${toTitleCase(quote.author)}*`;
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, quoteText, {
         parse_mode: "Markdown",
       });

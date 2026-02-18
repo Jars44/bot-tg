@@ -9,6 +9,7 @@ import type { CallbackHandler } from "./types.js";
 import { WeatherService } from "../services/WeatherService.js";
 import { PrayerService } from "../services/PrayerService.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class LocationCallbackHandler implements CallbackHandler {
   prefix = "loc_";
@@ -55,7 +56,7 @@ export class LocationCallbackHandler implements CallbackHandler {
           bot,
           chatId,
           messageId,
-          `Cuaca di ${locationName}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
+          `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
         );
       } else if (data.startsWith("loc_prayer_")) {
         const parts = data.replace("loc_prayer_", "").split("_");

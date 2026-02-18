@@ -6,6 +6,7 @@
  */
 
 import { escapeMarkdown } from "../utils/sanitize.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export const MESSAGES = {
   // General
@@ -19,25 +20,27 @@ export const MESSAGES = {
   // Search states
   SEARCHING: (topic: string) => `⧗ Mencari ${topic}...`,
   SEARCHING_EARTHQUAKE: "⧗ Mengambil data gempa...",
-  SEARCHING_LYRICS: (title: string, artist: string) => `⧗ Mencari lirik: ${title} - ${artist}...`,
-  SEARCHING_ANIME: (keyword: string) => `⧗ Mencari data anime: ${keyword}...`,
-  SEARCHING_WEATHER: (location: string) => `⧗ Mengambil data cuaca: ${location}...`,
+  SEARCHING_LYRICS: (title: string, artist: string) =>
+    `⧗ Mencari lirik: ${toTitleCase(title)} - ${toTitleCase(artist)}...`,
+  SEARCHING_ANIME: (keyword: string) => `⧗ Mencari data anime: ${toTitleCase(keyword)}...`,
+  SEARCHING_WEATHER: (location: string) => `⧗ Mengambil data cuaca: ${toTitleCase(location)}...`,
   SEARCHING_NEWS: "⧗ Mengambil berita terkini...",
-  SEARCHING_PRAYER: (city: string) => `⧗ Mengambil jadwal sholat: ${city}...`,
-  SEARCHING_MOVIE: (keyword: string) => `⧗ Mencari data film: ${keyword}...`,
+  SEARCHING_PRAYER: (city: string) => `⧗ Mengambil jadwal sholat: ${toTitleCase(city)}...`,
+  SEARCHING_MOVIE: (keyword: string) => `⧗ Mencari data film: ${toTitleCase(keyword)}...`,
   SEARCHING_QUOTE: "⧗ Mengambil kutipan...",
 
   // Errors
   ERROR_GENERIC: "× Terjadi kesalahan sistem. Silakan coba lagi.",
   ERROR_EARTHQUAKE: "× Gagal mengambil data gempa.",
-  ERROR_LYRICS: (title: string, artist: string) => `× Lirik tidak ditemukan: ${title} - ${artist}`,
+  ERROR_LYRICS: (title: string, artist: string) =>
+    `× Lirik tidak ditemukan: ${toTitleCase(title)} - ${toTitleCase(artist)}`,
   ERROR_LYRICS_FORMAT: "× Format salah. Gunakan: /lirik Artist - Title",
   ERROR_QUOTE: "× Gagal mengambil kutipan.",
   ERROR_ANIME: "× Data anime tidak ditemukan.",
   ERROR_WEATHER: "× Gagal mengambil data cuaca.",
-  ERROR_LOCATION_NOT_FOUND: (location: string) => `× Lokasi tidak ditemukan: ${location}`,
+  ERROR_LOCATION_NOT_FOUND: (location: string) => `× Lokasi tidak ditemukan: ${toTitleCase(location)}`,
   ERROR_NEWS: "× Gagal mengambil berita.",
-  ERROR_PRAYER: (city: string) => `× Data sholat tidak tersedia untuk: ${city}`,
+  ERROR_PRAYER: (city: string) => `× Data sholat tidak tersedia untuk: ${toTitleCase(city)}`,
   ERROR_PRAYER_INVALID: "× Format data tidak valid.",
   ERROR_MOVIE: "× Film tidak ditemukan.",
   ERROR_STICKER: "× Gagal memproses stiker.",
@@ -166,7 +169,7 @@ Mencari rating, sinopsis, dan info rilis film.
 
   // Sentiment
   SENTIMENT_FORMAT_ERROR: "× Format salah.\nGunakan: `/sentimen [keyword]`\nContoh: `/sentimen bitcoin`",
-  SENTIMENT_ANALYZING: (keyword: string) => `⧗ Menganalisis sentimen untuk "${keyword}"...`,
+  SENTIMENT_ANALYZING: (keyword: string) => `⧗ Menganalisis sentimen untuk "${toTitleCase(keyword)}"...`,
   SENTIMENT_ERROR: "× Gagal menganalisis sentimen.",
 
   // Alert
@@ -270,16 +273,16 @@ Informasi dan sinopsis dari MyAnimeList.
   GEOGUESSR_PROMPT:
     "📍 **Tebak Lokasi**\n\nLihat pin di atas. Balas pesan ini dengan nama *Negara*, *Provinsi*, atau *Kota* dari lokasi tersebut.\n\n_Ketik /nyerah untuk menyerah._",
   GEOGUESSR_CORRECT_CITY: (city: string, country: string, points: number) =>
-    `✓ **Tepat sekali!**\n\nLokasi: *${escapeMarkdown(city)}, ${escapeMarkdown(country)}*\n+${points} poin`,
+    `✓ **Tepat sekali!**\n\nLokasi: *${escapeMarkdown(toTitleCase(city))}, ${escapeMarkdown(toTitleCase(country))}*\n+${points} poin`,
   GEOGUESSR_CORRECT_STATE: (state: string, country: string, points: number) =>
-    `✓ **Benar!**\n\nProvinsi/Negara bagian: *${escapeMarkdown(state)}, ${escapeMarkdown(country)}*\n+${points} poin`,
+    `✓ **Benar!**\n\nProvinsi/Negara bagian: *${escapeMarkdown(toTitleCase(state))}, ${escapeMarkdown(toTitleCase(country))}*\n+${points} poin`,
   GEOGUESSR_CORRECT_COUNTRY: (country: string, points: number) =>
-    `✓ **Hampir!**\n\nNegara: *${escapeMarkdown(country)}*\n+${points} poin`,
+    `✓ **Hampir!**\n\nNegara: *${escapeMarkdown(toTitleCase(country))}*\n+${points} poin`,
   GEOGUESSR_WRONG: (attempts: number) =>
     `× **Kurang tepat!**\n\nPercobaan ke-${attempts}. Coba lagi atau ketik /nyerah.`,
   GEOGUESSR_GIVE_UP: (city: string | null, state: string | null, country: string, address: string) => {
     const location = city || state || country;
-    return `**Menyerah**\n\nJawaban: *${escapeMarkdown(location)}, ${escapeMarkdown(country)}*\n\n_${escapeMarkdown(address)}_`;
+    return `**Menyerah**\n\nJawaban: *${escapeMarkdown(toTitleCase(location))}, ${escapeMarkdown(toTitleCase(country))}*\n\n_${escapeMarkdown(address)}_`;
   },
   GEOGUESSR_ERROR: "× Gagal memproses permainan. Silakan coba lagi.",
   GEOGUESSR_ERROR_LOCATION: "× Gagal mendapatkan data lokasi. Silakan coba lagi.",

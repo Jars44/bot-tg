@@ -8,6 +8,7 @@ import { MovieService } from "../services/MovieService.js";
 import { MESSAGES } from "../config/messages.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { toTitleCase } from "../utils/helpers.js";
 
 export class MovieCommand implements Command {
   pattern = /^\/film(?:\s+(.+))?$/;
@@ -42,10 +43,10 @@ export class MovieCommand implements Command {
       }
 
       const reply = `
-Film: ${movie.title}
+Film: ${toTitleCase(movie.title)}
 Tahun: ${movie.releaseDate}
 Rating: ${movie.rating}
-Deskripsi: ${movie.overview}
+Sinopsis: ${movie.overview}
 `;
 
       await bot.deleteMessage(chatId, searchingMessage.message_id);
