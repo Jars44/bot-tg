@@ -1,18 +1,8 @@
-/**
- * Vibe Service — Audio & Scent Sync
- * Curates a personalized "vibe" (Music + Perfume) based on
- * user location, weather conditions, and time of day.
- *
- * Primary: AI-generated via Gemini Flash 2.5
- * Fallback: Hardcoded weather→vibe mapping
- */
-
 import type { AIService } from "./GenAIService.js";
 import type { WeatherService, WeatherData } from "./WeatherService.js";
 import type { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
-
-// ─── Types ────────────────────────────────────────────────────
+import { S } from "../config/symbols.js";
 
 export interface VibeProfile {
   mood: string;
@@ -62,8 +52,6 @@ interface NominatimReverseResult {
     country?: string;
   };
 }
-
-// ─── Fallback Data ────────────────────────────────────────────
 
 const FALLBACK_VIBES: Map<WeatherCondition, VibeProfile> = new Map([
   [
@@ -208,8 +196,6 @@ const FALLBACK_VIBES: Map<WeatherCondition, VibeProfile> = new Map([
   ],
 ]);
 
-// ─── Service ──────────────────────────────────────────────────
-
 export class VibeService {
   private aiService: AIService;
   private weatherService: WeatherService;
@@ -221,12 +207,7 @@ export class VibeService {
     this.httpClient = httpClient;
   }
 
-  /**
-   * Generate a vibe profile for the given coordinates.
-   * Attempts AI generation first, falls back to procedural mapping.
-   */
   async getVibe(lat: number, lon: number): Promise<VibeProfile> {
-    // Gather context
     const [weatherResult, locationName] = await Promise.all([
       this.weatherService.getWeatherByCoords(lat, lon),
       this.reverseGeocode(lat, lon),
@@ -237,7 +218,6 @@ export class VibeService {
     const hour = new Date().getHours();
     const timeLabel = this.getTimeLabel(hour);
 
-    // Primary: AI generation
     try {
       return await this.generateVibeAI(weather, resolvedLocation, hour, timeLabel);
     } catch (error: unknown) {
@@ -248,17 +228,12 @@ export class VibeService {
       console.log("[VibeService] Falling back to procedural vibe generation");
     }
 
-    // Fallback: Procedural
     return this.generateVibeFallback(weather);
   }
 
-  /**
-   * Generate vibe from city name (no coordinates).
-   */
   async getVibeByCity(cityName: string): Promise<VibeProfile> {
     const result = await this.weatherService.getWeatherByLocation(cityName);
     if (!result) {
-      // Return a generic fallback
       return this.generateVibeFallback({ temperature: 25, windspeed: 10, is_day: true });
     }
 
@@ -271,8 +246,6 @@ export class VibeService {
       return this.generateVibeFallback(result.weather);
     }
   }
-
-  // ─── AI Path ──────────────────────────────────────────────
 
   private async generateVibeAI(
     weather: WeatherData,
@@ -303,22 +276,16 @@ export class VibeService {
     return this.aiService.generateJSON<AIVibeResponse>(prompt, 0.9);
   }
 
-  // ─── Fallback Path ────────────────────────────────────────
-
   private generateVibeFallback(weather: WeatherData): VibeProfile {
     const condition = this.classifyWeather(weather);
     return FALLBACK_VIBES.get(condition) ?? FALLBACK_VIBES.get("clear_day")!;
   }
 
-  // ─── Helpers ──────────────────────────────────────────────
-
   private classifyWeather(weather: WeatherData): WeatherCondition {
-    // Simple heuristic classification based on available data
     if (weather.windspeed > 40) return "windy";
     if (weather.temperature < 10) return "cold";
     if (weather.temperature > 33) return "hot";
 
-    // Use is_day + wind to approximate cloud/rain
     if (!weather.is_day) return "clear_night";
     if (weather.windspeed > 20) return "cloudy";
 
@@ -360,9 +327,6 @@ export class VibeService {
     }
   }
 
-  /**
-   * Format a VibeProfile into a Telegram-friendly message.
-   */
   formatVibeMessage(vibe: VibeProfile, locationLabel?: string): string {
     const header = locationLabel ? `Vibe Check — ${locationLabel}` : "Vibe Check";
     const musicUrl = vibe.music.spotifyUrl ? `\n[Spotify](${vibe.music.spotifyUrl})` : "";
@@ -371,11 +335,11 @@ export class VibeService {
       `*${header}*`,
       `Mood: *${vibe.mood}*`,
       ``,
-      `*🎵 Musik*`,
+      `*${S.NOTES} Musik*`,
       `${vibe.music.track} — ${vibe.music.artist}`,
       `Genre: ${vibe.music.genre}${musicUrl}`,
       ``,
-      `*🌸 Profil Aroma*`,
+      `*${S.FLOWER} Profil Aroma*`,
       `${vibe.scent.name} — ${vibe.scent.brand}`,
       `Awal: ${vibe.scent.topNotes.join(", ")}`,
       `Dasar: ${vibe.scent.baseNotes.join(", ")}`,

@@ -1,8 +1,3 @@
-/**
- * JSON-based database using lowdb for persistence
- * Extended for Financial Suite with collection-based CRUD
- */
-
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { randomUUID } from "crypto";
@@ -40,7 +35,6 @@ export class JsonDb {
   constructor(dbPath?: string) {
     const dataDir = path.resolve(process.cwd(), "data");
 
-    // Ensure data directory exists
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -54,7 +48,6 @@ export class JsonDb {
     if (this.initialized) return;
     await this.db.read();
     this.db.data ||= DEFAULT_DATA;
-    // Ensure all collections exist
     this.db.data.reminders ||= [];
     this.db.data.rateLimits ||= [];
     this.db.data.transactions ||= [];
@@ -71,14 +64,10 @@ export class JsonDb {
     }
   }
 
-  // ==================== Generic Collection Access ====================
-
   getCollection<K extends keyof DatabaseSchema>(key: K): DatabaseSchema[K] {
     this.ensureInit();
     return this.db.data[key];
   }
-
-  // ==================== Reminder Operations ====================
 
   async addReminder(chatId: number, time: string, message: string): Promise<Reminder> {
     this.ensureInit();
@@ -126,8 +115,6 @@ export class JsonDb {
     await this.db.write();
   }
 
-  // ==================== Rate Limit Operations ====================
-
   async getUserLimit(userId: number): Promise<UserRateLimit> {
     this.ensureInit();
 
@@ -143,7 +130,6 @@ export class JsonDb {
       await this.db.write();
     }
 
-    // Check if rate limit should be reset
     if (Date.now() - userLimit.lastReset >= CONFIG.RATE_LIMIT_RESET_MS) {
       userLimit.stickerCount = 0;
       userLimit.lastReset = Date.now();
@@ -168,8 +154,6 @@ export class JsonDb {
     const remaining = Math.max(0, CONFIG.STICKER_LIMIT - userLimit.stickerCount);
     return { allowed, remaining };
   }
-
-  // ==================== Transaction Operations ====================
 
   async addTransaction(
     chatId: number,
@@ -207,7 +191,6 @@ export class JsonDb {
       transactions = transactions.filter((t) => t.type === options.type);
     }
 
-    // Sort by createdAt descending (newest first)
     transactions.sort((a, b) => b.createdAt - a.createdAt);
 
     if (options?.limit) {
@@ -241,8 +224,6 @@ export class JsonDb {
       count: transactions.length,
     };
   }
-
-  // ==================== Portfolio Operations ====================
 
   async getOrCreatePortfolio(chatId: number): Promise<Portfolio> {
     this.ensureInit();
@@ -320,22 +301,16 @@ export class JsonDb {
       executedAt: Date.now(),
     };
 
-    // Update cash balance
     portfolio.cashBalance += sellPrice * position.quantity - commission;
 
-    // Remove position
     portfolio.positions.splice(positionIndex, 1);
 
-    // Add to trade history
     portfolio.tradeHistory.push(tradeRecord);
 
     await this.db.write();
     return tradeRecord;
   }
 
-  /**
-   * Update position TP/SL levels
-   */
   async updatePositionTpSl(positionId: string, takeProfit?: number, stopLoss?: number): Promise<void> {
     this.ensureInit();
 
@@ -350,9 +325,6 @@ export class JsonDb {
     }
   }
 
-  /**
-   * Get all positions with TP/SL set (for monitoring)
-   */
   async getAllPositionsWithTpSl(): Promise<Array<{ chatId: number; position: Position }>> {
     this.ensureInit();
 
@@ -382,8 +354,6 @@ export class JsonDb {
     await this.db.write();
     return tradeRecord;
   }
-
-  // ==================== Alert Operations ====================
 
   async addAlert(chatId: number, symbol: string, targetPrice: number, condition: AlertCondition): Promise<PriceAlert> {
     this.ensureInit();
@@ -436,8 +406,6 @@ export class JsonDb {
     return false;
   }
 
-  // ==================== Conversation State Operations ====================
-
   async setConversationState(
     chatId: number,
     command: string,
@@ -446,7 +414,6 @@ export class JsonDb {
   ): Promise<void> {
     this.ensureInit();
 
-    // Remove existing state for this chat
     this.db.data.conversationStates = this.db.data.conversationStates.filter((s) => s.chatId !== chatId);
 
     const state: ConversationState = {
@@ -467,9 +434,6 @@ export class JsonDb {
     return state || null;
   }
 
-  /**
-   * Get all conversation states (for session manager initialization)
-   */
   async getAllConversationStates(): Promise<ConversationState[]> {
     await this.ensureInit();
     return this.db.data.conversationStates;
@@ -481,8 +445,6 @@ export class JsonDb {
     this.db.data.conversationStates = this.db.data.conversationStates.filter((s) => s.chatId !== chatId);
     await this.db.write();
   }
-
-  // ==================== Cleanup Operations ====================
 
   async cleanExpiredRateLimits(): Promise<void> {
     this.ensureInit();
@@ -503,7 +465,6 @@ export class JsonDb {
   async cleanTriggeredAlerts(): Promise<void> {
     this.ensureInit();
 
-    // Remove alerts that were triggered more than 24 hours ago
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     this.db.data.alerts = this.db.data.alerts.filter((a) => !a.triggered || a.createdAt > oneDayAgo);
     await this.db.write();

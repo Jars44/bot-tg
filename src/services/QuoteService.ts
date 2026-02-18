@@ -1,7 +1,3 @@
-/**
- * Quote service using FavQs API
- */
-
 import { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
 

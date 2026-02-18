@@ -1,8 +1,3 @@
-/**
- * Sticker command with Wizard-style interactive flow
- * Supports both text-to-sticker and image-to-sticker conversions
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import { StickerService } from "../services/StickerService.js";
@@ -13,6 +8,7 @@ import { safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 import { CONFIG } from "../config/index.js";
 import { delay } from "../utils/helpers.js";
+import { S } from "../config/symbols.js";
 
 export class StickerCommand implements Command, CallbackHandler {
   pattern = /^\/stiker(?:\s+(.+))?$/s;
@@ -38,19 +34,14 @@ export class StickerCommand implements Command, CallbackHandler {
 
     const text = match?.[1]?.trim();
 
-    // If text provided, process directly (legacy support)
     if (text) {
       await this.processTextSticker(bot, chatId, userId, text);
       return;
     }
 
-    // Otherwise, show wizard menu
     await this.showStickerTypeMenu(bot, chatId);
   }
 
-  /**
-   * Show initial menu: Image or Text sticker
-   */
   private async showStickerTypeMenu(bot: TelegramBot, chatId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardMarkup = {
       inline_keyboard: [
@@ -58,7 +49,7 @@ export class StickerCommand implements Command, CallbackHandler {
           { text: "Gambar", callback_data: "sticker_type_image" },
           { text: "Teks", callback_data: "sticker_type_text" },
         ],
-        [{ text: "× Batal", callback_data: "sticker_cancel" }],
+        [{ text: `${S.FAIL} Batal`, callback_data: "sticker_cancel" }],
       ],
     };
 
@@ -67,7 +58,6 @@ export class StickerCommand implements Command, CallbackHandler {
       parse_mode: "Markdown",
     });
 
-    // Store menu message ID for later editing
     await sessionManager.setState(chatId, {
       flow: "sticker",
       step: "type_selection",
@@ -75,9 +65,6 @@ export class StickerCommand implements Command, CallbackHandler {
     });
   }
 
-  /**
-   * Handle callback queries for sticker wizard
-   */
   async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
     const chatId = query.message?.chat.id;
     const messageId = query.message?.message_id;
@@ -99,20 +86,17 @@ export class StickerCommand implements Command, CallbackHandler {
     } catch (error) {
       console.error("[StickerCommand] Callback error:", error);
       await bot.answerCallbackQuery(query.id, {
-        text: "× Terjadi kesalahan",
+        text: `${S.FAIL} Terjadi kesalahan`,
       });
     }
   }
 
-  /**
-   * Handle "Gambar" selection - Start image wizard
-   */
   private async handleImageTypeSelected(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardMarkup = {
       inline_keyboard: [
         [
           { text: "← Kembali", callback_data: "sticker_back" },
-          { text: "× Batal", callback_data: "sticker_cancel" },
+          { text: `${S.FAIL} Batal`, callback_data: "sticker_cancel" },
         ],
       ],
     };
@@ -122,7 +106,6 @@ export class StickerCommand implements Command, CallbackHandler {
       parse_mode: "Markdown",
     });
 
-    // Update session: now waiting for image
     await sessionManager.setState(chatId, {
       flow: "sticker",
       step: "awaiting_image",
@@ -130,15 +113,12 @@ export class StickerCommand implements Command, CallbackHandler {
     });
   }
 
-  /**
-   * Handle "Teks" selection - Start text wizard
-   */
   private async handleTextTypeSelected(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardMarkup = {
       inline_keyboard: [
         [
           { text: "← Kembali", callback_data: "sticker_back" },
-          { text: "× Batal", callback_data: "sticker_cancel" },
+          { text: `${S.FAIL} Batal`, callback_data: "sticker_cancel" },
         ],
       ],
     };
@@ -147,7 +127,6 @@ export class StickerCommand implements Command, CallbackHandler {
       reply_markup: keyboard,
     });
 
-    // Update session: now waiting for text input
     await sessionManager.setState(chatId, {
       flow: "sticker",
       step: "awaiting_text",
@@ -155,9 +134,6 @@ export class StickerCommand implements Command, CallbackHandler {
     });
   }
 
-  /**
-   * Handle back button - Return to main menu
-   */
   private async handleBack(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardMarkup = {
       inline_keyboard: [
@@ -165,7 +141,7 @@ export class StickerCommand implements Command, CallbackHandler {
           { text: "Gambar", callback_data: "sticker_type_image" },
           { text: "Teks", callback_data: "sticker_type_text" },
         ],
-        [{ text: "× Batal", callback_data: "sticker_cancel" }],
+        [{ text: `${S.FAIL} Batal`, callback_data: "sticker_cancel" }],
       ],
     };
 
@@ -174,7 +150,6 @@ export class StickerCommand implements Command, CallbackHandler {
       parse_mode: "Markdown",
     });
 
-    // Update session: back to type selection
     await sessionManager.setState(chatId, {
       flow: "sticker",
       step: "type_selection",
@@ -182,28 +157,18 @@ export class StickerCommand implements Command, CallbackHandler {
     });
   }
 
-  /**
-   * Handle cancel button
-   */
   private async handleCancel(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
-    await safeEditMessage(bot, chatId, messageId, "× Pembuatan stiker dibatalkan.");
+    await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Pembuatan stiker dibatalkan.`);
 
     await sessionManager.clearState(chatId);
   }
 
-  /**
-   * Process text input for sticker (called by SessionInputHandler)
-   */
   async processTextInput(bot: TelegramBot, chatId: number, userId: number, text: string): Promise<void> {
     await this.processTextSticker(bot, chatId, userId, text);
     await sessionManager.clearState(chatId);
   }
 
-  /**
-   * Process text-to-sticker conversion
-   */
   private async processTextSticker(bot: TelegramBot, chatId: number, userId: number, text: string): Promise<void> {
-    // Check rate limit from database (persisted)
     const { allowed } = await this.db.canCreateSticker(userId);
 
     if (!allowed) {
@@ -216,23 +181,17 @@ export class StickerCommand implements Command, CallbackHandler {
     try {
       loadingMessage = await bot.sendMessage(chatId, MESSAGES.STICKER_CREATING);
 
-      // Generate sticker
       const webpPath = await this.stickerService.createSticker(text);
 
-      // Assign .name property to avoid deprecation warning from node-telegram-bot-api
       const namedPath = Object.assign(webpPath, { name: "sticker.webp" });
 
-      // Send sticker
       await bot.sendSticker(chatId, namedPath as unknown as string, {});
 
-      // Increment rate limit counter in database
       await this.db.incrementStickerCount(userId);
 
-      // Cleanup: delay then delete temp file
       await delay(3000);
       this.tempCleaner.deleteFile(webpPath);
 
-      // Delete loading message
       await bot.deleteMessage(chatId, loadingMessage.message_id);
     } catch (err) {
       console.error("[StickerCommand] Failed to create text sticker:", err);

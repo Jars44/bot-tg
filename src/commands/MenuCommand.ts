@@ -1,10 +1,5 @@
-/**
- * Menu Command
- * Displays the main interactive menu for the bot
- * Tone: Professional Hybrid
- */
-
 import TelegramBot from "node-telegram-bot-api";
+import { S } from "../config/symbols.js";
 import type { Command, CallbackHandler } from "./types.js";
 import {
   createMenuKeyboard,
@@ -29,14 +24,9 @@ import type { VibeCommand } from "./VibeCommand.js";
 import type { HuntCommand } from "./HuntCommand.js";
 import type { BrainstormCommand } from "./BrainstormCommand.js";
 
-/**
- * Main menu command handler
- */
 export class MenuCommand implements Command, CallbackHandler {
   pattern = /^\/(start|menu)$/;
   prefix = "menu_";
-
-  // Dependencies injected via constructor
   private newsCommand: NewsCommand;
   private helpCommand: HelpCommand;
   private geoGuessrCommand: GeoGuessrCommand;
@@ -68,8 +58,6 @@ export class MenuCommand implements Command, CallbackHandler {
     const text = msg.text || "";
 
     let messageText = `Jarvis Bot Dashboard\n` + `\n` + `Pilih layanan yang tersedia:`;
-
-    // Add welcome message for /start command
     if (text.startsWith("/start")) {
       messageText = `${MESSAGES.WELCOME}\n\n${messageText}`;
     }
@@ -89,8 +77,6 @@ export class MenuCommand implements Command, CallbackHandler {
     if (!chatId || !messageId) return;
 
     const action = data.replace("menu_", "");
-
-    // Navigation Logic
     switch (action) {
       case "trading":
         await safeEditMessage(
@@ -137,41 +123,32 @@ export class MenuCommand implements Command, CallbackHandler {
         );
         break;
 
-      // Feature Execution Logic
-      // For some features, we execute them directly and delete the menu message to avoid clutter
-
       case "news":
-        // Direct execution of NewsCommand
         await bot.deleteMessage(chatId, messageId);
         await this.newsCommand.execute(bot, createMockMessage(query));
         break;
 
       case "help":
-        // Direct execution of HelpCommand
         await bot.deleteMessage(chatId, messageId);
         await this.helpCommand.execute(bot, createMockMessage(query));
         break;
 
       case "geoguessr":
-        // Direct execution of GeoGuessrCommand
         await bot.deleteMessage(chatId, messageId);
         await this.geoGuessrCommand.execute(bot, createMockMessage(query));
         break;
-
-      // Lifestyle Suite — Direct execution
       case "vibe":
         await bot.deleteMessage(chatId, messageId);
         await this.vibeCommand.execute(bot, createMockMessage(query), null);
         break;
 
       case "moodboard":
-        // Wizard flow: Ask for aesthetic keyword
         sessionManager.startMoodboardMenu(chatId, messageId);
         await safeEditMessage(
           bot,
           chatId,
           messageId,
-          "🎨 Masukkan keyword estetik (contoh: *Cyberpunk*, *Old Money*, *Dark Academia*):",
+          `${S.PALETTE} Masukkan keyword estetik (contoh: *Cyberpunk*, *Old Money*, *Dark Academia*):`,
           {
             reply_markup: {
               inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
@@ -193,7 +170,6 @@ export class MenuCommand implements Command, CallbackHandler {
       case "anime":
       case "lyrics":
       case "movie": {
-        // Interactive inputs - Prompt user
         let prompt = "";
         if (action === "anime") {
           prompt = "Masukkan judul Anime:";
@@ -215,17 +191,14 @@ export class MenuCommand implements Command, CallbackHandler {
       }
 
       case "noop":
-        // Do nothing for separator
         break;
 
       case "quote": {
-        // Direct execution: Fetch and display quote immediately
         try {
-          await safeEditMessage(bot, chatId, messageId, "⏳ Mengambil kutipan...");
+          await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Mengambil kutipan...`);
         } catch {
-          // If edit fails, delete and send new message
           await bot.deleteMessage(chatId, messageId);
-          await bot.sendMessage(chatId, "⏳ Mengambil kutipan...");
+          await bot.sendMessage(chatId, `${S.LOADING} Mengambil kutipan...`);
         }
 
         try {
@@ -249,7 +222,6 @@ export class MenuCommand implements Command, CallbackHandler {
       }
 
       case "weather":
-        // Wizard flow: Ask for city name
         sessionManager.startWeatherMenu(chatId, messageId);
         await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat cuaca:", {
           reply_markup: {
@@ -259,7 +231,6 @@ export class MenuCommand implements Command, CallbackHandler {
         break;
 
       case "prayer":
-        // Wizard flow: Ask for city name
         sessionManager.startPrayerMenu(chatId, messageId);
         await safeEditMessage(bot, chatId, messageId, "Silakan ketik nama kota untuk melihat jadwal sholat:", {
           reply_markup: {
@@ -276,13 +247,8 @@ export class MenuCommand implements Command, CallbackHandler {
   }
 }
 
-/**
- * Handler for Trading Menu sub-actions
- */
 export class TradingMenuHandler implements CallbackHandler {
   prefix = "trade_";
-
-  // Dependencies
   private portfolioCommand: PortfolioCommand;
   private calendarCommand: CalendarCommand;
   private myAlertsCommand: MyAlertsCommand;
@@ -303,7 +269,6 @@ export class TradingMenuHandler implements CallbackHandler {
 
     switch (action) {
       case "buy":
-        // Start buy wizard - prompt for symbol
         sessionManager.startBuyWizard(chatId, messageId);
         await safeEditMessage(
           bot,
@@ -319,7 +284,6 @@ export class TradingMenuHandler implements CallbackHandler {
         );
         break;
       case "sell":
-        // Start sell wizard - prompt for symbol
         sessionManager.startSellWizard(chatId, messageId);
         await safeEditMessage(
           bot,
@@ -344,8 +308,6 @@ export class TradingMenuHandler implements CallbackHandler {
         break;
       case "alerts":
         await bot.deleteMessage(chatId, messageId);
-        // Execute MyAlerts logic (assuming it's implemented in AlertCommand or similar)
-        // For now, let's assume MyAlertsCommand has execute
         await this.myAlertsCommand.execute(bot, createMockMessage(query));
         break;
       default:
@@ -356,13 +318,8 @@ export class TradingMenuHandler implements CallbackHandler {
   }
 }
 
-/**
- * Handler for Finance Menu sub-actions
- */
 export class FinanceMenuHandler implements CallbackHandler {
   prefix = "fin_";
-
-  // Dependencies
   private catatCommand: ExpenseCommand;
   private rekapCommand: RekapCommand;
   private laporanCommand: LaporanCommand;
@@ -400,10 +357,6 @@ export class FinanceMenuHandler implements CallbackHandler {
   }
 }
 
-/**
- * Helper to create a mock message from callback query
- * Preserves user info for command execution
- */
 function createMockMessage(query: TelegramBot.CallbackQuery): TelegramBot.Message {
   return {
     message_id: query.message?.message_id || 0,

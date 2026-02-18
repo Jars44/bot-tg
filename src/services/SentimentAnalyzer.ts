@@ -1,11 +1,7 @@
-/**
- * Sentiment Analyzer Service
- * Keyword-based heuristic analysis for market sentiment
- */
-
 import type { NewsService } from "./NewsService.js";
 import type { SentimentResult } from "../database/types.js";
 import { CONFIG } from "../config/index.js";
+import { S } from "../config/symbols.js";
 
 export class SentimentAnalyzer {
   private newsService: NewsService;
@@ -14,12 +10,8 @@ export class SentimentAnalyzer {
     this.newsService = newsService;
   }
 
-  /**
-   * Analyze sentiment for a given keyword/topic
-   */
   async analyzeSentiment(keyword: string): Promise<SentimentResult> {
     try {
-      // Fetch news related to the keyword
       const newsItems = await this.newsService.searchNews(keyword);
 
       if (!newsItems || newsItems.length === 0) {
@@ -32,13 +24,11 @@ export class SentimentAnalyzer {
         };
       }
 
-      // Extract headlines
       const headlines = newsItems.slice(0, 5).map((item) => ({
         title: item.title,
         url: item.url,
       }));
 
-      // Calculate sentiment score
       let bullishScore = 0;
       let bearishScore = 0;
 
@@ -47,7 +37,6 @@ export class SentimentAnalyzer {
         .join(" ")
         .toLowerCase();
 
-      // Count bullish keywords
       for (const word of CONFIG.SENTIMENT.BULLISH) {
         const regex = new RegExp(word, "gi");
         const matches = allText.match(regex);
@@ -56,7 +45,6 @@ export class SentimentAnalyzer {
         }
       }
 
-      // Count bearish keywords
       for (const word of CONFIG.SENTIMENT.BEARISH) {
         const regex = new RegExp(word, "gi");
         const matches = allText.match(regex);
@@ -65,11 +53,9 @@ export class SentimentAnalyzer {
         }
       }
 
-      // Calculate final score (-100 to +100)
       const totalScore = bullishScore - bearishScore;
       const normalizedScore = Math.max(-100, Math.min(100, totalScore));
 
-      // Determine sentiment
       let sentiment: "Bullish" | "Bearish" | "Neutral";
       if (normalizedScore > 15) {
         sentiment = "Bullish";
@@ -79,7 +65,6 @@ export class SentimentAnalyzer {
         sentiment = "Neutral";
       }
 
-      // Generate analysis text
       const analysis = this.generateAnalysis(sentiment, normalizedScore, bullishScore, bearishScore);
 
       return {
@@ -101,9 +86,6 @@ export class SentimentAnalyzer {
     }
   }
 
-  /**
-   * Generate human-readable analysis
-   */
   private generateAnalysis(sentiment: string, score: number, bullishScore: number, bearishScore: number): string {
     const absScore = Math.abs(score);
     let strength: string;
@@ -126,9 +108,6 @@ export class SentimentAnalyzer {
     return `Sentimen ${direction} ${strength} berdasarkan ${bullishScore + bearishScore} indikator kata kunci`;
   }
 
-  /**
-   * Format sentiment result for display
-   */
   formatSentimentResult(result: SentimentResult): string {
     const indicator = this.getSentimentIndicator(result.sentiment, result.score);
     const scoreSign = result.score >= 0 ? "+" : "";
@@ -141,13 +120,11 @@ export class SentimentAnalyzer {
       message += `*Recent Headlines:*\n`;
       for (const headline of result.headlines) {
         const title = headline.title;
-        // Increase limit to 150 chars to show full title + source
         const truncated = title.length > 150 ? title.substring(0, 147) + "..." : title;
-        // Check if URL is valid to avoid formatting errors
         if (headline.url && headline.url.startsWith("http")) {
-          message += `• [${truncated}](${headline.url})\n`;
+          message += `${S.BULLET_ALT} [${truncated}](${headline.url})\n`;
         } else {
-          message += `• ${truncated}\n`;
+          message += `${S.BULLET_ALT} ${truncated}\n`;
         }
       }
     }
@@ -155,21 +132,18 @@ export class SentimentAnalyzer {
     return message;
   }
 
-  /**
-   * Get appropriate emoji for sentiment
-   */
   private getSentimentIndicator(sentiment: string, score: number): string {
     const absScore = Math.abs(score);
 
     if (sentiment === "Bullish") {
-      if (absScore >= 50) return "▲▲";
-      if (absScore >= 30) return "▲";
-      return "▲";
+      if (absScore >= 50) return `${S.UP}${S.UP}`;
+      if (absScore >= 30) return S.UP;
+      return S.UP;
     } else if (sentiment === "Bearish") {
-      if (absScore >= 50) return "▼▼";
-      if (absScore >= 30) return "▼";
-      return "▼";
+      if (absScore >= 50) return `${S.DOWN}${S.DOWN}`;
+      if (absScore >= 30) return S.DOWN;
+      return S.DOWN;
     }
-    return "•";
+    return S.BULLET_ALT;
   }
 }

@@ -1,19 +1,14 @@
-/**
- * UI Helper Utilities
- * Common UI patterns for Telegram bot interactions
- */
-
 import TelegramBot from "node-telegram-bot-api";
+import { S } from "../config/symbols.js";
+import { escapeMarkdown } from "./sanitize.js";
 
-/** Button type for inline keyboard */
+export { escapeMarkdown };
+
 export interface ButtonConfig {
   text: string;
   callback_data: string;
 }
 
-/**
- * Execute an action while showing "typing" indicator
- */
 export async function withLoading<T>(
   bot: TelegramBot,
   chatId: number,
@@ -24,9 +19,6 @@ export async function withLoading<T>(
   return action();
 }
 
-/**
- * Create a grid layout for inline keyboard buttons
- */
 export function createGrid(buttons: ButtonConfig[], columns: number = 2): TelegramBot.InlineKeyboardButton[][] {
   const grid: TelegramBot.InlineKeyboardButton[][] = [];
 
@@ -41,9 +33,6 @@ export function createGrid(buttons: ButtonConfig[], columns: number = 2): Telegr
   return grid;
 }
 
-/**
- * Create standard confirmation buttons (Execute / Cancel)
- */
 export function createConfirmButtons(
   yesData: string,
   noData: string,
@@ -58,9 +47,6 @@ export function createConfirmButtons(
   ];
 }
 
-/**
- * Create a numbered selection list
- */
 export function createNumberedButtons(
   prefix: string,
   count: number,
@@ -79,16 +65,10 @@ export function createNumberedButtons(
   return createGrid(buttons, columns);
 }
 
-/**
- * Create a back button
- */
 export function createBackButton(callbackData: string, text: string = "Kembali"): TelegramBot.InlineKeyboardButton[][] {
   return [[{ text, callback_data: callbackData }]];
 }
 
-/**
- * Category buttons for expense tracking
- */
 export const EXPENSE_CATEGORIES = [
   { text: "Makanan", callback_data: "exp_cat_food" },
   { text: "Transport", callback_data: "exp_cat_transport" },
@@ -98,26 +78,17 @@ export const EXPENSE_CATEGORIES = [
   { text: "Lainnya", callback_data: "exp_cat_custom" },
 ];
 
-/**
- * Create expense category keyboard
- */
 export function createCategoryKeyboard(): TelegramBot.InlineKeyboardButton[][] {
   return createGrid(EXPENSE_CATEGORIES, 2);
 }
 
-/**
- * Main menu buttons - Core/Stable Features
- */
 export const MENU_CORE_BUTTONS = [
   { text: "Keuangan", callback_data: "menu_expense" },
   { text: "Trading", callback_data: "menu_trading" },
   { text: "Sholat", callback_data: "menu_prayer" },
-  { text: "Kutipan", callback_data: "menu_quote" }, // Replaces simple "Bantuan" with a feature
+  { text: "Kutipan", callback_data: "menu_quote" },
 ];
 
-/**
- * Main menu buttons - Experimental/Beta Features
- */
 export const MENU_EXPERIMENTAL_BUTTONS = [
   { text: "Cuaca", callback_data: "menu_weather" },
   { text: "Berita", callback_data: "menu_news" },
@@ -128,33 +99,23 @@ export const MENU_EXPERIMENTAL_BUTTONS = [
   { text: "Help", callback_data: "menu_help" },
 ];
 
-/**
- * Main menu buttons - Lifestyle Suite
- */
 export const MENU_LIFESTYLE_BUTTONS = [
-  { text: "🎵 Vibe", callback_data: "menu_vibe" },
-  { text: "🎨 Moodboard", callback_data: "menu_moodboard" },
-  { text: "📸 Hunt", callback_data: "menu_hunt" },
-  { text: "💡 Brainstorm", callback_data: "menu_brainstorm" },
+  { text: `${S.NOTE} Vibe`, callback_data: "menu_vibe" },
+  { text: `${S.PALETTE} Moodboard`, callback_data: "menu_moodboard" },
+  { text: `${S.LENS} Hunt`, callback_data: "menu_hunt" },
+  { text: `${S.BULB} Brainstorm`, callback_data: "menu_brainstorm" },
 ];
 
-/**
- * Create main menu keyboard with segmentation
- */
 export function createMenuKeyboard(): TelegramBot.InlineKeyboardButton[][] {
   const coreGrid = createGrid(MENU_CORE_BUTTONS, 2);
   const lifestyleGrid = createGrid(MENU_LIFESTYLE_BUTTONS, 2);
   const experimentalGrid = createGrid(MENU_EXPERIMENTAL_BUTTONS, 3);
 
-  // Visual separators
   const separator: TelegramBot.InlineKeyboardButton[] = [{ text: "· · ·", callback_data: "noop" }];
 
   return [...coreGrid, separator, ...lifestyleGrid, separator, ...experimentalGrid];
 }
 
-/**
- * Trading sub-menu buttons
- */
 export const TRADING_BUTTONS = [
   { text: "Portfolio", callback_data: "trade_portfolio" },
   { text: "Buy", callback_data: "trade_buy" },
@@ -164,16 +125,10 @@ export const TRADING_BUTTONS = [
   { text: "Kembali", callback_data: "menu_back" },
 ];
 
-/**
- * Create trading sub-menu keyboard
- */
 export function createTradingKeyboard(): TelegramBot.InlineKeyboardButton[][] {
   return createGrid(TRADING_BUTTONS, 2);
 }
 
-/**
- * Finance sub-menu buttons
- */
 export const FINANCE_BUTTONS = [
   { text: "Catat", callback_data: "fin_catat" },
   { text: "Rekap", callback_data: "fin_rekap" },
@@ -181,37 +136,18 @@ export const FINANCE_BUTTONS = [
   { text: "Kembali", callback_data: "menu_back" },
 ];
 
-/**
- * Create finance sub-menu keyboard
- */
 export function createFinanceKeyboard(): TelegramBot.InlineKeyboardButton[][] {
   return createGrid(FINANCE_BUTTONS, 2);
 }
 
-/**
- * Format currency in Indonesian Rupiah
- */
 export function formatRupiah(amount: number): string {
   return `Rp${amount.toLocaleString("id-ID")}`;
 }
 
-/**
- * Format currency in USD
- */
 export function formatUSD(amount: number): string {
   return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/**
- * Escape markdown special characters
- */
-export function escapeMarkdown(text: string): string {
-  return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
-}
-
-/**
- * Create pagination buttons for lists
- */
 export function createPaginationButtons(
   current: number,
   total: number,
@@ -234,10 +170,6 @@ export function createPaginationButtons(
   return [buttons];
 }
 
-/**
- * Create Market Hub dashboard keyboard
- * UX Improvement: Centralized asset dashboard with all actions in one place
- */
 export function createMarketDashboard(symbol: string): TelegramBot.InlineKeyboardButton[][] {
   return [
     [
@@ -256,9 +188,6 @@ export function createMarketDashboard(symbol: string): TelegramBot.InlineKeyboar
   ];
 }
 
-/**
- * Create Risk Wizard capital selection keyboard
- */
 export function createCapitalButtons(): TelegramBot.InlineKeyboardButton[][] {
   return [
     [
@@ -275,9 +204,6 @@ export function createCapitalButtons(): TelegramBot.InlineKeyboardButton[][] {
   ];
 }
 
-/**
- * Create Risk Wizard risk percentage keyboard
- */
 export function createRiskPercentButtons(): TelegramBot.InlineKeyboardButton[][] {
   return [
     [
@@ -294,9 +220,6 @@ export function createRiskPercentButtons(): TelegramBot.InlineKeyboardButton[][]
   ];
 }
 
-/**
- * Create Risk Wizard stop loss keyboard
- */
 export function createStopLossButtons(): TelegramBot.InlineKeyboardButton[][] {
   return [
     [
@@ -313,9 +236,6 @@ export function createStopLossButtons(): TelegramBot.InlineKeyboardButton[][] {
   ];
 }
 
-/**
- * Create Risk Wizard result keyboard
- */
 export function createRiskResultButtons(): TelegramBot.InlineKeyboardButton[][] {
   return [
     [{ text: "Hitung Ulang", callback_data: "risk_restart" }],
@@ -323,23 +243,14 @@ export function createRiskResultButtons(): TelegramBot.InlineKeyboardButton[][] 
   ];
 }
 
-/**
- * Get a standard "Back to Menu" inline keyboard button row
- */
 export function getBackToMenuButton(): TelegramBot.InlineKeyboardButton[][] {
   return [[{ text: "Menu Utama", callback_data: "menu_back" }]];
 }
 
-/**
- * Append a "Menu Utama" button row to an existing inline keyboard
- */
 export function appendMenuButton(keyboard: TelegramBot.InlineKeyboardButton[][]): TelegramBot.InlineKeyboardButton[][] {
   return [...keyboard, [{ text: "Menu Utama", callback_data: "menu_back" }]];
 }
 
-/**
- * Safe edit message wrapper - handles stale message errors gracefully
- */
 export async function safeEditMessage(
   bot: TelegramBot,
   chatId: number,
@@ -355,7 +266,6 @@ export async function safeEditMessage(
     });
     return true;
   } catch (error) {
-    // Message was deleted, is stale, or can't be edited - need to send new message
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (
       errorMessage.includes("message to edit not found") ||

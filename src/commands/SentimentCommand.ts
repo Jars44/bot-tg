@@ -1,8 +1,3 @@
-/**
- * Sentiment Analysis Command
- * Analyze market sentiment based on news headlines
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import { MESSAGES } from "../config/messages.js";
 import { sessionManager } from "../utils/SessionManager.js";
@@ -10,10 +5,6 @@ import { safeEditMessage } from "../utils/uiHelper.js";
 import type { Command } from "./types.js";
 import type { SentimentAnalyzer } from "../services/SentimentAnalyzer.js";
 
-/**
- * Sentiment analysis command
- * Usage: /sentimen [keyword]
- */
 export class SentimentCommand implements Command {
   pattern = /^\/sentimen(?:\s+(.+))?$/;
   private sentimentAnalyzer: SentimentAnalyzer;
@@ -40,14 +31,12 @@ export class SentimentCommand implements Command {
       const result = await this.sentimentAnalyzer.analyzeSentiment(keyword);
       const message = this.sentimentAnalyzer.formatSentimentResult(result);
 
-      // Edit the analyzing message with the result
       const edited = await safeEditMessage(bot, chatId, analyzingMsg.message_id, message, {
         parse_mode: "Markdown",
-        disable_web_page_preview: true, // Disable preview to keep it clean
+        disable_web_page_preview: true,
       });
 
       if (!edited) {
-        // Fallback if edit fails
         await bot.sendMessage(chatId, message, { parse_mode: "Markdown", disable_web_page_preview: true });
       }
     } catch (error) {

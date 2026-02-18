@@ -1,12 +1,8 @@
-/**
- * Vibe Command
- * Handles /vibe and location-triggered vibe generation
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import type { VibeService } from "../services/VibeService.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
+import { S } from "../config/symbols.js";
 
 export class VibeCommand implements Command {
   pattern = /^\/vibe(?:\s+(.+))?$/;
@@ -24,14 +20,14 @@ export class VibeCommand implements Command {
     if (!cityArg && !msg.location) {
       await bot.sendMessage(
         chatId,
-        "*🎵 Vibe Check*\n\nKirim lokasi Anda atau ketik nama kota.\n\nContoh: `/vibe Malang`",
+        `*${S.NOTE} Vibe Check*\n\nKirim lokasi Anda atau ketik nama kota.\n\nContoh: \`/vibe Malang\``,
         { parse_mode: "Markdown" },
       );
       return;
     }
 
     const loadingLabel = cityArg ? `di *${cityArg}*` : "dari lokasi Anda";
-    const loadingMsg = await bot.sendMessage(chatId, `⧗ Mendeteksi vibe ${loadingLabel}...`, {
+    const loadingMsg = await bot.sendMessage(chatId, `${S.LOADING} Mendeteksi vibe ${loadingLabel}...`, {
       parse_mode: "Markdown",
     });
     const msgId = loadingMsg.message_id;
@@ -52,15 +48,12 @@ export class VibeCommand implements Command {
       if (!edited) await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[VibeCommand] Error:", error);
-      await safeEditMessage(bot, chatId, msgId, "× Gagal mendeteksi vibe. Silakan coba lagi.");
+      await safeEditMessage(bot, chatId, msgId, `${S.FAIL} Gagal mendeteksi vibe. Silakan coba lagi.`);
     }
   }
 
-  /**
-   * Generate vibe directly from coordinates (called by LocationHandler).
-   */
   async executeFromLocation(bot: TelegramBot, chatId: number, lat: number, lon: number): Promise<void> {
-    const loadingMsg = await bot.sendMessage(chatId, "⧗ Mendeteksi vibe dari lokasi Anda...");
+    const loadingMsg = await bot.sendMessage(chatId, `${S.LOADING} Mendeteksi vibe dari lokasi Anda...`);
     const msgId = loadingMsg.message_id;
 
     try {
@@ -70,7 +63,7 @@ export class VibeCommand implements Command {
       if (!edited) await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[VibeCommand] Location vibe error:", error);
-      await safeEditMessage(bot, chatId, msgId, "× Gagal mendeteksi vibe dari lokasi ini.");
+      await safeEditMessage(bot, chatId, msgId, `${S.FAIL} Gagal mendeteksi vibe dari lokasi ini.`);
     }
   }
 }

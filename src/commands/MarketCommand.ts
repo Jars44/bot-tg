@@ -1,10 +1,5 @@
-/**
- * Market Command - Asset-Centric Dashboard Hub
- * UX Improvement: Centralized view for any asset with all trading actions in one place
- * Uses editMessageText for anti-spam navigation
- */
-
 import TelegramBot from "node-telegram-bot-api";
+import { S } from "../config/symbols.js";
 import type { Command, CallbackHandler } from "./types.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 import type { ChartService } from "../services/ChartService.js";
@@ -12,10 +7,6 @@ import type { SentimentAnalyzer } from "../services/SentimentAnalyzer.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { createMarketDashboard, safeEditMessage, formatUSD } from "../utils/uiHelper.js";
 
-/**
- * Market Hub Command
- * Usage: /market [symbol] or /m [symbol]
- */
 export class MarketCommand implements Command {
   pattern = /^\/(?:market|m)(?:\s+(\w+))?$/i;
   private tradingEngine: TradingEngine;
@@ -29,7 +20,6 @@ export class MarketCommand implements Command {
     const symbol = match?.[1]?.toUpperCase();
 
     if (!symbol) {
-      // UX Improvement: Prompt for symbol input instead of showing error
       const sentMessage = await bot.sendMessage(
         chatId,
         "*Market Hub*\n\n" + "Masukkan simbol aset yang ingin dilihat:\n\n" + "_Contoh: BTC, ETH, XAUUSD, AAPL_",
@@ -47,8 +37,6 @@ export class MarketCommand implements Command {
           },
         },
       );
-
-      // Set session to wait for symbol input
       await sessionManager.setState(chatId, {
         flow: "market_hub",
         step: "symbol_input",
@@ -56,24 +44,18 @@ export class MarketCommand implements Command {
       });
       return;
     }
-
-    // Show dashboard directly
     await this.showDashboard(bot, chatId, symbol);
   }
 
-  /**
-   * Display the Market Hub dashboard for a symbol
-   */
+  
   async showDashboard(bot: TelegramBot, chatId: number, symbol: string, messageId?: number): Promise<void> {
     try {
-      // Fetch current price data
       const priceData = await this.tradingEngine.getPrice(symbol);
       const price = priceData.price;
       const change24h = priceData.change24h ?? 0;
-      // Calculate percent from price change
       const changePercent = price > 0 ? (change24h / (price - change24h)) * 100 : 0;
 
-      const changeIndicator = change24h >= 0 ? "↑" : "↓";
+      const changeIndicator = change24h >= 0 ? S.ARROW_UP : S.ARROW_DOWN;
       const changeSign = change24h >= 0 ? "+" : "";
 
       const dashboardText =
@@ -83,32 +65,27 @@ export class MarketCommand implements Command {
         `_Pilih aksi di bawah:_`;
 
       if (messageId) {
-        // Edit existing message
         const success = await safeEditMessage(bot, chatId, messageId, dashboardText, {
           parse_mode: "Markdown",
           reply_markup: { inline_keyboard: createMarketDashboard(symbol) },
         });
 
         if (!success) {
-          // Fallback: send new message if edit fails
           await bot.sendMessage(chatId, dashboardText, {
             parse_mode: "Markdown",
             reply_markup: { inline_keyboard: createMarketDashboard(symbol) },
           });
         }
       } else {
-        // Send new message
         await bot.sendMessage(chatId, dashboardText, {
           parse_mode: "Markdown",
           reply_markup: { inline_keyboard: createMarketDashboard(symbol) },
         });
       }
-
-      // Update session
       await sessionManager.clearState(chatId);
     } catch (error) {
       console.error("[MarketCommand] Error fetching price:", error);
-      const errorMsg = `× Gagal mengambil data untuk ${symbol}.\nPastikan simbol valid.`;
+      const errorMsg = `${S.FAIL} Gagal mengambil data untuk ${symbol}.\nPastikan simbol valid.`;
 
       if (messageId) {
         await safeEditMessage(bot, chatId, messageId, errorMsg, {
@@ -127,10 +104,6 @@ export class MarketCommand implements Command {
   }
 }
 
-/**
- * Market Hub Callback Handler
- * Handles all mkt_* callbacks for dashboard navigation
- */
 export class MarketCallbackHandler implements CallbackHandler {
   prefix = "mkt_";
   private marketCommand: MarketCommand;
@@ -157,36 +130,24 @@ export class MarketCallbackHandler implements CallbackHandler {
     if (!chatId || !messageId) return;
 
     const action = data.replace("mkt_", "");
-
-    // Handle symbol selection from quick buttons
     if (action.startsWith("sym_")) {
       const symbol = action.replace("sym_", "");
       await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
       await bot.answerCallbackQuery(query.id);
       return;
     }
-
-    // Extract symbol from callback data (format: action_SYMBOL)
     const parts = action.split("_");
     const command = parts[0];
     const symbol = parts.slice(1).join("_").toUpperCase();
 
     switch (command) {
       case "chart": {
-        // UX Improvement: Show chart inline with back button
-        await safeEditMessage(bot, chatId, messageId, `⧗ Membuat grafik untuk ${symbol}...`);
+        await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Membuat grafik untuk ${symbol}...`);
 
         try {
           const chartBuffer = await this.chartService.generateChart(symbol, "1d");
-
-          // Delete the loading message
           await bot.deleteMessage(chatId, messageId);
-
-          // Assign a .name property to the buffer so node-telegram-bot-api uses it as the filename,
-          // suppressing the deprecation warning about defaulting to "data".
           const namedBuffer = Object.assign(chartBuffer, { name: `${symbol}_chart.png` });
-
-          // Send chart as photo
           await bot.sendPhoto(chatId, namedBuffer as unknown as Buffer, {
             caption: `*${symbol} Grafik (1D)*\n_Klik tombol untuk kembali ke dashboard_`,
             parse_mode: "Markdown",
@@ -196,7 +157,7 @@ export class MarketCallbackHandler implements CallbackHandler {
           });
         } catch (error) {
           console.error("[MarketCallback] Chart error:", error);
-          const edited = await safeEditMessage(bot, chatId, messageId, `× Gagal membuat grafik untuk ${symbol}`, {
+          const edited = await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal membuat grafik untuk ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
             },
@@ -204,7 +165,7 @@ export class MarketCallbackHandler implements CallbackHandler {
 
           if (!edited) {
             try {
-              await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}.`, {
+              await bot.sendMessage(chatId, `${S.FAIL} Gagal membuat grafik untuk ${symbol}.`, {
                 reply_markup: {
                   inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
                 },
@@ -218,7 +179,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "sent": {
-        // UX Improvement: Show sentiment analysis
         await safeEditMessage(bot, chatId, messageId, `🧠 Analyzing sentiment for ${symbol}...`);
 
         try {
@@ -237,7 +197,7 @@ export class MarketCallbackHandler implements CallbackHandler {
             bot,
             chatId,
             messageId,
-            `× Gagal menganalisis sentimen untuk ${symbol}`,
+            `${S.FAIL} Gagal menganalisis sentimen untuk ${symbol}`,
             {
               reply_markup: {
                 inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
@@ -247,7 +207,7 @@ export class MarketCallbackHandler implements CallbackHandler {
 
           if (!edited) {
             try {
-              await bot.sendMessage(chatId, `× Gagal menganalisis sentimen untuk ${symbol}.`, {
+              await bot.sendMessage(chatId, `${S.FAIL} Gagal menganalisis sentimen untuk ${symbol}.`, {
                 reply_markup: {
                   inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
                 },
@@ -261,7 +221,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "risk": {
-        // UX Improvement: Quick access to risk calculator with symbol context
         await safeEditMessage(
           bot,
           chatId,
@@ -283,7 +242,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "alert": {
-        // UX Improvement: Quick access to set alert
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
@@ -306,7 +264,7 @@ export class MarketCallbackHandler implements CallbackHandler {
           );
         } catch (error) {
           console.error("[MarketCallback] Alert price error:", error);
-          const edited = await safeEditMessage(bot, chatId, messageId, `× Gagal mengambil harga ${symbol}`, {
+          const edited = await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal mengambil harga ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
             },
@@ -314,7 +272,7 @@ export class MarketCallbackHandler implements CallbackHandler {
 
           if (!edited) {
             try {
-              await bot.sendMessage(chatId, `× Gagal mengambil harga ${symbol}.`, {
+              await bot.sendMessage(chatId, `${S.FAIL} Gagal mengambil harga ${symbol}.`, {
                 reply_markup: {
                   inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
                 },
@@ -328,7 +286,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "buy": {
-        // UX Improvement: Pre-filled buy instruction
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
@@ -348,7 +305,7 @@ export class MarketCallbackHandler implements CallbackHandler {
             },
           );
         } catch {
-          await safeEditMessage(bot, chatId, messageId, `× Gagal mengambil harga ${symbol}`, {
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal mengambil harga ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
             },
@@ -358,7 +315,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "sell": {
-        // UX Improvement: Pre-filled sell instruction
         try {
           const priceData = await this.tradingEngine.getPrice(symbol);
 
@@ -380,7 +336,7 @@ export class MarketCallbackHandler implements CallbackHandler {
             },
           );
         } catch {
-          await safeEditMessage(bot, chatId, messageId, `× Gagal mengambil harga ${symbol}`, {
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal mengambil harga ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
             },
@@ -390,8 +346,6 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "back": {
-        // When coming back from a chart (photo message), delete it and send a new text message.
-        // We cannot editMessageText on a photo message - it will throw "there is no text in the message".
         const sourceMessage = query.message;
         const isPhotoMessage =
           sourceMessage && (sourceMessage.photo || sourceMessage.sticker || sourceMessage.document);

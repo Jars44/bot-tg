@@ -1,14 +1,6 @@
-/**
- * AI Service — Generative AI Wrapper with Circuit Breaker
- * Uses Google Gemini Flash 2.5 for dynamic content generation.
- * Implements a Circuit Breaker pattern to gracefully degrade
- * when the upstream API is unavailable or slow.
- */
-
 import { GoogleGenAI } from "@google/genai";
 import { CONFIG, getEnvVar, ENV_KEYS } from "../config/index.js";
 
-/** Error thrown when the circuit breaker is open or a timeout occurs */
 export class AIServiceUnavailableError extends Error {
   constructor(reason: string) {
     super(`AI Service unavailable: ${reason}`);
@@ -16,16 +8,11 @@ export class AIServiceUnavailableError extends Error {
   }
 }
 
-/** Circuit breaker state */
 type CircuitState = "closed" | "open" | "half-open";
 
-/** Circuit breaker configuration */
 interface CircuitBreakerConfig {
-  /** Number of consecutive failures before opening the circuit */
   failureThreshold: number;
-  /** Time in ms before attempting to close the circuit again */
   resetTimeoutMs: number;
-  /** Request timeout in ms */
   requestTimeoutMs: number;
 }
 
@@ -48,10 +35,6 @@ export class AIService {
     this.config = { ...DEFAULT_CIRCUIT_CONFIG, ...config };
   }
 
-  /**
-   * Generate content from a prompt with circuit breaker protection.
-   * @throws AIServiceUnavailableError if the circuit is open or the request fails/times out.
-   */
   async generate(prompt: string, temperature = 0.9, maxTokens = 1024): Promise<string> {
     this.checkCircuit();
 
@@ -68,24 +51,17 @@ export class AIService {
 
       const message = error instanceof Error ? error.message : String(error);
 
-      // Classify as transient (5xx, timeout) → circuit breaker
       if (this.isTransientError(message)) {
         throw new AIServiceUnavailableError(message);
       }
 
-      // Non-transient errors (quota, auth) — propagate but don't trip breaker extra
       throw new AIServiceUnavailableError(message);
     }
   }
 
-  /**
-   * Generate structured JSON content from a prompt.
-   * The prompt should instruct the model to return JSON.
-   */
   async generateJSON<T>(prompt: string, temperature = 0.7): Promise<T> {
     const raw = await this.generate(prompt, temperature, 2048);
 
-    // Extract JSON from response (model sometimes wraps in markdown code block)
     const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, raw];
     const jsonStr = (jsonMatch[1] ?? raw).trim();
 
@@ -96,13 +72,10 @@ export class AIService {
     }
   }
 
-  // ─── Circuit Breaker Internals ──────────────────────────────
-
   private checkCircuit(): void {
     if (this.circuitState === "open") {
       const elapsed = Date.now() - this.lastFailureTime;
       if (elapsed >= this.config.resetTimeoutMs) {
-        // Try half-open
         this.circuitState = "half-open";
         console.log("[AIService] Circuit breaker → half-open (attempting recovery)");
       } else {
@@ -155,7 +128,6 @@ export class AIService {
       setTimeout(() => reject(new AIServiceUnavailableError("Request timed out")), timeoutMs);
     });
 
-    // Race against timeout
     const result = await Promise.race([resultPromise, timeoutPromise]);
 
     const text = result.text ?? "";

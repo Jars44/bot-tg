@@ -1,14 +1,9 @@
-/**
- * Alert Command
- * Set price alerts for assets
- * Tone: Professional Hybrid
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { withLoading, formatUSD } from "../utils/uiHelper.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 
 interface Alert {
@@ -19,7 +14,6 @@ interface Alert {
   createdAt: number;
 }
 
-// In-memory alert storage (Mock implementation for now)
 const alerts: Alert[] = [];
 
 export class AlertCommand implements Command {
@@ -54,11 +48,9 @@ export class AlertCommand implements Command {
         const priceData = await this.tradingEngine.getPrice(symbol);
         const currentPrice = priceData.price;
 
-        // Auto-detect condition if not specified
         if (!condition) {
           condition = targetPrice > currentPrice ? "above" : "below";
         } else {
-          // Normalize condition
           if (condition === ">") condition = "above";
           if (condition === "<") condition = "below";
         }
@@ -77,7 +69,7 @@ export class AlertCommand implements Command {
 
         await bot.sendMessage(
           chatId,
-          `✓ *Alert Disimpan*\n\n` +
+          `${S.SUCCESS} *Alert Disimpan*\n\n` +
             `Asset:   ${symbol}\n` +
             `Target:  ${formatUSD(targetPrice)}\n` +
             `Current: ${formatUSD(currentPrice)}\n\n` +
@@ -92,9 +84,6 @@ export class AlertCommand implements Command {
   }
 }
 
-/**
- * View My Alerts
- */
 export class MyAlertsCommand implements Command {
   pattern = /^\/myalerts$/;
 

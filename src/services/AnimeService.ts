@@ -1,7 +1,3 @@
-/**
- * Anime service using Jikan API (MyAnimeList)
- */
-
 import jikanjs from "@mateoaranda/jikanjs";
 
 export interface AnimeResult {
@@ -39,17 +35,11 @@ interface JikanSearchResult {
 }
 
 export class AnimeService {
-  /**
-   * Search for anime by keyword - returns first result
-   */
   async search(keyword: string): Promise<AnimeResult | null> {
     const results = await this.searchMultiple(keyword, 1);
     return results.length > 0 ? results[0] : null;
   }
 
-  /**
-   * Search for multiple anime by keyword - returns top N results
-   */
   async searchMultiple(keyword: string, limit: number = 5): Promise<AnimeResult[]> {
     try {
       const result = (await jikanjs.search("anime", keyword)) as JikanSearchResult;

@@ -1,9 +1,3 @@
-/**
- * Risk Calculator Command
- * Wizard flow for calculating position size and risk
- * Tone: Professional Hybrid
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import {
@@ -15,15 +9,12 @@ import {
   formatUSD,
 } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 import { sessionManager, type RiskSessionData } from "../utils/SessionManager.js";
 
-/**
- * Handler for Risk Input Session Strategy (Text Input)
- */
 export class RiskInputHandler {
   constructor() {}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- SessionState type is complex
   async handle(bot: TelegramBot, msg: TelegramBot.Message, state: any): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text || "";
@@ -33,8 +24,6 @@ export class RiskInputHandler {
       await bot.sendMessage(chatId, MESSAGES.RISK_INVALID_INPUT);
       return;
     }
-
-    // const data = state.data as RiskSessionData;
 
     if (state.step === "capital") {
       sessionManager.updateRiskData(chatId, { capital: value });
@@ -51,10 +40,8 @@ export class RiskInputHandler {
         reply_markup: { inline_keyboard: createStopLossButtons() },
       });
     } else if (state.step === "stop_loss") {
-      // Finalize calculation
       sessionManager.updateRiskData(chatId, { stopLossPips: value });
 
-      // We need to fetch the complete data to calculate
       const finalState = sessionManager.getState(chatId);
       const finalData = finalState?.data as RiskSessionData;
 
@@ -65,8 +52,6 @@ export class RiskInputHandler {
 
   async showResult(bot: TelegramBot, chatId: number, data: RiskSessionData) {
     const riskAmount = ((data.capital || 0) * (data.riskPercent || 0)) / 100;
-    // Standard lot size calculation approx: (Risk Amount) / (SL Pips * 10)
-    // This is a simplified FOREX formula assuming standard lots ($10/pip)
     const positionSize = riskAmount / ((data.stopLossPips || 1) * 10);
 
     const message =
@@ -76,7 +61,7 @@ export class RiskInputHandler {
       `Risiko:    ${data.riskPercent || 0}% (${formatUSD(riskAmount)})\n` +
       `Stop Loss: ${data.stopLossPips || 0} pips\n` +
       `\`\`\`\n\n` +
-      `✓ *REKOMENDASI LOT*\n` +
+      `${S.SUCCESS} *REKOMENDASI LOT*\n` +
       `→ *${positionSize.toFixed(2)} Lot*`;
 
     await bot.sendMessage(chatId, message, {
@@ -98,7 +83,6 @@ export class RiskCommand implements Command, CallbackHandler {
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    // Start wizard
     sessionManager.startRiskWizard(chatId);
 
     await bot.sendMessage(chatId, `*Kalkulator Risiko*\n\nPilih modal trading anda:`, {
@@ -117,12 +101,9 @@ export class RiskCommand implements Command, CallbackHandler {
 
     const action = data.replace("risk_", "");
 
-    // Handle standard selections
     if (action.startsWith("cap_")) {
-      // Capital Selection
       if (action === "cap_custom") {
         await safeEditMessage(bot, chatId, messageId, "Masukkan jumlah modal (USD):");
-        // The SessionInputHandler will catch the next text message
         return;
       }
 
@@ -134,30 +115,27 @@ export class RiskCommand implements Command, CallbackHandler {
         reply_markup: { inline_keyboard: createRiskPercentButtons() },
       });
     } else if (action.startsWith("pct_")) {
-      // Percentage Selection
       if (action === "pct_custom") {
         await safeEditMessage(bot, chatId, messageId, "Masukkan persen risiko (contoh: 1.5):");
         return;
       }
 
       const value = parseFloat(action.replace("pct_", ""));
-      sessionManager.updateRiskData(chatId, { riskPercent: value }); // FIXED
+      sessionManager.updateRiskData(chatId, { riskPercent: value });
       sessionManager.setRiskStep(chatId, "stop_loss");
 
       await safeEditMessage(bot, chatId, messageId, `Risiko: ${value}%\n\nTentukan Stop Loss (pips):`, {
         reply_markup: { inline_keyboard: createStopLossButtons() },
       });
     } else if (action.startsWith("sl_")) {
-      // Stop Loss Selection
       if (action === "sl_custom") {
         await safeEditMessage(bot, chatId, messageId, "Masukkan Stop Loss (pips):");
         return;
       }
 
       const value = parseInt(action.replace("sl_", ""));
-      sessionManager.updateRiskData(chatId, { stopLossPips: value }); // FIXED
+      sessionManager.updateRiskData(chatId, { stopLossPips: value });
 
-      // Finalize
       await bot.deleteMessage(chatId, messageId);
 
       const state = sessionManager.getState(chatId);
@@ -175,10 +153,8 @@ export class RiskCommand implements Command, CallbackHandler {
       });
     } else if (action === "cancel") {
       sessionManager.clearState(chatId);
-      await safeEditMessage(bot, chatId, messageId, "× Kalkulator ditutup.");
+      await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Kalkulator ditutup.`);
     } else if (action.startsWith("back_")) {
-      // Back navigation logic could be added here
-      // For now, simplify to restart
       sessionManager.startRiskWizard(chatId);
       await safeEditMessage(bot, chatId, messageId, `*Kalkulator Risiko*\n\nPilih modal trading anda:`, {
         reply_markup: { inline_keyboard: createCapitalButtons() },

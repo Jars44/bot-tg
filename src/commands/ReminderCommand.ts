@@ -1,7 +1,3 @@
-/**
- * Reminder command with database persistence
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import cron from "node-cron";
 import type { Command } from "./types.js";
@@ -9,6 +5,7 @@ import { JsonDb } from "../database/JsonDb.js";
 import { MESSAGES } from "../config/messages.js";
 import { getCurrentTimeString } from "../utils/helpers.js";
 import { sessionManager } from "../utils/SessionManager.js";
+import { S } from "../config/symbols.js";
 
 export class ReminderCommand implements Command {
   pattern = /^\/ingatkan(?:\s+(\d{1,2}:\d{2})(?:\s+(.+))?)?$/;
@@ -20,18 +17,13 @@ export class ReminderCommand implements Command {
     this.db = db;
   }
 
-  /**
-   * Start the reminder cron job
-   */
   startCron(bot: TelegramBot): void {
     this.bot = bot;
 
-    // Check reminders every minute
     this.cronJob = cron.schedule("* * * * *", async () => {
       await this.checkReminders();
     });
 
-    // Morning greeting at 7:00 AM
     cron.schedule("0 7 * * *", async () => {
       await this.sendMorningGreeting();
     });
@@ -39,9 +31,6 @@ export class ReminderCommand implements Command {
     console.log("[ReminderCommand] Cron job started");
   }
 
-  /**
-   * Check and trigger due reminders
-   */
   private async checkReminders(): Promise<void> {
     if (!this.bot) return;
 
@@ -60,9 +49,6 @@ export class ReminderCommand implements Command {
     }
   }
 
-  /**
-   * Send morning greeting to active users
-   */
   private async sendMorningGreeting(): Promise<void> {
     if (!this.bot) return;
 
@@ -93,21 +79,17 @@ export class ReminderCommand implements Command {
     if (!message) {
       await bot.sendMessage(
         chatId,
-        "× Format salah. Pesan tidak boleh kosong.\nContoh: `/ingatkan 12:00 Makan siang`",
+        `${S.FAIL} Format salah. Pesan tidak boleh kosong.\nContoh: \`/ingatkan 12:00 Makan siang\``,
         { parse_mode: "Markdown" },
       );
       return;
     }
 
-    // Store reminder in database (persists across restarts)
     await this.db.addReminder(chatId, time, message);
 
     await bot.sendMessage(chatId, MESSAGES.REMINDER_SET(time, message));
   }
 
-  /**
-   * Stop the cron job
-   */
   stopCron(): void {
     if (this.cronJob) {
       this.cronJob.stop();

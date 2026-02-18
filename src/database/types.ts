@@ -1,14 +1,7 @@
-/**
- * Database type definitions
- * Extended for Financial Suite
- */
-
-// ==================== Existing Types ====================
-
 export interface Reminder {
   id: string;
   chatId: number;
-  time: string; // Format: "HH:mm"
+  time: string;
   message: string;
   createdAt: number;
 }
@@ -19,12 +12,8 @@ export interface UserRateLimit {
   lastReset: number;
 }
 
-// ==================== Financial Types ====================
-
-/** Transaction type for expense tracking */
 export type TransactionType = "expense" | "income";
 
-/** Expense/Income transaction record */
 export interface Transaction {
   id: string;
   chatId: number;
@@ -35,7 +24,6 @@ export interface Transaction {
   createdAt: number;
 }
 
-/** Trading position (Long-only for MVP) */
 export interface Position {
   id: string;
   symbol: string;
@@ -43,13 +31,10 @@ export interface Position {
   quantity: number;
   type: "long";
   openedAt: number;
-  /** Take Profit price level */
   takeProfit?: number;
-  /** Stop Loss price level */
   stopLoss?: number;
 }
 
-/** Trade execution record */
 export interface TradeRecord {
   id: string;
   symbol: string;
@@ -61,7 +46,6 @@ export interface TradeRecord {
   executedAt: number;
 }
 
-/** User's paper trading portfolio */
 export interface Portfolio {
   chatId: number;
   cashBalance: number;
@@ -70,10 +54,8 @@ export interface Portfolio {
   createdAt: number;
 }
 
-/** Price alert condition operators */
 export type AlertCondition = ">" | "<" | ">=" | "<=";
 
-/** Price alert configuration */
 export interface PriceAlert {
   id: string;
   chatId: number;
@@ -84,7 +66,6 @@ export interface PriceAlert {
   triggered: boolean;
 }
 
-/** Conversation state for multi-step commands */
 export interface ConversationState {
   chatId: number;
   command: string;
@@ -92,8 +73,6 @@ export interface ConversationState {
   data: Record<string, unknown>;
   expiresAt: number;
 }
-
-// ==================== Database Schema ====================
 
 export interface DatabaseSchema {
   reminders: Reminder[];
@@ -104,9 +83,6 @@ export interface DatabaseSchema {
   conversationStates: ConversationState[];
 }
 
-// ==================== Service Types ====================
-
-/** Price data from any source */
 export interface PriceData {
   symbol: string;
   price: number;
@@ -115,7 +91,6 @@ export interface PriceData {
   timestamp: number;
 }
 
-/** Trade execution result */
 export interface TradeResult {
   success: boolean;
   message: string;
@@ -124,7 +99,6 @@ export interface TradeResult {
   pnl?: number;
 }
 
-/** Portfolio summary with live values */
 export interface PortfolioSummary {
   cashBalance: number;
   equity: number;
@@ -133,7 +107,6 @@ export interface PortfolioSummary {
   positions: PositionWithPnL[];
 }
 
-/** Position with calculated PnL */
 export interface PositionWithPnL extends Position {
   currentPrice: number;
   marketValue: number;
@@ -141,16 +114,14 @@ export interface PositionWithPnL extends Position {
   unrealizedPnLPercent: number;
 }
 
-/** Sentiment analysis result */
 export interface SentimentResult {
   sentiment: "Bullish" | "Bearish" | "Neutral";
-  score: number; // -100 to +100
+  score: number;
   headlines: { title: string; url: string }[];
   analysis: string;
   keyword: string;
 }
 
-/** Economic calendar event */
 export interface EconomicEvent {
   title: string;
   country: string;
@@ -161,7 +132,6 @@ export interface EconomicEvent {
   date: string;
 }
 
-/** Transaction summary stats */
 export interface TransactionSummary {
   totalIncome: number;
   totalExpense: number;

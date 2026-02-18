@@ -1,9 +1,3 @@
-/**
- * Smart Paste Handler
- * Auto-detects URLs from supported platforms and offers download confirmation.
- * Implements both MessageHandler (URL detection) and CallbackHandler (confirmation buttons).
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler, CallbackHandler } from "./types.js";
 import { sessionManager, isSmartPasteSession } from "../utils/SessionManager.js";
@@ -11,33 +5,21 @@ import { DownloadInputHandler } from "./DownloadCommand.js";
 import { MESSAGES } from "../config/messages.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 
-/** Supported platform URL patterns */
 const SUPPORTED_URL_PATTERNS = [
-  // YouTube
   /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/)|youtu\.be\/)\S+/i,
-  // TikTok
   /(?:https?:\/\/)?(?:www\.)?(?:tiktok\.com\/@[\w.-]+\/video\/\d+|vm\.tiktok\.com\/\w+)/i,
-  // Instagram
   /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/\S+/i,
-  // Twitter/X
   /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/\w+\/status\/\d+/i,
 ];
 
-/** General URL extraction pattern */
 const URL_EXTRACT_REGEX = /https?:\/\/[^\s]+/i;
 
-/**
- * Smart Paste Message Handler - Detects URLs
- */
 export class SmartPasteHandler implements MessageHandler {
   shouldHandle(msg: TelegramBot.Message): boolean {
     const text = msg.text;
     if (!text) return false;
-    // Skip commands
     if (text.startsWith("/")) return false;
-    // Skip if user has an active session (don't intercept wizard inputs)
     if (sessionManager.hasActiveSession(msg.chat.id)) return false;
-    // Check if text contains a supported URL
     return SUPPORTED_URL_PATTERNS.some((pattern) => pattern.test(text));
   }
 
@@ -45,7 +27,6 @@ export class SmartPasteHandler implements MessageHandler {
     const chatId = msg.chat.id;
     const text = msg.text ?? "";
 
-    // Extract the URL
     const urlMatch = text.match(URL_EXTRACT_REGEX);
     if (!urlMatch) return;
 
@@ -64,14 +45,10 @@ export class SmartPasteHandler implements MessageHandler {
       },
     });
 
-    // Store URL in session for callback handler
     sessionManager.startSmartPaste(chatId, url, confirmMsg.message_id);
   }
 }
 
-/**
- * Smart Paste Callback Handler - Handles confirmation buttons
- */
 export class SmartPasteCallbackHandler implements CallbackHandler {
   prefix = "sp_";
   private downloadHandler: DownloadInputHandler;
@@ -96,25 +73,19 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
 
     const url = state.data.url;
 
-    // Handle cancel
     if (data === "sp_cancel") {
       sessionManager.clearState(chatId);
       await safeEditMessage(bot, chatId, messageId, MESSAGES.SMART_PASTE_CANCELLED);
       return;
     }
 
-    // Handle video/audio
     const isAudio = data === "sp_audio";
     sessionManager.clearState(chatId);
 
-    // Delete confirmation message
     try {
       await bot.deleteMessage(chatId, messageId);
-    } catch {
-      // Ignore
-    }
+    } catch { /* empty */ }
 
-    // Delegate to DownloadInputHandler's download logic
     await this.downloadHandler.processDownload(bot, chatId, url, isAudio);
   }
 }

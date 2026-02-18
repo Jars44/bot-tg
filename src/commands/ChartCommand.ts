@@ -1,8 +1,3 @@
-/**
- * Chart Command
- * Generates and sends candlestick chart images
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import type { ChartService } from "../services/ChartService.js";
@@ -10,6 +5,7 @@ import { FinanceDataService } from "../services/FinanceDataService.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 
 export class ChartCommand implements Command {
   pattern = /^\/chart(?:\s+(\w+)(?:\s+(\w+))?)?$/;
@@ -24,7 +20,6 @@ export class ChartCommand implements Command {
     const symbol = match?.[1]?.toUpperCase();
     const timeframe = match?.[2]?.toLowerCase() || "1h";
 
-    // Validation - show help if no symbol
     if (!symbol) {
       await bot.sendMessage(chatId, MESSAGES.GUIDE_CHART, { parse_mode: "Markdown" });
       const promptMsg = await bot.sendMessage(chatId, MESSAGES.GUIDE_PROMPT_CHART);
@@ -32,29 +27,23 @@ export class ChartCommand implements Command {
       return;
     }
 
-    // Validate timeframe
     const validTimeframes = Object.keys(FinanceDataService.TIMEFRAMES);
     if (!validTimeframes.includes(timeframe)) {
-      await bot.sendMessage(chatId, `× Timeframe tidak valid.\n\nGunakan: ${validTimeframes.join(", ")}`, {
+      await bot.sendMessage(chatId, `${S.FAIL} Timeframe tidak valid.\n\nGunakan: ${validTimeframes.join(", ")}`, {
         parse_mode: "Markdown",
       });
       return;
     }
 
-    // Send loading message
-    const loadingMsg = await bot.sendMessage(chatId, `⧗ Membuat grafik ${symbol} (${timeframe})...`);
+    const loadingMsg = await bot.sendMessage(chatId, `${S.LOADING} Membuat grafik ${symbol} (${timeframe})...`);
 
     try {
-      // Generate chart
       const chartBuffer = await this.chartService.generateChart(symbol, timeframe);
 
-      // Delete loading message
       await bot.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
 
-      // Assign .name so node-telegram-bot-api uses it as the filename (suppresses deprecation warning)
       const namedBuffer = Object.assign(chartBuffer, { name: `${symbol}_chart.png` });
 
-      // Send chart image
       await bot.sendPhoto(chatId, namedBuffer as unknown as Buffer, {
         caption: `*${symbol}* | ${timeframe.toUpperCase()}\n\n_Grafik candlestick dengan Bollinger Bands & RSI_`,
         parse_mode: "Markdown",
@@ -62,18 +51,16 @@ export class ChartCommand implements Command {
     } catch (error) {
       console.error(`[ChartCommand] Error generating chart:`, error);
 
-      // Edit loading message with error, with fallback
       const edited = await safeEditMessage(
         bot,
         chatId,
         loadingMsg.message_id,
-        `× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`,
+        `${S.FAIL} Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`,
       );
 
       if (!edited) {
-        // Fallback: send error as new message
         try {
-          await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`);
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`);
         } catch (sendError) {
           console.error("[ChartCommand] Failed to send error message:", sendError);
         }
@@ -82,9 +69,6 @@ export class ChartCommand implements Command {
   }
 }
 
-/**
- * Help command for chart
- */
 export class ChartHelpCommand implements Command {
   pattern = /^\/chart$/;
 
@@ -95,9 +79,6 @@ export class ChartHelpCommand implements Command {
   }
 }
 
-/**
- * Callback handler for chart inline button
- */
 export class ChartCallbackHandler implements CallbackHandler {
   prefix = "chart:";
   private chartService: ChartService;
@@ -112,7 +93,7 @@ export class ChartCallbackHandler implements CallbackHandler {
 
     const symbol = data.replace("chart:", "");
 
-    await bot.answerCallbackQuery(query.id, { text: `⧗ Membuat grafik ${symbol}...` });
+    await bot.answerCallbackQuery(query.id, { text: `${S.LOADING} Membuat grafik ${symbol}...` });
 
     try {
       const chartBuffer = await this.chartService.generateChart(symbol, "1h");
@@ -124,7 +105,7 @@ export class ChartCallbackHandler implements CallbackHandler {
       });
     } catch (error) {
       console.error(`[ChartCallbackHandler] Error generating chart:`, error);
-      await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}.`);
+      await bot.sendMessage(chatId, `${S.FAIL} Gagal membuat grafik untuk ${symbol}.`);
     }
   }
 }

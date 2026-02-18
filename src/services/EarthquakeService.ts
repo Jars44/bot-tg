@@ -1,7 +1,3 @@
-/**
- * Earthquake service using BMKG API
- */
-
 import { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
 

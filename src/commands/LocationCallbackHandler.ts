@@ -1,9 +1,3 @@
-/**
- * Location Callback Handler
- * Handles inline button callbacks from the unsolicited location menu
- * (loc_weather_ and loc_prayer_ prefixes)
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { CallbackHandler } from "./types.js";
 import { WeatherService } from "../services/WeatherService.js";
@@ -12,6 +6,7 @@ import type { VibeService } from "../services/VibeService.js";
 import type { UrbanExplorationService } from "../services/UrbanExplorationService.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 import { toTitleCase } from "../utils/helpers.js";
+import { S } from "../config/symbols.js";
 
 export class LocationCallbackHandler implements CallbackHandler {
   prefix = "loc_";
@@ -47,16 +42,16 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Koordinat tidak valid.`);
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Mengambil data cuaca...");
+        await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Mengambil data cuaca...`);
 
         const result = await this.weatherService.getWeatherByCoords(lat, lon);
 
         if (!result) {
-          await safeEditMessage(bot, chatId, messageId, "× Gagal mendapatkan data cuaca. Coba lagi nanti.");
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal mendapatkan data cuaca. Coba lagi nanti.`);
           return;
         }
 
@@ -75,11 +70,11 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Koordinat tidak valid.`);
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Mengambil jadwal sholat...");
+        await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Mengambil jadwal sholat...`);
 
         const timings = await this.prayerService.formattedTimingsByCoords(lat, lon);
 
@@ -92,11 +87,11 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Koordinat tidak valid.`);
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Mendeteksi vibe lokasi...");
+        await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Mendeteksi vibe lokasi...`);
 
         const vibe = await this.vibeService.getVibe(lat, lon);
         const message = this.vibeService.formatVibeMessage(vibe);
@@ -109,11 +104,11 @@ export class LocationCallbackHandler implements CallbackHandler {
         const lon = parseFloat(parts[1]);
 
         if (isNaN(lat) || isNaN(lon)) {
-          await safeEditMessage(bot, chatId, messageId, "× Koordinat tidak valid.");
+          await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Koordinat tidak valid.`);
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Membuat misi fotografi...");
+        await safeEditMessage(bot, chatId, messageId, `${S.LOADING} Membuat misi fotografi...`);
 
         const mission = await this.urbanService.generateMission(lat, lon);
         const message = this.urbanService.formatMissionMessage(mission);
@@ -123,7 +118,7 @@ export class LocationCallbackHandler implements CallbackHandler {
       }
     } catch (error) {
       console.error("[LocationCallbackHandler] Error:", error);
-      await safeEditMessage(bot, chatId, messageId, "× Gagal memproses lokasi.");
+      await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal memproses lokasi.`);
     }
   }
 }

@@ -1,17 +1,8 @@
-/**
- * Aesthetic Service — Moodboard Generator
- * Generates visual moodboards with color palettes from keyword queries.
- *
- * Primary: Unsplash API for images + sharp for color extraction
- * Fallback: AI-generated color palette + curated image suggestions
- */
-
 import sharp from "sharp";
 import type { HttpClient } from "./HttpClient.js";
 import type { AIService } from "./GenAIService.js";
 import { getOptionalEnvVar } from "../config/index.js";
-
-// ─── Types ────────────────────────────────────────────────────
+import { S } from "../config/symbols.js";
 
 export interface MoodboardResult {
   keyword: string;
@@ -54,13 +45,9 @@ interface AIPaletteResponse {
   colors: Array<{ hex: string; label: string }>;
 }
 
-// ─── Constants ────────────────────────────────────────────────
-
 const UNSPLASH_API_BASE = "https://api.unsplash.com";
 const MAX_IMAGES = 5;
-const SAMPLE_SIZE = 3; // Number of images to extract colors from
-
-// ─── Fallback Palettes ───────────────────────────────────────
+const SAMPLE_SIZE = 3;
 
 const FALLBACK_PALETTES: Record<string, ColorSwatch[]> = {
   cyberpunk: [
@@ -115,8 +102,6 @@ const DEFAULT_PALETTE: ColorSwatch[] = [
   { hex: "#2ECC71", label: "Emerald" },
 ];
 
-// ─── Service ──────────────────────────────────────────────────
-
 export class AestheticService {
   private httpClient: HttpClient;
   private aiService: AIService;
@@ -128,15 +113,9 @@ export class AestheticService {
     this.unsplashKey = getOptionalEnvVar("UNSPLASH_ACCESS_KEY");
   }
 
-  /**
-   * Generate a moodboard for the given keyword.
-   * Returns images and extracted color palette.
-   */
   async generateMoodboard(keyword: string): Promise<MoodboardResult> {
-    // Fetch images (Unsplash or fallback)
     const images = await this.fetchImages(keyword);
 
-    // Extract colors from fetched images
     let palette: ColorSwatch[];
     if (images.length > 0) {
       palette = await this.extractColorsFromImages(images);
@@ -146,8 +125,6 @@ export class AestheticService {
 
     return { keyword, images, palette };
   }
-
-  // ─── Image Fetching ─────────────────────────────────────────
 
   private async fetchImages(keyword: string): Promise<MoodboardImage[]> {
     if (!this.unsplashKey) {
@@ -180,8 +157,6 @@ export class AestheticService {
     }
   }
 
-  // ─── Color Extraction ──────────────────────────────────────
-
   private async extractColorsFromImages(images: MoodboardImage[]): Promise<ColorSwatch[]> {
     const sampled = images.slice(0, SAMPLE_SIZE);
     const allColors: ColorSwatch[] = [];
@@ -199,13 +174,11 @@ export class AestheticService {
       return DEFAULT_PALETTE;
     }
 
-    // Deduplicate by hex and take top 5
     const unique = this.deduplicateColors(allColors);
     return unique.slice(0, 5);
   }
 
   private async extractDominantColors(imageUrl: string): Promise<ColorSwatch[]> {
-    // Download image
     const response = await this.httpClient.instance.get(imageUrl, {
       responseType: "arraybuffer",
       timeout: 10_000,
@@ -213,15 +186,12 @@ export class AestheticService {
 
     const buffer = Buffer.from(response.data as ArrayBuffer);
 
-    // Resize to small thumbnail for fast processing
     const resized = await sharp(buffer).resize(50, 50, { fit: "cover" }).raw().toBuffer({ resolveWithObject: true });
 
-    // Sample pixels to find dominant colors
     const pixels = resized.data;
     const colorCounts = new Map<string, number>();
 
     for (let i = 0; i < pixels.length; i += 3) {
-      // Quantize to reduce unique colors (round to nearest 32)
       const r = Math.round(pixels[i] / 32) * 32;
       const g = Math.round(pixels[i + 1] / 32) * 32;
       const b = Math.round(pixels[i + 2] / 32) * 32;
@@ -229,7 +199,6 @@ export class AestheticService {
       colorCounts.set(hex, (colorCounts.get(hex) ?? 0) + 1);
     }
 
-    // Sort by frequency and pick top 3
     const sorted = [...colorCounts.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -255,10 +224,7 @@ export class AestheticService {
     return unique;
   }
 
-  // ─── Palette Fallback ──────────────────────────────────────
-
   private async generatePaletteFallback(keyword: string): Promise<ColorSwatch[]> {
-    // Check static palettes first
     const normalized = keyword.toLowerCase().trim();
     for (const [key, palette] of Object.entries(FALLBACK_PALETTES)) {
       if (normalized.includes(key) || key.includes(normalized)) {
@@ -266,7 +232,6 @@ export class AestheticService {
       }
     }
 
-    // Try AI-generated palette
     try {
       const prompt = [
         `Buat palet 5 warna untuk estetik/mood: "${keyword}".`,
@@ -286,14 +251,11 @@ export class AestheticService {
     return DEFAULT_PALETTE;
   }
 
-  // ─── Color Utilities ──────────────────────────────────────
-
   private rgbToHex(r: number, g: number, b: number): string {
     return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
   }
 
   private labelColor(hex: string): string {
-    // Simple heuristic color labeling based on RGB values
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
@@ -310,14 +272,11 @@ export class AestheticService {
     return brightness > 128 ? "Nada Terang" : "Nada Gelap";
   }
 
-  /**
-   * Format a moodboard result into a Telegram text message (for the palette).
-   */
   formatPaletteMessage(result: MoodboardResult): string {
     const paletteLines = result.palette.map((c) => `\`${c.hex}\` — ${c.label}`);
 
     return [
-      `*🎨 Moodboard — "${result.keyword}"*`,
+      `*${S.PALETTE} Moodboard — "${result.keyword}"*`,
       ``,
       `*Palet Warna*`,
       ...paletteLines,

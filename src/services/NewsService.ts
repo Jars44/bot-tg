@@ -1,7 +1,3 @@
-/**
- * News service using Google News RSS
- */
-
 import Parser from "rss-parser";
 
 export interface NewsArticle {
@@ -24,17 +20,11 @@ export class NewsService {
     });
   }
 
-  /**
-   * Get top headlines (Indonesian)
-   * Fetches multiple articles with fallback if few results found
-   */
   async getTopHeadlines(limit: number = 5): Promise<NewsArticle[]> {
     try {
-      // Primary source: Antara News (Top News) - provides direct links and images
       const feed = await this.parser.parseURL("https://www.antaranews.com/rss/top-news");
       let items = feed.items || [];
 
-      // Limit results
       items = items.slice(0, limit);
 
       const articles: NewsArticle[] = items.map((item) => {
@@ -49,7 +39,6 @@ export class NewsService {
     } catch (error) {
       console.error("[NewsService] Error fetching top headlines from Antara:", error);
 
-      // Fallback to Google News if Antara fails
       try {
         const feed = await this.parser.parseURL("https://news.google.com/rss?hl=id&gl=ID&ceid=ID:id");
         const items = (feed.items || []).slice(0, limit);
@@ -71,12 +60,8 @@ export class NewsService {
     }
   }
 
-  /**
-   * Search news by keyword
-   */
   async searchNews(keyword: string, maxResults: number = 10): Promise<NewsArticle[]> {
     try {
-      // Google News RSS search
       const encodedKeyword = encodeURIComponent(keyword);
       const feed = await this.parser.parseURL(
         `https://news.google.com/rss/search?q=${encodedKeyword}&hl=en&gl=US&ceid=US:en`,
@@ -86,10 +71,8 @@ export class NewsService {
         return [];
       }
 
-      // Limit results first to avoid too many requests
       const items = feed.items.slice(0, maxResults);
 
-      // Resolve URLs in parallel with concurrency limit if needed, creates array of promises
       const articlePromises = items.map(async (item) => {
         const url = await this.resolveUrl(item.link || "");
         return {
@@ -106,14 +89,10 @@ export class NewsService {
     }
   }
 
-  /**
-   * Resolve Google News redirect URL to the real URL
-   */
   private async resolveUrl(url: string): Promise<string> {
     if (!url || !url.includes("news.google.com")) return url;
 
     try {
-      // Set short timeout for resolution to stay responsive
       const response = await axios.head(url, {
         timeout: 2000,
         maxRedirects: 5,
@@ -121,7 +100,6 @@ export class NewsService {
       });
       return response.request.res.responseUrl || url;
     } catch {
-      // If HEAD fails (some sites block it), try small GET
       try {
         const response = await axios.get(url, {
           timeout: 2000,
@@ -130,7 +108,6 @@ export class NewsService {
         });
         return response.request.res.responseUrl || url;
       } catch {
-        // Fallback to original URL
         return url;
       }
     }

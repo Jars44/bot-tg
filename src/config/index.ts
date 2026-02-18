@@ -1,35 +1,17 @@
-/**
- * Application configuration constants
- * All magic numbers and API URLs extracted here
- */
-
 export const CONFIG = {
-  /** Maximum stickers per user before rate limit */
   STICKER_LIMIT: 5,
-
-  /** Rate limit reset interval in milliseconds (10 minutes) */
   RATE_LIMIT_RESET_MS: 10 * 60 * 1000,
-
-  /** Temp file max age before cleanup in milliseconds (1 hour) */
   TEMP_FILE_MAX_AGE_MS: 60 * 60 * 1000,
-
-  /** Maximum characters per line for sticker text */
   STICKER_MAX_CHARS_PER_LINE: 20,
-
-  /** Sticker image dimensions */
   STICKER_SIZE: 512,
-
-  /** HTTP request timeout in milliseconds */
   HTTP_TIMEOUT_MS: 30000,
 
-  /** Default location for weather (fallback) */
   DEFAULT_LOCATION: {
     name: "Malang",
     lat: -7.98,
     lon: 112.63,
   },
 
-  /** API endpoints */
   API: {
     BMKG_BASE: "https://data.bmkg.go.id/DataMKG/TEWS/",
     NOMINATIM: "https://nominatim.openstreetmap.org",
@@ -40,14 +22,12 @@ export const CONFIG = {
     ALADHAN: "https://api.aladhan.com/v1",
     TMDB: "https://api.themoviedb.org/3",
     TMDB_IMAGE: "https://image.tmdb.org/t/p/w500",
-    COBALT: "https://cobalt.canine.tools", // Universal Downloader (v10)
+    COBALT: "https://cobalt.canine.tools",
     FOREX_FACTORY: "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
   },
 
-  /** User-Agent header for APIs that require it (especially Nominatim) */
   USER_AGENT: "TelegramBot/2.0 (https://t.me/Jars44_Bot)",
 
-  /** Font size mapping for sticker text based on longest line length */
   FONT_SIZE_MAP: {
     1: 280,
     3: 190,
@@ -65,49 +45,32 @@ export const CONFIG = {
     15: 40,
   } as Record<number, number>,
 
-  /** Default font size for longer text */
   DEFAULT_FONT_SIZE: 40,
-
-  /** Maximum font size for short text */
   MAX_FONT_SIZE: 160,
 
-  /** Paper Trading Configuration */
   PAPER_TRADING: {
-    /** Starting virtual USD balance */
     INITIAL_BALANCE: 10000,
-    /** Commission rate per trade (0.1%) */
     COMMISSION_RATE: 0.001,
   },
 
-  /** Alert & Monitoring Thresholds */
   ALERTS: {
-    /** Whale alert threshold in USD */
     WHALE_THRESHOLD_USD: 500000,
-    /** Arbitrage opportunity threshold percentage */
     ARBITRAGE_THRESHOLD_PCT: 1.5,
-
-    /** Price check interval in milliseconds (1 minute) */
     CHECK_INTERVAL_MS: 60 * 1000,
-    /** Conversation state expiry in milliseconds (10 minutes) */
     STATE_EXPIRY_MS: 10 * 60 * 1000,
   },
 
-  /** Sentiment Analysis Keywords */
   SENTIMENT: {
     BEARISH: ["crash", "plunge", "crisis", "dump", "sell-off", "bearish", "decline", "drop", "fall", "recession"],
     BULLISH: ["surge", "record", "bull", "rally", "breakout", "bullish", "gain", "rise", "soar", "moon"],
   },
 
-  /** AI Chat Configuration */
   AI: {
-    /** Maximum conversation history pairs (user+model) to keep in memory */
     MAX_HISTORY_PAIRS: 5,
-    /** Model name for Gemini */
     MODEL: "gemini-2.5-flash",
   },
 } as const;
 
-/** Environment variable keys */
 export const ENV_KEYS = {
   BOT_TOKEN: "BOT_TOKEN",
   TMDB_API_KEY: "TMDB_API_KEY",
@@ -115,7 +78,6 @@ export const ENV_KEYS = {
   GEMINI_API_KEY: "GEMINI_API_KEY",
 } as const;
 
-/** Get environment variable with validation */
 export function getEnvVar(key: keyof typeof ENV_KEYS): string {
   const value = process.env[key];
   if (!value) {
@@ -124,7 +86,6 @@ export function getEnvVar(key: keyof typeof ENV_KEYS): string {
   return value;
 }
 
-/** Get optional environment variable (returns null if not set) */
 export function getOptionalEnvVar(key: string): string | null {
   return process.env[key] ?? null;
 }

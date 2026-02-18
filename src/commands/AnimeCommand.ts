@@ -1,12 +1,8 @@
-/**
- * Anime search command with selection list
- * Shows multiple results and allows user to select
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler } from "./types.js";
 import { AnimeService, type AnimeResult } from "../services/AnimeService.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { createNumberedButtons, safeEditMessage } from "../utils/uiHelper.js";
 import { toTitleCase } from "../utils/helpers.js";
@@ -33,7 +29,6 @@ export class AnimeCommand implements Command {
     const searchingMessage = await bot.sendMessage(chatId, MESSAGES.SEARCHING_ANIME(keyword));
 
     try {
-      // Search for multiple results
       const results = await this.animeService.searchMultiple(keyword, 5);
 
       if (results.length === 0) {
@@ -44,14 +39,12 @@ export class AnimeCommand implements Command {
         return;
       }
 
-      // If only one result, show it directly
       if (results.length === 1) {
         await bot.deleteMessage(chatId, searchingMessage.message_id);
         await this.showAnimeDetail(bot, chatId, results[0]);
         return;
       }
 
-      // Build selection list
       let message = `*Hasil untuk "${toTitleCase(keyword)}":*\n\n`;
 
       results.forEach((anime, index) => {
@@ -69,7 +62,6 @@ export class AnimeCommand implements Command {
       });
 
       if (!edited) {
-        // Fallback: send new message if edit fails
         await bot.sendMessage(chatId, message, {
           parse_mode: "Markdown",
           reply_markup: {
@@ -78,10 +70,9 @@ export class AnimeCommand implements Command {
         });
       }
 
-      // Store results in session
       sessionManager.startAnimeSelection(chatId, {
         results: results.map((r) => ({
-          id: 0, // Not needed
+          id: 0,
           title: r.title,
           type: r.type,
           score: r.score,
@@ -108,7 +99,7 @@ Tayang: ${anime.year ?? "N/A"}
 Skor: ${anime.score ?? "N/A"}
 ${anime.synopsis}...
 
-→ [Lihat di MAL](${anime.url})
+${S.ARROW_R} [Lihat di MAL](${anime.url})
 `;
 
     await bot.sendPhoto(chatId, anime.imageUrl, {
@@ -118,9 +109,6 @@ ${anime.synopsis}...
   }
 }
 
-/**
- * Callback handler for anime selection
- */
 export class AnimeSelectionHandler implements CallbackHandler {
   prefix = "anime_sel_";
 
@@ -146,20 +134,17 @@ export class AnimeSelectionHandler implements CallbackHandler {
 
     const anime = results[index];
 
-    // Clear session
     sessionManager.clearState(chatId);
 
-    // Delete selection message
     await bot.deleteMessage(chatId, messageId);
 
-    // Show anime detail
     const reply = `
 *${toTitleCase(anime.title)}* (${anime.type})
 Tayang: ${anime.year ?? "N/A"}
 Skor: ${anime.score ?? "N/A"}
 ${anime.synopsis}...
 
-→ [Lihat di MAL](${anime.url})
+${S.ARROW_R} [Lihat di MAL](${anime.url})
 `;
 
     await bot.sendPhoto(chatId, anime.imageUrl, {

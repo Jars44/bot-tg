@@ -1,16 +1,9 @@
-/**
- * TP/SL Handler
- * Handles Take Profit and Stop Loss input flow
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler, CallbackHandler } from "./types.js";
 import { sessionManager, type TpSlSessionData } from "../utils/SessionManager.js";
 import type { JsonDb } from "../database/JsonDb.js";
+import { S } from "../config/symbols.js";
 
-/**
- * Message handler for TP/SL text input
- */
 export class TpSlInputHandler implements MessageHandler {
   private db: JsonDb;
 
@@ -22,7 +15,6 @@ export class TpSlInputHandler implements MessageHandler {
     const chatId = msg.chat.id;
     const state = sessionManager.getState(chatId);
 
-    // Ignore commands
     if (msg.text?.startsWith("/")) return false;
 
     return state?.flow === "tpsl" && Boolean(msg.text);
@@ -36,10 +28,9 @@ export class TpSlInputHandler implements MessageHandler {
 
     const text = msg.text?.trim();
 
-    // Cancel button
     if (text === "Batal") {
       await sessionManager.clearState(chatId);
-      await bot.sendMessage(chatId, "✓ Dibatalkan.", { reply_markup: { remove_keyboard: true } });
+      await bot.sendMessage(chatId, `${S.SUCCESS} Dibatalkan.`, { reply_markup: { remove_keyboard: true } });
       return;
     }
 
@@ -47,12 +38,11 @@ export class TpSlInputHandler implements MessageHandler {
     const tpslData = state.data as TpSlSessionData;
 
     if (isNaN(price) || price <= 0) {
-      await bot.sendMessage(chatId, "× Harga tidak valid. Masukkan angka positif.");
+      await bot.sendMessage(chatId, `${S.FAIL} Harga tidak valid. Masukkan angka positif.`);
       return;
     }
 
     if (state.step === "tp") {
-      // Save Take Profit and ask for Stop Loss
       tpslData.takeProfit = price;
 
       await sessionManager.setState(chatId, {
@@ -63,7 +53,7 @@ export class TpSlInputHandler implements MessageHandler {
 
       await bot.sendMessage(
         chatId,
-        `✓ Take Profit: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
+        `${S.SUCCESS} Take Profit: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n\n` +
           `Masukkan harga *Stop Loss* untuk ${tpslData.symbol}:\n` +
           `_Harga entry: $${tpslData.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}_`,
         {
@@ -76,12 +66,10 @@ export class TpSlInputHandler implements MessageHandler {
         },
       );
     } else if (state.step === "sl") {
-      // Save Stop Loss and update position
       const stopLoss = price;
       const takeProfit = tpslData.takeProfit;
 
       try {
-        // Update position with TP/SL
         await this.db.updatePositionTpSl(tpslData.positionId, takeProfit, stopLoss);
 
         await sessionManager.clearState(chatId);
@@ -101,7 +89,7 @@ export class TpSlInputHandler implements MessageHandler {
         );
       } catch (error) {
         console.error("[TpSlHandler] Error setting TP/SL:", error);
-        await bot.sendMessage(chatId, "× Gagal menyimpan TP/SL. Silakan coba lagi.", {
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal menyimpan TP/SL. Silakan coba lagi.`, {
           reply_markup: { remove_keyboard: true },
         });
         await sessionManager.clearState(chatId);
@@ -110,9 +98,6 @@ export class TpSlInputHandler implements MessageHandler {
   }
 }
 
-/**
- * Callback handler for TP/SL buttons
- */
 export class TpSlCallbackHandler implements CallbackHandler {
   prefix = "tpsl:";
 
@@ -126,7 +111,6 @@ export class TpSlCallbackHandler implements CallbackHandler {
 
     const action = query.data.replace(this.prefix, "");
 
-    // Parse action: set:positionId:symbol:entryPrice or skip
     if (action === "skip") {
       await bot.answerCallbackQuery(query.id, { text: "⏩ Skipped" });
       await bot
@@ -145,7 +129,6 @@ export class TpSlCallbackHandler implements CallbackHandler {
       const [, positionId, symbol, entryPriceStr] = action.split(":");
       const entryPrice = parseFloat(entryPriceStr);
 
-      // Start TP/SL session
       await sessionManager.setState(chatId, {
         flow: "tpsl",
         step: "tp",

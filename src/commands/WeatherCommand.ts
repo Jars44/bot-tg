@@ -1,11 +1,8 @@
-/**
- * Weather command with location lookup
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { WeatherService } from "../services/WeatherService.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
 import { toTitleCase } from "../utils/helpers.js";
@@ -22,12 +19,11 @@ export class WeatherCommand implements Command {
     const chatId = msg.chat.id;
     const location = match?.[1]?.trim();
 
-    // If no city provided, show location request button
     if (!location) {
       const promptMsg = await bot.sendMessage(chatId, "*Cuaca*\n\nKetik nama kota atau kirim lokasimu:", {
         parse_mode: "Markdown",
         reply_markup: {
-          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: "× Batal" }]],
+          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: `${S.FAIL} Batal` }]],
           resize_keyboard: true,
           one_time_keyboard: true,
         },
@@ -62,16 +58,14 @@ export class WeatherCommand implements Command {
 
       const { weather, locationName } = result;
       const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}${S.TEMP}C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
-      // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
       const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
 
       if (!edited) {
-        // Loading message was deleted, send new message with same options
         try {
           if (hasMenuButton) {
             await bot.sendMessage(chatId, weatherMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
@@ -80,7 +74,7 @@ export class WeatherCommand implements Command {
           }
         } catch (sendError) {
           console.error("[WeatherCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, "× Gagal menampilkan cuaca.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan cuaca.`);
         }
       }
     } catch (error) {
@@ -93,7 +87,7 @@ export class WeatherCommand implements Command {
   }
 
   async fetchAndSendWeatherByCoords(bot: TelegramBot, chatId: number, lat: number, lon: number): Promise<void> {
-    const searchingMessage = await bot.sendMessage(chatId, "⧗ Mencari cuaca...", {
+    const searchingMessage = await bot.sendMessage(chatId, `${S.LOADING} Mencari cuaca...`, {
       reply_markup: { remove_keyboard: true },
     });
 
@@ -105,19 +99,18 @@ export class WeatherCommand implements Command {
           bot,
           chatId,
           searchingMessage.message_id,
-          "× Gagal mendapatkan data cuaca.",
+          `${S.FAIL} Gagal mendapatkan data cuaca.`,
         );
         if (!edited) {
-          await bot.sendMessage(chatId, "× Gagal mendapatkan data cuaca.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal mendapatkan data cuaca.`);
         }
         return;
       }
 
       const { weather, locationName } = result;
       const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
+      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}${S.TEMP}C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
 
-      // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
       const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
@@ -132,7 +125,7 @@ export class WeatherCommand implements Command {
           }
         } catch (sendError) {
           console.error("[WeatherCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, "× Gagal menampilkan cuaca.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan cuaca.`);
         }
       }
     } catch (error) {

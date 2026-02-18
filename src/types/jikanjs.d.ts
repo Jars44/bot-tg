@@ -1,7 +1,3 @@
-/**
- * Type declarations for modules without types
- */
-
 declare module "@mateoaranda/jikanjs" {
   interface JikanAnime {
     title: string;

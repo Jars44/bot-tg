@@ -1,11 +1,8 @@
-/**
- * Prayer times command
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { PrayerService } from "../services/PrayerService.js";
 import { MESSAGES } from "../config/messages.js";
+import { S } from "../config/symbols.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
 import { toTitleCase } from "../utils/helpers.js";
@@ -22,12 +19,11 @@ export class PrayerCommand implements Command {
     const chatId = msg.chat.id;
     const city = match?.[1]?.trim();
 
-    // If no city provided, show location request button
     if (!city) {
       const promptMsg = await bot.sendMessage(chatId, "*Jadwal Sholat*\n\nKetik nama kota atau kirim lokasimu:", {
         parse_mode: "Markdown",
         reply_markup: {
-          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: "× Batal" }]],
+          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: `${S.FAIL} Batal` }]],
           resize_keyboard: true,
           one_time_keyboard: true,
         },
@@ -57,7 +53,6 @@ export class PrayerCommand implements Command {
 
       const prayerMessage = `Jadwal Sholat di ${toTitleCase(city)}:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
 
-      // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
       const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
@@ -72,7 +67,7 @@ export class PrayerCommand implements Command {
           }
         } catch (sendError) {
           console.error("[PrayerCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, "× Gagal menampilkan jadwal sholat.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan jadwal sholat.`);
         }
       }
     } catch (error) {
@@ -85,7 +80,7 @@ export class PrayerCommand implements Command {
   }
 
   async fetchAndSendPrayerTimesByCoords(bot: TelegramBot, chatId: number, lat: number, lon: number): Promise<void> {
-    const searchingMessage = await bot.sendMessage(chatId, "⧗ Mencari jadwal sholat...", {
+    const searchingMessage = await bot.sendMessage(chatId, `${S.LOADING} Mencari jadwal sholat...`, {
       reply_markup: { remove_keyboard: true },
     });
 
@@ -97,17 +92,16 @@ export class PrayerCommand implements Command {
           bot,
           chatId,
           searchingMessage.message_id,
-          "× Gagal mendapatkan jadwal sholat.",
+          `${S.FAIL} Gagal mendapatkan jadwal sholat.`,
         );
         if (!edited) {
-          await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal mendapatkan jadwal sholat.`);
         }
         return;
       }
 
       const prayerMessage = `Jadwal Sholat:\nSubuh: ${times.Fajr}\nDzuhur: ${times.Dhuhr}\nAshar: ${times.Asr}\nMaghrib: ${times.Maghrib}\nIsya: ${times.Isha}`;
 
-      // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
       const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
@@ -122,7 +116,7 @@ export class PrayerCommand implements Command {
           }
         } catch (sendError) {
           console.error("[PrayerCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, "× Gagal menampilkan jadwal sholat.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan jadwal sholat.`);
         }
       }
     } catch (error) {
@@ -131,10 +125,10 @@ export class PrayerCommand implements Command {
         bot,
         chatId,
         searchingMessage.message_id,
-        "× Gagal mendapatkan jadwal sholat.",
+        `${S.FAIL} Gagal mendapatkan jadwal sholat.`,
       );
       if (!edited) {
-        await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.");
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal mendapatkan jadwal sholat.`);
       }
     }
   }

@@ -1,16 +1,7 @@
-/**
- * Urban Exploration Service — Lokasi & Rute Hunting
- * Generates photography missions based on user's GPS coordinates.
- *
- * Primary: AI-generated quests from geo-context
- * Fallback: Procedural "Mad Libs" style mission generator
- */
-
 import type { AIService } from "./GenAIService.js";
 import type { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
-
-// ─── Types ────────────────────────────────────────────────────
+import { S } from "../config/symbols.js";
 
 export interface PhotographyMission {
   title: string;
@@ -52,8 +43,6 @@ interface AIMissionResponse {
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   tips: string[];
 }
-
-// ─── Fallback Data ────────────────────────────────────────────
 
 const SUBJECTS = [
   "A lone figure walking away from camera",
@@ -118,8 +107,6 @@ const LOCATION_CLASSIFICATIONS: Record<string, string[]> = {
 
 const DIFFICULTIES: Array<"Beginner" | "Intermediate" | "Advanced"> = ["Beginner", "Intermediate", "Advanced"];
 
-// ─── Service ──────────────────────────────────────────────────
-
 export class UrbanExplorationService {
   private aiService: AIService;
   private httpClient: HttpClient;
@@ -129,14 +116,9 @@ export class UrbanExplorationService {
     this.httpClient = httpClient;
   }
 
-  /**
-   * Generate a photography mission for given coordinates.
-   */
   async generateMission(lat: number, lon: number): Promise<PhotographyMission> {
-    // Get location context
     const geoContext = await this.getGeoContext(lat, lon);
 
-    // Primary: AI generation
     try {
       return await this.generateMissionAI(geoContext);
     } catch (error: unknown) {
@@ -147,11 +129,8 @@ export class UrbanExplorationService {
       console.log("[UrbanExplorationService] Falling back to procedural mission");
     }
 
-    // Fallback: Procedural
     return this.generateMissionFallback(geoContext);
   }
-
-  // ─── AI Path ──────────────────────────────────────────────
 
   private async generateMissionAI(context: GeoContext): Promise<PhotographyMission> {
     const prompt = [
@@ -185,8 +164,6 @@ export class UrbanExplorationService {
       locationType: context.locationType,
     };
   }
-
-  // ─── Fallback Path ────────────────────────────────────────
 
   private generateMissionFallback(context: GeoContext): PhotographyMission {
     const subject = this.randomPick(SUBJECTS);
@@ -232,8 +209,6 @@ export class UrbanExplorationService {
     return selected;
   }
 
-  // ─── Geo Context ──────────────────────────────────────────
-
   private async getGeoContext(lat: number, lon: number): Promise<GeoContext> {
     try {
       const result = await this.httpClient.get<NominatimReverseResult>(`${CONFIG.API.NOMINATIM}/reverse`, {
@@ -278,8 +253,6 @@ export class UrbanExplorationService {
     return "Urban";
   }
 
-  // ─── Helpers ──────────────────────────────────────────────
-
   private randomPick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
@@ -288,14 +261,11 @@ export class UrbanExplorationService {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  /**
-   * Format a mission into a Telegram-friendly message.
-   */
   formatMissionMessage(mission: PhotographyMission): string {
     const tips = mission.tips.map((t) => `• ${t}`).join("\n");
 
     return [
-      `*📸 Misi Fotografi*`,
+      `*${S.LENS} Misi Fotografi*`,
       `"${mission.title}"`,
       ``,
       `*Area:* ${mission.locationType}`,
@@ -313,8 +283,6 @@ export class UrbanExplorationService {
     ].join("\n");
   }
 }
-
-// ─── Internal Types ─────────────────────────────────────────
 
 interface GeoContext {
   address: string;

@@ -1,15 +1,9 @@
-/**
- * Finance Data Service
- * Unified wrapper for CCXT (crypto) and Yahoo Finance (stocks/forex)
- */
-
 import ccxt, { Exchange } from "ccxt";
 import YahooFinance from "yahoo-finance2";
 import type { PriceData } from "../database/types.js";
 
 const yahooFinance = new YahooFinance();
 
-/** Common crypto symbols */
 const CRYPTO_SYMBOLS = new Set([
   "BTC",
   "ETH",
@@ -33,7 +27,6 @@ const CRYPTO_SYMBOLS = new Set([
   "APT",
 ]);
 
-/** Common forex pairs */
 const FOREX_PAIRS = new Set([
   "EURUSD",
   "GBPUSD",
@@ -52,7 +45,7 @@ const FOREX_PAIRS = new Set([
 export class FinanceDataService {
   private binance: Exchange;
   private priceCache: Map<string, { price: PriceData; timestamp: number }> = new Map();
-  private readonly CACHE_TTL_MS = 30000; // 30 seconds
+  private readonly CACHE_TTL_MS = 30000;
 
   constructor() {
     this.binance = new ccxt.binance({
@@ -60,25 +53,16 @@ export class FinanceDataService {
     });
   }
 
-  /**
-   * Check if symbol is a cryptocurrency
-   */
   private isCrypto(symbol: string): boolean {
     const upper = symbol.toUpperCase().replace("/USDT", "").replace("USDT", "");
     return CRYPTO_SYMBOLS.has(upper);
   }
 
-  /**
-   * Check if symbol is a forex pair
-   */
   private isForex(symbol: string): boolean {
     const upper = symbol.toUpperCase().replace("/", "").replace("=X", "");
     return FOREX_PAIRS.has(upper);
   }
 
-  /**
-   * Normalize symbol for exchange API
-   */
   private normalizeCryptoSymbol(symbol: string): string {
     const upper = symbol.toUpperCase();
     if (upper.includes("/")) return upper;
@@ -86,13 +70,9 @@ export class FinanceDataService {
     return `${upper}/USDT`;
   }
 
-  /**
-   * Normalize symbol for Yahoo Finance
-   */
   private normalizeYahooSymbol(symbol: string): string {
     const upper = symbol.toUpperCase().replace("/", "");
 
-    // Crypto
     if (this.isCrypto(symbol)) {
       if (upper.endsWith("USDT")) {
         return `${upper.replace("USDT", "")}-USD`;
@@ -100,24 +80,19 @@ export class FinanceDataService {
       return `${upper}-USD`;
     }
 
-    // Forex pairs / Commodities
     if (this.isForex(symbol)) {
       if (upper.startsWith("XAU")) {
-        return "GC=F"; // Gold Futures
+        return "GC=F";
       }
       if (upper.startsWith("XAG")) {
-        return "SI=F"; // Silver Futures
+        return "SI=F";
       }
       return `${upper}=X`;
     }
 
-    // Stocks - just return as-is
     return upper;
   }
 
-  /**
-   * Get cryptocurrency price from Binance (with Yahoo fallback)
-   */
   async getCryptoPrice(symbol: string): Promise<PriceData> {
     const normalizedSymbol = this.normalizeCryptoSymbol(symbol);
 
@@ -137,7 +112,7 @@ export class FinanceDataService {
       );
       try {
         const yahooPrice = await this.getYahooPrice(symbol);
-        yahooPrice.source = "crypto"; // Keep strict type
+        yahooPrice.source = "crypto";
         return yahooPrice;
       } catch (yahooError) {
         console.error(`[FinanceDataService] Both Binance and Yahoo failed for ${symbol}:`, yahooError);
@@ -146,9 +121,6 @@ export class FinanceDataService {
     }
   }
 
-  /**
-   * Get forex/stock price from Yahoo Finance
-   */
   async getYahooPrice(symbol: string): Promise<PriceData> {
     const yahooSymbol = this.normalizeYahooSymbol(symbol);
 
@@ -160,7 +132,6 @@ export class FinanceDataService {
         throw new Error(`No data for ${symbol}`);
       }
 
-      // Try multiple fields for price
       const price =
         quote.regularMarketPrice ||
         quote.price ||
@@ -186,7 +157,6 @@ export class FinanceDataService {
     } catch (error) {
       console.error(`[FinanceDataService] Error fetching Yahoo price for ${symbol}:`, error);
 
-      // Fallback for Gold if XAUUSD fails
       if (symbol === "XAUUSD" || symbol === "XAUUSD=X") {
         console.log("[FinanceDataService] Attempting fallback to GC=F for Gold");
         try {
@@ -200,14 +170,10 @@ export class FinanceDataService {
     }
   }
 
-  /**
-   * Get price from any source (auto-detects asset type)
-   */
   async getPrice(symbol: string): Promise<PriceData> {
     const cacheKey = symbol.toUpperCase();
     const cached = this.priceCache.get(cacheKey);
 
-    // Return cached if still valid
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
       return cached.price;
     }
@@ -220,19 +186,14 @@ export class FinanceDataService {
       priceData = await this.getYahooPrice(symbol);
     }
 
-    // Cache the result
     this.priceCache.set(cacheKey, { price: priceData, timestamp: Date.now() });
 
     return priceData;
   }
 
-  /**
-   * Get prices for multiple symbols
-   */
   async getPrices(symbols: string[]): Promise<Map<string, PriceData>> {
     const results = new Map<string, PriceData>();
 
-    // Batch requests for efficiency
     const promises = symbols.map(async (symbol) => {
       try {
         const price = await this.getPrice(symbol);
@@ -246,9 +207,6 @@ export class FinanceDataService {
     return results;
   }
 
-  /**
-   * Get recent large trades from Binance (for whale monitoring)
-   */
   async getRecentLargeTrades(
     symbol: string,
     thresholdUSD: number = 500000,
@@ -273,7 +231,7 @@ export class FinanceDataService {
         error instanceof Error &&
         (error.message.includes("fetch failed") ||
           error.name === "NetworkError" ||
-          error.name === "ExchangeNotAvailable" || // Geo-restriction
+          error.name === "ExchangeNotAvailable" ||
           error.message.includes("451"))
       ) {
         console.warn(`[FinanceDataService] Binance unavailable for trades (${symbol}). Whale monitoring paused.`);
@@ -284,9 +242,6 @@ export class FinanceDataService {
     }
   }
 
-  /**
-   * Get price from multiple exchanges for arbitrage detection
-   */
   async getPriceFromExchanges(
     symbol: string,
     exchangeIds: string[] = ["binance", "kraken"],
@@ -303,26 +258,20 @@ export class FinanceDataService {
         } else if (exchangeId === "kraken") {
           exchange = new ccxt.kraken({ enableRateLimit: true });
         } else {
-          return; // Unsupported exchange
+          return;
         }
 
         const ticker = await exchange.fetchTicker(normalizedSymbol);
         if (ticker.last) {
           results.set(exchangeId, ticker.last);
         }
-      } catch {
-        // Silently fail for arbitrage as it's optional and likely to fail if blocked
-        // console.warn(`[FinanceDataService] ${exchangeId} failed for arbitrage:`, error);
-      }
+      } catch { /* empty */ }
     });
 
     await Promise.all(promises);
     return results;
   }
 
-  /**
-   * Calculate arbitrage opportunity
-   */
   async checkArbitrage(
     symbol: string,
     thresholdPercent: number = 1.5,
@@ -345,9 +294,6 @@ export class FinanceDataService {
     };
   }
 
-  /**
-   * OHLCV data point for charting
-   */
   static readonly TIMEFRAMES: Record<string, string> = {
     "1m": "1m",
     "5m": "5m",
@@ -357,18 +303,11 @@ export class FinanceDataService {
     "1d": "1d",
   };
 
-  /**
-   * Get OHLCV (candlestick) data for charting
-   * @param symbol Asset symbol (BTC, ETH, XAUUSD, etc.)
-   * @param timeframe Timeframe (1m, 5m, 15m, 1h, 4h, 1d)
-   * @param limit Number of candles to fetch (default: 100)
-   */
   async getOHLCV(
     symbol: string,
     timeframe: string = "1h",
     limit: number = 100,
   ): Promise<Array<{ timestamp: number; open: number; high: number; low: number; close: number; volume: number }>> {
-    // Validate timeframe
     const tf = FinanceDataService.TIMEFRAMES[timeframe] || "1h";
 
     if (this.isCrypto(symbol)) {
@@ -378,9 +317,6 @@ export class FinanceDataService {
     }
   }
 
-  /**
-   * Get OHLCV from Binance for crypto (with Yahoo fallback)
-   */
   private async getCryptoOHLCV(
     symbol: string,
     timeframe: string,
@@ -406,9 +342,6 @@ export class FinanceDataService {
     }
   }
 
-  /**
-   * Get OHLCV from Yahoo Finance for forex/stocks
-   */
   private async getYahooOHLCV(
     symbol: string,
     timeframe: string,
@@ -417,34 +350,32 @@ export class FinanceDataService {
     try {
       const yahooSymbol = this.normalizeYahooSymbol(symbol);
 
-      // Map timeframe to Yahoo interval
       const intervalMap: Record<string, string> = {
         "1m": "1m",
         "5m": "5m",
         "15m": "15m",
         "1h": "1h",
-        "4h": "1h", // Yahoo doesn't support 4h, use 1h
+        "4h": "1h",
         "1d": "1d",
       };
 
       const interval = intervalMap[timeframe] || "1h";
 
-      // Calculate date range based on timeframe
       const now = new Date();
       let startDate: Date;
 
       switch (timeframe) {
         case "1m":
         case "5m":
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
         case "15m":
         case "1h":
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         case "4h":
         case "1d":
-          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000); // 1 year
+          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
           break;
         default:
           startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -460,7 +391,6 @@ export class FinanceDataService {
         throw new Error(`No OHLCV data for ${symbol}`);
       }
 
-      // Take last 'limit' candles
       const quotes = result.quotes.slice(-limit);
 
       return quotes.map((q) => ({

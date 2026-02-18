@@ -1,19 +1,11 @@
-/**
- * Paper Trading Commands with Confirmation
- * Buy, Sell, and Portfolio commands for virtual trading
- * Enhanced with confirmation dialogs for safety
- */
-
 import TelegramBot from "node-telegram-bot-api";
+import { S } from "../config/symbols.js";
 import type { Command, CallbackHandler } from "./types.js";
 import type { TradingEngine } from "../services/TradingEngine.js";
 import { sessionManager, type TradeSessionData } from "../utils/SessionManager.js";
 import { createConfirmButtons, formatUSD, withLoading, safeEditMessage } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 
-/**
- * View paper trading portfolio
- */
 export class PortfolioCommand implements Command {
   pattern = /^\/portfolio$/;
   private tradingEngine: TradingEngine;
@@ -33,16 +25,12 @@ export class PortfolioCommand implements Command {
         await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
       } catch (error) {
         console.error("[PortfolioCommand] Error:", error);
-        await bot.sendMessage(chatId, "× Gagal mengambil data portfolio. Silakan coba lagi.");
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal mengambil data portfolio. Silakan coba lagi.`);
       }
     });
   }
 }
 
-/**
- * Buy command for paper trading with confirmation
- * Usage: /buy [symbol] [quantity]
- */
 export class BuyCommand implements Command {
   pattern = /^\/buy(?:\s+(\w+)(?:\s+([\d.]+))?)?$/;
   private tradingEngine: TradingEngine;
@@ -74,18 +62,14 @@ export class BuyCommand implements Command {
     const quantity = parseFloat(match[2]);
 
     if (isNaN(quantity) || quantity <= 0) {
-      await bot.sendMessage(chatId, "⚠︎ Quantity harus angka positif.");
+      await bot.sendMessage(chatId, `${S.WARN} Quantity harus angka positif.`);
       return;
     }
-
-    // Fetch current price for confirmation
     await withLoading(bot, chatId, async () => {
       try {
         const priceData = await this.tradingEngine.getPrice(symbol);
         const price = priceData.price;
         const total = price * quantity;
-
-        // Show confirmation dialog (Receipt Style)
         const confirmMessage =
           `*KONFIRMASI ORDER*\n\n` +
           `\`\`\`\n` +
@@ -103,8 +87,6 @@ export class BuyCommand implements Command {
             inline_keyboard: createConfirmButtons("tconf_buy_yes", "tconf_buy_no"),
           },
         });
-
-        // Store pending trade in session
         sessionManager.startTradeConfirmation(chatId, {
           action: "buy",
           symbol,
@@ -114,16 +96,12 @@ export class BuyCommand implements Command {
         });
       } catch (error) {
         console.error("[BuyCommand] Error fetching price:", error);
-        await bot.sendMessage(chatId, "× Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal mengambil harga pasar.`);
       }
     });
   }
 }
 
-/**
- * Sell command for paper trading with confirmation
- * Usage: /sell [symbol] [quantity]
- */
 export class SellCommand implements Command {
   pattern = /^\/sell(?:\s+(\w+)(?:\s+([\d.]+))?)?$/;
   private tradingEngine: TradingEngine;
@@ -154,18 +132,14 @@ export class SellCommand implements Command {
     const quantity = parseFloat(match[2]);
 
     if (isNaN(quantity) || quantity <= 0) {
-      await bot.sendMessage(chatId, "⚠︎ Quantity harus angka positif.");
+      await bot.sendMessage(chatId, `${S.WARN} Quantity harus angka positif.`);
       return;
     }
-
-    // Fetch current price for confirmation
     await withLoading(bot, chatId, async () => {
       try {
         const priceData = await this.tradingEngine.getPrice(symbol);
         const price = priceData.price;
         const total = price * quantity;
-
-        // Show confirmation dialog (Receipt Style)
         const confirmMessage =
           `*KONFIRMASI ORDER*\n\n` +
           `\`\`\`\n` +
@@ -183,8 +157,6 @@ export class SellCommand implements Command {
             inline_keyboard: createConfirmButtons("tconf_sell_yes", "tconf_sell_no"),
           },
         });
-
-        // Store pending trade in session
         sessionManager.startTradeConfirmation(chatId, {
           action: "sell",
           symbol,
@@ -194,16 +166,12 @@ export class SellCommand implements Command {
         });
       } catch (error) {
         console.error("[SellCommand] Error fetching price:", error);
-        await bot.sendMessage(chatId, "× Gagal mengambil harga pasar.");
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal mengambil harga pasar.`);
       }
     });
   }
 }
 
-/**
- * Close command for liquidating entire position
- * Usage: /close [symbol]
- */
 export class CloseCommand implements Command {
   pattern = /^\/close(?:\s+(\w+))?$/;
   private tradingEngine: TradingEngine;
@@ -230,8 +198,6 @@ export class CloseCommand implements Command {
     }
 
     const symbolInput = match[1].toUpperCase();
-
-    // Check if closing ALL positions
     if (symbolInput === "ALL") {
       await withLoading(bot, chatId, async () => {
         try {
@@ -244,10 +210,8 @@ export class CloseCommand implements Command {
           }
 
           const totalValue = activePositions.reduce((sum, p) => sum + p.marketValue, 0);
-
-          // Show confirmation dialog for closing ALL
           const confirmMessage =
-            `⚠︎ *KONFIRMASI: CLOSE ALL*\n\n` +
+            `${S.WARN} *KONFIRMASI: CLOSE ALL*\n\n` +
             `\`\`\`\n` +
             `Action:     LIQUIDATE ALL\n` +
             `Posisi:     ${activePositions.length}\n` +
@@ -266,8 +230,6 @@ export class CloseCommand implements Command {
               ],
             },
           });
-
-          // Store pending trade in session with special symbol "ALL"
           sessionManager.startTradeConfirmation(chatId, {
             action: "sell",
             symbol: "ALL",
@@ -277,23 +239,20 @@ export class CloseCommand implements Command {
           });
         } catch (error) {
           console.error("[CloseCommand] Error fetching portfolio:", error);
-          await bot.sendMessage(chatId, "× Gagal memproses permintaan.");
+          await bot.sendMessage(chatId, `${S.FAIL} Gagal memproses permintaan.`);
         }
       });
       return;
     }
 
     const symbol = symbolInput;
-
-    // Fetch current position and price for confirmation
     await withLoading(bot, chatId, async () => {
       try {
-        // Get portfolio to find position quantity
         const summary = await this.tradingEngine.getPortfolioSummary(chatId);
         const position = summary.positions.find((p) => p.symbol === symbol);
 
         if (!position || position.quantity <= 0) {
-          await bot.sendMessage(chatId, `× Tidak ada posisi ${symbol} terbuka.`);
+          await bot.sendMessage(chatId, `${S.FAIL} Tidak ada posisi ${symbol} terbuka.`);
           return;
         }
 
@@ -301,10 +260,8 @@ export class CloseCommand implements Command {
         const priceData = await this.tradingEngine.getPrice(symbol);
         const price = priceData.price;
         const total = price * quantity;
-
-        // Show confirmation dialog
         const confirmMessage =
-          `⚠︎ *KONFIRMASI: CLOSE POSISI*\n\n` +
+          `${S.WARN} *KONFIRMASI: CLOSE POSISI*\n\n` +
           `\`\`\`\n` +
           `Action:     CLOSE ${symbol}\n` +
           `Qty:        ${quantity}\n` +
@@ -323,8 +280,6 @@ export class CloseCommand implements Command {
             ],
           },
         });
-
-        // Store pending trade in session (using "sell" action as close is a sell)
         sessionManager.startTradeConfirmation(chatId, {
           action: "sell",
           symbol,
@@ -334,15 +289,12 @@ export class CloseCommand implements Command {
         });
       } catch (error) {
         console.error("[CloseCommand] Error fetching position/price:", error);
-        await bot.sendMessage(chatId, "× Gagal memproses permintaan.");
+        await bot.sendMessage(chatId, `${S.FAIL} Gagal memproses permintaan.`);
       }
     });
   }
 }
 
-/**
- * Trade confirmation callback handler
- */
 export class TradeConfirmHandler implements CallbackHandler {
   prefix = "tconf_";
   private tradingEngine: TradingEngine;
@@ -368,17 +320,13 @@ export class TradeConfirmHandler implements CallbackHandler {
     const [action, decision] = data.replace("tconf_", "").split("_");
 
     if (decision === "no") {
-      // Cancel trade
       sessionManager.clearState(chatId);
-      await safeEditMessage(bot, chatId, messageId, "× Transaksi dibatalkan.");
+      await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Transaksi dibatalkan.`);
       await bot.answerCallbackQuery(query.id, { text: "Dibatalkan" });
       return;
     }
-
-    // Execute trade
     await withLoading(bot, chatId, async () => {
       try {
-        // Handle CLOSE ALL
         if (action === "closeall") {
           const result = await this.tradingEngine.closeAllPositions(chatId);
 
@@ -388,7 +336,7 @@ export class TradeConfirmHandler implements CallbackHandler {
             parse_mode: "Markdown",
           });
 
-          await bot.answerCallbackQuery(query.id, { text: result.success ? "✓ Berhasil" : "× Gagal" });
+          await bot.answerCallbackQuery(query.id, { text: result.success ? `${S.SUCCESS} Berhasil` : `${S.FAIL} Gagal` });
           return;
         }
 
@@ -398,17 +346,13 @@ export class TradeConfirmHandler implements CallbackHandler {
         } else {
           result = await this.tradingEngine.executeSell(chatId, tradeData.symbol, tradeData.quantity);
         }
-
-        // Clear session
         sessionManager.clearState(chatId);
 
         await safeEditMessage(bot, chatId, messageId, result.message, {
           parse_mode: "Markdown",
         });
 
-        await bot.answerCallbackQuery(query.id, { text: "✓ Order Tereksekusi" });
-
-        // For BUY orders, offer TP/SL protection
+        await bot.answerCallbackQuery(query.id, { text: `${S.SUCCESS} Order Tereksekusi` });
         if (action === "buy" && result.success && result.position) {
           const protectionMessage =
             `*Take Profit / Stop Loss*\n\n` +
@@ -434,16 +378,13 @@ export class TradeConfirmHandler implements CallbackHandler {
       } catch (error) {
         console.error("[TradeConfirmHandler] Error:", error);
         sessionManager.clearState(chatId);
-        await safeEditMessage(bot, chatId, messageId, "× Gagal memproses order.");
+        await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Gagal memproses order.`);
         await bot.answerCallbackQuery(query.id, { text: "Gagal" });
       }
     });
   }
 }
 
-/**
- * View trade history
- */
 export class HistoryCommand implements Command {
   pattern = /^\/history$/;
 
@@ -457,7 +398,7 @@ export class HistoryCommand implements Command {
       await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
     } catch (error) {
       console.error("[HistoryCommand] Error:", error);
-      await bot.sendMessage(chatId, "× Gagal mengambil riwayat.");
+      await bot.sendMessage(chatId, `${S.FAIL} Gagal mengambil riwayat.`);
     }
   }
 }

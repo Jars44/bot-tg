@@ -1,7 +1,3 @@
-/**
- * Help command
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { MESSAGES } from "../config/messages.js";

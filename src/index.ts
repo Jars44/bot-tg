@@ -1,19 +1,10 @@
-/**
- * Main entry point for the Telegram Bot
- * Production-grade modular TypeScript application
- * Extended with Financial Suite features
- */
-
 import "dotenv/config";
 import TelegramBot from "node-telegram-bot-api";
 
-// Config
 import { getEnvVar, ENV_KEYS } from "./config/index.js";
 
-// Database
 import { JsonDb } from "./database/JsonDb.js";
 
-// Services
 import { HttpClient } from "./services/HttpClient.js";
 import { TempCleanerService } from "./services/TempCleanerService.js";
 import { WeatherService } from "./services/WeatherService.js";
@@ -27,7 +18,6 @@ import { EarthquakeService } from "./services/EarthquakeService.js";
 import { DownloadService } from "./services/DownloadService.js";
 import { StickerService } from "./services/StickerService.js";
 
-// Financial Services
 import { FinanceDataService } from "./services/FinanceDataService.js";
 import { TradingEngine } from "./services/TradingEngine.js";
 import { SentimentAnalyzer } from "./services/SentimentAnalyzer.js";
@@ -35,14 +25,12 @@ import { EconomicCalendarService } from "./services/EconomicCalendarService.js";
 import { AlertScheduler } from "./services/AlertScheduler.js";
 import { ChartService } from "./services/ChartService.js";
 
-// Lifestyle Services
 import { AIService } from "./services/GenAIService.js";
 import { VibeService } from "./services/VibeService.js";
 import { AestheticService } from "./services/AestheticService.js";
 import { UrbanExplorationService } from "./services/UrbanExplorationService.js";
 import { BrainstormService } from "./services/BrainstormService.js";
 
-// Commands
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
 import { StopCommand } from "./commands/StartCommand.js";
 import { HelpCommand } from "./commands/HelpCommand.js";
@@ -66,7 +54,6 @@ import { LocationHandler } from "./commands/LocationHandler.js";
 import { LocationCallbackHandler } from "./commands/LocationCallbackHandler.js";
 import { SmartPasteHandler, SmartPasteCallbackHandler } from "./commands/SmartPasteHandler.js";
 
-// Financial Commands
 import { ExpenseCommand, LaporanCommand, RekapCommand } from "./commands/ExpenseCommand.js";
 import {
   PortfolioCommand,
@@ -85,7 +72,6 @@ import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js
 import { GeoGuessrCommand, GiveUpCommand } from "./commands/GeoGuessrCommand.js";
 import { AiStartCommand, AiStopCommand } from "./commands/AiChatCommand.js";
 
-// Lifestyle Commands
 import { VibeCommand } from "./commands/VibeCommand.js";
 import { AestheticCommand } from "./commands/AestheticCommand.js";
 import { HuntCommand } from "./commands/HuntCommand.js";
@@ -96,40 +82,32 @@ import {
   BrainstormCallbackHandler,
 } from "./commands/BrainstormCommand.js";
 
-// Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
 import { sessionManager } from "./utils/SessionManager.js";
 
 async function main(): Promise<void> {
   console.log("[Bot] Starting initialization...");
 
-  // Setup global error handlers
   setupErrorHandlers();
 
-  // Validate bot token format
   const token = getEnvVar(ENV_KEYS.BOT_TOKEN);
   if (!token || token.length < 20 || !token.includes(":")) {
-    throw new Error("❌ Invalid or missing BOT_TOKEN. Check your .env file.");
+    throw new Error("Invalid or missing BOT_TOKEN. Check your .env file.");
   }
   console.log("[Bot] Token format validated");
 
-  // Initialize database
   const db = new JsonDb();
   await db.init();
   console.log("[Bot] Database initialized");
 
-  // Initialize session manager persistence
   await sessionManager.initialize(db);
   console.log("[Bot] Session persistence initialized");
 
-  // Initialize HTTP client
   const httpClient = new HttpClient();
 
-  // Initialize temp cleaner
   const tempCleaner = new TempCleanerService();
   tempCleaner.start();
 
-  // Initialize services (Dependency Injection)
   const weatherService = new WeatherService(httpClient);
   const animeService = new AnimeService();
   const quoteService = new QuoteService(httpClient);
@@ -141,7 +119,6 @@ async function main(): Promise<void> {
   const downloadService = new DownloadService(tempCleaner);
   const stickerService = new StickerService(tempCleaner);
 
-  // Financial Services
   const financeDataService = new FinanceDataService();
   const tradingEngine = new TradingEngine(db, financeDataService);
   const sentimentAnalyzer = new SentimentAnalyzer(newsService);
@@ -150,7 +127,6 @@ async function main(): Promise<void> {
   const chartService = new ChartService(financeDataService);
   console.log("[Bot] Financial services initialized");
 
-  // Lifestyle Services
   const aiService = new AIService();
   const vibeService = new VibeService(aiService, weatherService, httpClient);
   const aestheticService = new AestheticService(httpClient, aiService);
@@ -158,7 +134,6 @@ async function main(): Promise<void> {
   const brainstormService = new BrainstormService(aiService);
   console.log("[Bot] Lifestyle services initialized");
 
-  // Initialize bot with polling options
   const bot = new TelegramBot(token, {
     polling: {
       interval: 1000,
@@ -171,24 +146,20 @@ async function main(): Promise<void> {
   });
   console.log("[Bot] Telegram bot initialized with polling");
 
-  // Handle polling errors
   bot.on("polling_error", (error) => {
     const errorObj = error as unknown as Record<string, unknown>;
     if (errorObj.code === "EFATAL") {
       console.error("[Bot] Polling error EFATAL:", errorObj.message);
       console.log("[Bot] Attempting to restart polling...");
-      // Bot will automatically restart polling
     } else {
       console.error("[Bot] Polling error:", error);
     }
   });
 
-  // Handle bot errors
   bot.on("error", (error) => {
     console.error("[Bot] Bot error:", error);
   });
 
-  // Initialize commands with DI
   const reminderCommand = new ReminderCommand(db);
   const downloadCommand = new DownloadCommand();
   const downloadCallbackHandler = new DownloadCallbackHandler(downloadService);
@@ -206,12 +177,10 @@ async function main(): Promise<void> {
   const buyCommand = new BuyCommand(tradingEngine);
   const sellCommand = new SellCommand(tradingEngine);
 
-  // DI for MenuCommand
   const newsCommand = new NewsCommand(newsService);
   const helpCommand = new HelpCommand();
   const geoGuessrCommand = new GeoGuessrCommand();
 
-  // Lifestyle Commands
   const vibeCommand = new VibeCommand(vibeService);
   const aestheticCommand = new AestheticCommand(aestheticService);
   const huntCommand = new HuntCommand(urbanExplorationService);
@@ -230,23 +199,18 @@ async function main(): Promise<void> {
     brainstormCommand,
   );
 
-  // Market Hub Command (with DI)
   const marketCommand = new MarketCommand(tradingEngine);
 
-  // DI for TradingMenuHandler
   const portfolioCommand = new PortfolioCommand(tradingEngine);
   const calendarCommand = new CalendarCommand(economicCalendarService);
   const myAlertsCommand = new MyAlertsCommand();
 
-  // DI for FinanceMenuHandler
   const rekapCommand = new RekapCommand(db);
   const laporanCommand = new LaporanCommand(db);
 
-  // Risk Wizard (with handlers)
   const riskInputHandler = new RiskInputHandler();
   const riskCommand = new RiskCommand(riskInputHandler);
 
-  // Session handler for interactive flows (with MovieCommand for movie search)
   const sessionInputHandler = new SessionInputHandler(
     animeCommand,
     lyricsCommand,
@@ -266,7 +230,6 @@ async function main(): Promise<void> {
   );
 
   const commands: Command[] = [
-    // Core commands - MenuCommand handles /start and /menu
     menuCommand,
     new StopCommand(),
     helpCommand,
@@ -282,106 +245,84 @@ async function main(): Promise<void> {
     lyricsCommand,
     downloadCommand,
 
-    // Financial Suite Commands
-    expenseCommand, // /catat
-    new LaporanCommand(db), // /laporan
-    new RekapCommand(db), // /rekap
+    expenseCommand,
+    new LaporanCommand(db),
+    new RekapCommand(db),
 
-    // Paper Trading
-    portfolioCommand, // /portfolio
-    buyCommand, // /buy [symbol] [qty]
-    sellCommand, // /sell [symbol] [qty]
-    new CloseCommand(tradingEngine), // /close [symbol]
+    portfolioCommand,
+    buyCommand,
+    sellCommand,
+    new CloseCommand(tradingEngine),
 
-    // Risk Calculator (Hybrid: Regex + Wizard)
-    riskCommand, // /risk or /risk [capital] [%] [pips]
+    riskCommand,
 
-    // Market Hub
-    marketCommand, // /market [symbol] or /m [symbol]
+    marketCommand,
 
-    // Price Alerts
-    alertCommand, // /alert [symbol] [price] [cond]
-    myAlertsCommand, // /alerts
+    alertCommand,
+    myAlertsCommand,
 
-    // Sentiment Analysis
-    sentimentCommand, // /sentimen [keyword]
+    sentimentCommand,
 
-    // Economic Calendar
-    calendarCommand, // /calendar
-    new HighImpactCommand(economicCalendarService), // /highimpact
+    calendarCommand,
+    new HighImpactCommand(economicCalendarService),
 
-    // Charting
-    chartCommand, // /chart [symbol] [timeframe]
+    chartCommand,
 
-    // Mini-Games
-    geoGuessrCommand, // /geoguessr
-    new GiveUpCommand(), // /nyerah
+    geoGuessrCommand,
+    new GiveUpCommand(),
 
-    // AI Chat
-    new AiStartCommand(), // /ai or /chat
-    new AiStopCommand(), // /exit or /stopai
+    new AiStartCommand(),
+    new AiStopCommand(),
 
-    // Lifestyle Suite
-    vibeCommand, // /vibe [city]
-    aestheticCommand, // /moodboard [keyword] or /aesthetic [keyword]
-    huntCommand, // /hunt
-    brainstormCommand, // /brainstorm [topic]
-    ideaCommand, // /idea [topic]
-    loreCommand, // /lore [topic]
+    vibeCommand,
+    aestheticCommand,
+    huntCommand,
+    brainstormCommand,
+    ideaCommand,
+    loreCommand,
   ];
 
-  // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
-    new SmartPasteHandler(), // Smart Paste: Auto-detect URLs (highest priority)
-    new LocationHandler(weatherService, prayerService, vibeCommand, huntCommand), // Handle location messages (high priority)
-    new StickerHandler(stickerService, tempCleaner, db), // Handle photo messages for sticker creation
-    expenseCommand, // Handle expense flow text input
-    sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
-    downloadInputHandler, // Handle download URL input
-    new TpSlInputHandler(db), // Handle TP/SL input
+    new SmartPasteHandler(),
+    new LocationHandler(weatherService, prayerService, vibeCommand, huntCommand),
+    new StickerHandler(stickerService, tempCleaner, db),
+    expenseCommand,
+    sessionInputHandler,
+    downloadInputHandler,
+    new TpSlInputHandler(db),
     new RandomReplyHandler(stickerService),
     new InvalidCommandHandler(),
   ];
 
-  // Callback handlers (for inline buttons)
   const callbackHandlers: CallbackHandler[] = [
-    // Menu navigation
-    menuCommand, // menu_ prefix
-    new FinanceMenuHandler(expenseCommand, rekapCommand, laporanCommand), // fin_ prefix
-    new TradingMenuHandler(portfolioCommand, calendarCommand, myAlertsCommand), // trade_ menu prefix (different from tconf_)
+    menuCommand,
+    new FinanceMenuHandler(expenseCommand, rekapCommand, laporanCommand),
+    new TradingMenuHandler(portfolioCommand, calendarCommand, myAlertsCommand),
 
-    // Market Hub
-    new MarketCallbackHandler(marketCommand, tradingEngine, chartService, sentimentAnalyzer), // mkt_ prefix
+    new MarketCallbackHandler(marketCommand, tradingEngine, chartService, sentimentAnalyzer),
 
-    // Risk Wizard
-    riskCommand, // risk_ prefix (RiskCommand is also the CallbackHandler)
+    riskCommand,
 
-    // Financial commands
-    expenseCommand.getCallbackHandler(), // exp_ prefix
-    new RekapCommand(db), // rekap_ prefix
-    new TradeConfirmHandler(tradingEngine), // tconf_ prefix
+    expenseCommand.getCallbackHandler(),
+    new RekapCommand(db),
+    new TradeConfirmHandler(tradingEngine),
 
-    // Search selection
-    new AnimeSelectionHandler(), // anime_sel_ prefix
+    new AnimeSelectionHandler(),
 
-    // TP/SL
-    new TpSlCallbackHandler(), // tpsl_ prefix
+    new TpSlCallbackHandler(),
 
-    // Download wizard
-    downloadCallbackHandler, // dl_ prefix
-    stickerCommand, // sticker_ prefix
-    new ChartCallbackHandler(chartService), // chart_ prefix
-    new LocationCallbackHandler(weatherService, prayerService, vibeService, urbanExplorationService), // loc_ prefix
-    new SmartPasteCallbackHandler(downloadInputHandler), // sp_ prefix
-    brainstormCallbackHandler, // brain_ prefix
+    downloadCallbackHandler,
+    stickerCommand,
+    new ChartCallbackHandler(chartService),
+    new LocationCallbackHandler(weatherService, prayerService, vibeService, urbanExplorationService),
+    new SmartPasteCallbackHandler(downloadInputHandler),
+    brainstormCallbackHandler,
   ];
 
-  // Start cron jobs
   reminderCommand.startCron(bot);
   alertScheduler.startAll(bot);
   console.log("[Bot] All schedulers started (reminders, alerts, whale monitor, arbitrage)");
 
-  // Register command handlers
   for (const command of commands) {
     bot.onText(command.pattern, async (msg, match) => {
       try {
@@ -392,7 +333,6 @@ async function main(): Promise<void> {
     });
   }
 
-  // Register callback query handler
   bot.on("callback_query", async (query) => {
     const data = query.data ?? "";
 
@@ -408,10 +348,7 @@ async function main(): Promise<void> {
     }
   });
 
-  // Register message handlers
   bot.on("message", async (msg) => {
-    // Handle /command messages — route only to InvalidCommandHandler
-    // (valid commands are handled by onText listeners above; this catches unknown/incomplete ones)
     if (msg.text && msg.text.startsWith("/")) {
       const invalidHandler = new InvalidCommandHandler();
       if (invalidHandler.shouldHandle(msg)) {
@@ -424,7 +361,6 @@ async function main(): Promise<void> {
       return;
     }
 
-    // Process messages with text, location, or photos
     if (!msg.text && !msg.location && !msg.photo) return;
 
     for (const handler of messageHandlers) {
@@ -434,7 +370,7 @@ async function main(): Promise<void> {
         } catch (err) {
           console.error("[Bot] Error in message handler:", err);
         }
-        return; // Only one handler per message
+        return;
       }
     }
   });
@@ -447,7 +383,6 @@ async function main(): Promise<void> {
   console.log("[Bot] Bot is running! Press Ctrl+C to stop.");
 }
 
-// Run the bot
 main().catch((err) => {
   console.error("[Bot] Fatal error during initialization:", err);
   process.exit(1);

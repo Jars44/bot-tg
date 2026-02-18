@@ -1,9 +1,3 @@
-/**
- * Unified Axios HTTP client with default configuration
- * - Default timeout
- * - Automatic User-Agent injection
- */
-
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import { CONFIG } from "../config/index.js";
 
@@ -37,5 +31,4 @@ export class HttpClient {
   }
 }
 
-/** Singleton HTTP client for general use */
 export const httpClient = new HttpClient();

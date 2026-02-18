@@ -1,9 +1,3 @@
-/**
- * GeoGuessr Command
- * Location guessing mini-game
- * Distribution: 60% Indonesia, 40% World
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { GeoGuessrService } from "../services/GeoGuessrService.js";
@@ -23,28 +17,22 @@ export class GeoGuessrCommand implements Command {
     const chatId = msg.chat.id;
 
     try {
-      // Show loading state
       await withLoading(
         bot,
         chatId,
         async () => {
           try {
-            // Generate random location
             const location = this.geoGuessrService.generateRandomLocation();
 
-            // Get answer key via reverse geocoding
             const answerKey = await this.geoGuessrService.getAnswerKey(location.lat, location.lng);
 
-            // Send location pin
             const locationMessage = await bot.sendLocation(chatId, location.lat, location.lng);
 
-            // Send prompt
             const promptMessage = await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_PROMPT, {
               parse_mode: "Markdown",
               reply_to_message_id: locationMessage.message_id,
             });
 
-            // Start session with answer key
             sessionManager.setState(chatId, {
               flow: SESSION_FLOWS.GEOGUESSR,
               step: "guessing",
@@ -61,7 +49,6 @@ export class GeoGuessrCommand implements Command {
               },
             });
           } catch (innerError) {
-            // Specific error handling during location fetch
             console.error("[GeoGuessrCommand] Inner error:", innerError);
             const errorMsg = innerError instanceof Error ? innerError.message : String(innerError);
 
@@ -83,10 +70,6 @@ export class GeoGuessrCommand implements Command {
   }
 }
 
-/**
- * Give Up Command Handler
- * Reveals the answer and ends the current game
- */
 export class GiveUpCommand implements Command {
   pattern = /^\/nyerah$/;
 
@@ -96,7 +79,6 @@ export class GiveUpCommand implements Command {
     try {
       const state = sessionManager.getState(chatId);
 
-      // Check if there's an active GeoGuessr game
       if (!state || state.flow !== SESSION_FLOWS.GEOGUESSR) {
         await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_NO_ACTIVE_GAME);
         return;
@@ -105,7 +87,6 @@ export class GiveUpCommand implements Command {
       try {
         const data = state.data;
 
-        // Reveal answer
         const answerMessage = MESSAGES.GEOGUESSR_GIVE_UP(
           data.targetCity,
           data.targetState,
@@ -119,7 +100,6 @@ export class GiveUpCommand implements Command {
         await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_ERROR_LOCATION);
       }
 
-      // Always clear session, even on error
       sessionManager.clearState(chatId);
     } catch (error) {
       console.error("[GiveUpCommand] Error:", error);

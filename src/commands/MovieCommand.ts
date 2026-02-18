@@ -1,7 +1,3 @@
-/**
- * Movie search command
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { MovieService } from "../services/MovieService.js";

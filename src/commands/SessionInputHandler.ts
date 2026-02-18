@@ -1,9 +1,3 @@
-/**
- * Session Input Handler
- * Handles generic text inputs for interactive flows
- * UX Improvement: Routes input to appropriate commands based on active session state
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
 import {
@@ -34,9 +28,6 @@ import type { AestheticCommand } from "./AestheticCommand.js";
 import { MESSAGES } from "../config/messages.js";
 import { withLoading } from "../utils/uiHelper.js";
 
-/**
- * Handles text input during active sessions (e.g. asking for location, song title)
- */
 export class SessionInputHandler implements MessageHandler {
   private animeCommand: AnimeCommand;
   private lyricsCommand: LyricsCommand;
@@ -92,14 +83,9 @@ export class SessionInputHandler implements MessageHandler {
     this.aestheticCommand = aestheticCommand ?? null;
   }
 
-  /**
-   * Check if this handler should process the message
-   * Returns true if user has active session and text is not a command
-   */
   shouldHandle(msg: TelegramBot.Message): boolean {
     if (!msg.text || msg.text.startsWith("/")) return false;
 
-    // Check specific flows that expect text input
     const state = sessionManager.getState(msg.chat.id);
     if (!state) return false;
 
@@ -125,9 +111,6 @@ export class SessionInputHandler implements MessageHandler {
     );
   }
 
-  /**
-   * Handle the message based on session state
-   */
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text ?? "";
@@ -135,7 +118,6 @@ export class SessionInputHandler implements MessageHandler {
 
     if (!state) return;
 
-    // Handle location text input for weather/prayer commands
     if (state.flow === SESSION_FLOWS.LOCATION) {
       const pendingCommand = state.data?.pendingCommand;
       if (pendingCommand === "weather") {
@@ -149,7 +131,6 @@ export class SessionInputHandler implements MessageHandler {
       }
     }
 
-    // Route based on flow type
     if (state.flow === SESSION_FLOWS.LYRICS) {
       sessionManager.clearState(chatId);
       const lyricsMatch = ["/lirik " + text, text] as RegExpMatchArray;
@@ -168,27 +149,19 @@ export class SessionInputHandler implements MessageHandler {
         const messageId = state.data.messageId;
         try {
           await bot.deleteMessage(chatId, msg.message_id);
-        } catch {
-          // Ignore
-        }
+        } catch { /* empty */ }
         await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
       }
     } else if (state.flow === SESSION_FLOWS.RISK) {
       await this.riskInputHandler.handle(bot, msg, state);
     } else if (isWeatherMenuSession(state)) {
-      // Don't clear session yet - let the command know it came from menu
       await this.weatherCommand.fetchAndSendWeather(bot, chatId, text);
       sessionManager.clearState(chatId);
     } else if (isPrayerMenuSession(state)) {
-      // Don't clear session yet - let the command know it came from menu
       await this.prayerCommand.fetchAndSendPrayerTimes(bot, chatId, text);
       sessionManager.clearState(chatId);
     } else if (state.flow === SESSION_FLOWS.CHART) {
       sessionManager.clearState(chatId);
-      // Chart expects: /chart [symbol] [timeframe]
-      // User input could be "BTC 1h" or just "BTC"
-      // Match regex: /^\/chart(?:\s+(\w+)(?:\s+(\w+))?)?$/
-      // match[1] = symbol, match[2] = timeframe
       const parts = text.split(/\s+/);
       const symbol = parts[0];
       const timeframe = parts[1];
@@ -198,11 +171,9 @@ export class SessionInputHandler implements MessageHandler {
       const userId = msg.from?.id;
       if (!userId) return;
 
-      // Handle sticker text input
       if (state.step === "awaiting_text") {
         await this.stickerCommand.processTextInput(bot, chatId, userId, text);
       } else {
-        // Fallback for legacy "input" step
         sessionManager.clearState(chatId);
         const stickerMatch = ["/stiker " + text, text] as RegExpMatchArray;
         await this.stickerCommand.execute(bot, msg, stickerMatch);
@@ -213,21 +184,13 @@ export class SessionInputHandler implements MessageHandler {
       await this.sentimentCommand.execute(bot, msg, sentimentMatch);
     } else if (state.flow === SESSION_FLOWS.ALERT) {
       sessionManager.clearState(chatId);
-      // Alert expects: /alert [symbol] [price] [condition]
-      // match[1]=symbol, match[2]=price, match[3]=condition
       const parts = text.split(/\s+/);
       const alertMatch = ["/alert " + text, parts[0], parts[1], parts[2]] as RegExpMatchArray;
       await this.alertCommand.execute(bot, msg, alertMatch);
     } else if (state.flow === SESSION_FLOWS.REMINDER) {
       sessionManager.clearState(chatId);
-      // Reminder expects: /ingatkan [time] [message]
-      // match[1]=time, match[2]=message
-      // User input: "07:00 Bangun" -> parts=["07:00", "Bangun"]
-      // But message can have spaces.
-      // match[1] = first word, match[2] = rest of string.
       const firstSpace = text.indexOf(" ");
       if (firstSpace === -1) {
-        // Only one word, likely invalid, but let command handle it
         const reminderMatch = ["/ingatkan " + text, text, undefined] as unknown as RegExpMatchArray;
         await this.reminderCommand.execute(bot, msg, reminderMatch);
       } else {
@@ -238,24 +201,19 @@ export class SessionInputHandler implements MessageHandler {
       }
     } else if (state.flow === SESSION_FLOWS.BUY_WIZARD) {
       sessionManager.clearState(chatId);
-      // Buy expects: /buy [symbol] [qty]
-      // User input: "BTC 0.1"
       const parts = text.split(/\s+/);
       const match = ["/buy " + text, parts[0], parts[1]] as RegExpMatchArray;
       await this.buyCommand.execute(bot, msg, match);
     } else if (state.flow === SESSION_FLOWS.SELL_WIZARD) {
       sessionManager.clearState(chatId);
-      // Sell expects: /sell [symbol] [qty]
       const parts = text.split(/\s+/);
       const match = ["/sell " + text, parts[0], parts[1]] as RegExpMatchArray;
       await this.sellCommand.execute(bot, msg, match);
     } else if (state.flow === SESSION_FLOWS.GEOGUESSR) {
-      // Handle GeoGuessr guess
       if (state.step === "guessing") {
         const data = state.data;
         data.attempts += 1;
 
-        // Check answer using fuzzy matching
         const answerKey = {
           country: data.targetCountry,
           state: data.targetState,
@@ -266,7 +224,6 @@ export class SessionInputHandler implements MessageHandler {
         const result = this.geoGuessrService.matchAnswer(text, answerKey);
 
         if (result.match) {
-          // Correct answer!
           let responseMessage = "";
 
           if (result.level === "city") {
@@ -287,13 +244,10 @@ export class SessionInputHandler implements MessageHandler {
 
           await bot.sendMessage(chatId, responseMessage, { parse_mode: "Markdown" });
 
-          // Clear session
           sessionManager.clearState(chatId);
         } else {
-          // Wrong answer
           await bot.sendMessage(chatId, MESSAGES.GEOGUESSR_WRONG(data.attempts), { parse_mode: "Markdown" });
 
-          // Update attempts count in session
           sessionManager.setState(chatId, {
             ...state,
             data: {
@@ -304,29 +258,22 @@ export class SessionInputHandler implements MessageHandler {
         }
       }
     } else if (state.flow === SESSION_FLOWS.MOODBOARD && this.aestheticCommand) {
-      // Handle moodboard keyword input
       sessionManager.clearState(chatId);
       const moodboardMatch = ["/moodboard " + text, "moodboard", text] as RegExpMatchArray;
       await this.aestheticCommand.execute(bot, msg, moodboardMatch);
     } else if (state.flow === SESSION_FLOWS.AI_CHAT) {
-      // Handle AI Chat
       if (state.step === "chatting") {
         try {
-          // Show typing indicator
           await withLoading(
             bot,
             chatId,
             async () => {
-              // Get AI response with conversation history
               const response = await this.aiService.chatWithContext(text, state.data.history);
 
-              // Save user message to history
               sessionManager.updateAiChatHistory(chatId, "user", text);
 
-              // Save AI response to history
               sessionManager.updateAiChatHistory(chatId, "model", response);
 
-              // Send response to user (plain text, not Markdown - AI content may have unescaped special chars)
               await bot.sendMessage(chatId, response);
             },
             "typing",

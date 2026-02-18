@@ -1,17 +1,10 @@
-/**
- * Economic Calendar Command
- * View high-impact forex events
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import { MESSAGES } from "../config/messages.js";
 import type { Command } from "./types.js";
 import type { EconomicCalendarService } from "../services/EconomicCalendarService.js";
 import { withLoading } from "../utils/uiHelper.js";
+import { getCountryFlag } from "../utils/helpers.js";
 
-/**
- * View today's economic events
- */
 export class CalendarCommand implements Command {
   pattern = /^\/calendar$/;
   private calendarService: EconomicCalendarService;
@@ -37,9 +30,6 @@ export class CalendarCommand implements Command {
   }
 }
 
-/**
- * View high-impact events only
- */
 export class HighImpactCommand implements Command {
   pattern = /^\/highimpact$/;
   private calendarService: EconomicCalendarService;
@@ -63,7 +53,7 @@ export class HighImpactCommand implements Command {
         let message = "*High Impact Events — Today*\n\n";
 
         for (const event of events) {
-          const flag = this.getCountryFlag(event.country);
+          const flag = getCountryFlag(event.country);
           message += `• ${event.time} ${flag} ${event.title}\n`;
           if (event.forecast || event.previous) {
             message += `  F: ${event.forecast || "N/A"} | P: ${event.previous || "N/A"}\n`;
@@ -78,17 +68,4 @@ export class HighImpactCommand implements Command {
     });
   }
 
-  private getCountryFlag(country: string): string {
-    const flags: Record<string, string> = {
-      USD: "US",
-      EUR: "EU",
-      GBP: "GB",
-      JPY: "JP",
-      CHF: "CH",
-      AUD: "AU",
-      CAD: "CA",
-      NZD: "NZ",
-    };
-    return flags[country.toUpperCase()] || country;
-  }
 }

@@ -1,11 +1,8 @@
-/**
- * Economic Calendar Service
- * Fetches high-impact forex economic events
- */
-
 import type { HttpClient } from "./HttpClient.js";
 import type { EconomicEvent } from "../database/types.js";
 import { CONFIG } from "../config/index.js";
+import { getCountryFlag } from "../utils/helpers.js";
+import { S } from "../config/symbols.js";
 
 interface ForexFactoryEvent {
   title: string;
@@ -20,17 +17,13 @@ interface ForexFactoryEvent {
 export class EconomicCalendarService {
   private httpClient: HttpClient;
   private cache: { events: EconomicEvent[]; timestamp: number } | null = null;
-  private readonly CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+  private readonly CACHE_TTL_MS = 60 * 60 * 1000;
 
   constructor(httpClient: HttpClient) {
     this.httpClient = httpClient;
   }
 
-  /**
-   * Fetch all events for this week
-   */
   async getWeeklyEvents(): Promise<EconomicEvent[]> {
-    // Return cached if valid
     if (this.cache && Date.now() - this.cache.timestamp < this.CACHE_TTL_MS) {
       return this.cache.events;
     }
@@ -52,7 +45,6 @@ export class EconomicCalendarService {
         previous: event.previous || undefined,
       }));
 
-      // Cache the results
       this.cache = { events, timestamp: Date.now() };
 
       return events;
@@ -62,39 +54,26 @@ export class EconomicCalendarService {
     }
   }
 
-  /**
-   * Get today's events
-   */
   async getTodayEvents(): Promise<EconomicEvent[]> {
     const allEvents = await this.getWeeklyEvents();
     const today = new Date().toISOString().split("T")[0];
 
     return allEvents.filter((event) => {
-      // Handle various date formats
       const eventDate = this.parseDate(event.date);
       return eventDate === today;
     });
   }
 
-  /**
-   * Get high-impact events only
-   */
   async getHighImpactEvents(): Promise<EconomicEvent[]> {
     const todayEvents = await this.getTodayEvents();
     return todayEvents.filter((event) => event.impact === "high");
   }
 
-  /**
-   * Get events by country
-   */
   async getEventsByCountry(country: string): Promise<EconomicEvent[]> {
     const todayEvents = await this.getTodayEvents();
     return todayEvents.filter((event) => event.country.toUpperCase() === country.toUpperCase());
   }
 
-  /**
-   * Format events for display
-   */
   formatEvents(events: EconomicEvent[]): string {
     if (events.length === 0) {
       return "Tidak ada event ekonomi penting hari ini.";
@@ -102,7 +81,6 @@ export class EconomicCalendarService {
 
     let message = "*Economic Calendar — Today*\n\n";
 
-    // Group by impact
     const highImpact = events.filter((e) => e.impact === "high");
     const mediumImpact = events.filter((e) => e.impact === "medium");
     const lowImpact = events.filter((e) => e.impact === "low");
@@ -133,12 +111,9 @@ export class EconomicCalendarService {
     return message;
   }
 
-  /**
-   * Format single event line
-   */
   private formatEventLine(event: EconomicEvent): string {
-    const flag = this.getCountryFlag(event.country);
-    let line = `• ${event.time} ${flag} ${event.title}\n`;
+    const flag = getCountryFlag(event.country);
+    let line = `${S.BULLET_ALT} ${event.time} ${flag} ${event.title}\n`;
 
     if (event.forecast || event.previous) {
       line += `  Forecast: ${event.forecast || "N/A"} | Previous: ${event.previous || "N/A"}\n`;
@@ -147,9 +122,6 @@ export class EconomicCalendarService {
     return line;
   }
 
-  /**
-   * Normalize impact level
-   */
   private normalizeImpact(impact: string): "high" | "medium" | "low" {
     const lower = impact.toLowerCase();
     if (lower.includes("high") || lower === "red") return "high";
@@ -157,9 +129,6 @@ export class EconomicCalendarService {
     return "low";
   }
 
-  /**
-   * Parse various date formats to YYYY-MM-DD
-   */
   private parseDate(dateStr: string): string {
     try {
       const date = new Date(dateStr);
@@ -167,24 +136,5 @@ export class EconomicCalendarService {
     } catch {
       return dateStr;
     }
-  }
-
-  /**
-   * Get flag emoji for country/currency code
-   */
-  private getCountryFlag(country: string): string {
-    const flags: Record<string, string> = {
-      USD: "US",
-      EUR: "EU",
-      GBP: "GB",
-      JPY: "JP",
-      CHF: "CH",
-      AUD: "AU",
-      CAD: "CA",
-      NZD: "NZ",
-      CNY: "CN",
-      INR: "IN",
-    };
-    return flags[country.toUpperCase()] || country;
   }
 }

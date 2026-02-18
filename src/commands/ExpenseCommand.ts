@@ -1,14 +1,9 @@
-/**
- * Expense Tracker Command with State Machine
- * Interactive multi-step flow for recording expenses and income
- * Tone: Professional Hybrid
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler, MessageHandler } from "./types.js";
 import type { JsonDb } from "../database/JsonDb.js";
 import type { TransactionType } from "../database/types.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
+import { S } from "../config/symbols.js";
 
 const EXPENSE_CATEGORIES: Record<string, string> = {
   food: "Makanan",
@@ -35,13 +30,9 @@ export class ExpenseCommand implements Command, MessageHandler {
     this.db = db;
   }
 
-  /**
-   * Start expense recording flow
-   */
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
 
-    // Set initial state
     await this.db.setConversationState(chatId, "expense", "type", {});
 
     const options = {
@@ -61,9 +52,6 @@ export class ExpenseCommand implements Command, MessageHandler {
     });
   }
 
-  /**
-   * Get callback handler for button interactions
-   */
   getCallbackHandler(): CallbackHandler {
     return {
       prefix: "exp_",
@@ -77,7 +65,6 @@ export class ExpenseCommand implements Command, MessageHandler {
           return;
         }
 
-        // Handle type selection
         if (data.startsWith("exp_type_")) {
           const type = data.replace("exp_type_", "") as TransactionType;
 
@@ -94,18 +81,15 @@ export class ExpenseCommand implements Command, MessageHandler {
           );
         }
 
-        // Handle category selection
         if (data.startsWith("exp_cat_")) {
           const stateData = state.data as { type: TransactionType; amount: number };
 
-          // Determine which category map to use based on transaction type
           const categoryMap = stateData.type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
           const categoryKey = data.replace("exp_cat_", "");
-          const category = categoryMap[categoryKey] || categoryKey; // Fallback to key if not found
+          const category = categoryMap[categoryKey] || categoryKey;
 
           if (categoryKey === "custom") {
-            // Prompt for custom description
             await this.db.setConversationState(chatId, "expense", "description", {
               type: stateData.type,
               amount: stateData.amount,
@@ -115,16 +99,14 @@ export class ExpenseCommand implements Command, MessageHandler {
               parse_mode: "Markdown",
             });
           } else {
-            // Save transaction with selected category
             await this.db.addTransaction(chatId, stateData.type, stateData.amount, category);
             await this.db.clearConversationState(chatId);
 
-            // Get updated summary
             const summary = await this.db.getTransactionSummary(chatId);
             const typeLabel = stateData.type === "expense" ? "Pengeluaran" : "Pemasukan";
 
             const message =
-              `✓ *TRANSAKSI BERHASIL*\n\n` +
+              `${S.SUCCESS} *TRANSAKSI BERHASIL*\n\n` +
               `\`\`\`\n` +
               `Type:     ${typeLabel}\n` +
               `Jumlah:   Rp${stateData.amount.toLocaleString("id-ID")}\n` +
@@ -146,39 +128,29 @@ export class ExpenseCommand implements Command, MessageHandler {
     };
   }
 
-  /**
-   * Check if this handler should process the message
-   */
   async shouldHandle(msg: TelegramBot.Message): Promise<boolean> {
     if (!msg.text) return false;
 
-    // Skip commands (starting with /) to avoid swallowing other commands
     if (msg.text.startsWith("/")) return false;
 
-    // Check if user is in expense flow state
     const state = await this.db.getConversationState(msg.chat.id);
     return state?.command === "expense";
   }
 
-  /**
-   * Handle text input for amount and description
-   */
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text ?? "";
 
-    // Skip if text looks like a command
     if (text.startsWith("/")) return;
 
     const state = await this.db.getConversationState(chatId);
     if (!state || state.command !== "expense") return;
 
-    // Handle amount input
     if (state.step === "amount") {
       const amount = parseFloat(text.replace(/[^0-9.]/g, ""));
 
       if (isNaN(amount) || amount <= 0) {
-        await bot.sendMessage(chatId, "⚠︎ Nominal tidak valid. Masukkan angka positif.");
+        await bot.sendMessage(chatId, `${S.WARN} Nominal tidak valid. Masukkan angka positif.`);
         return;
       }
 
@@ -188,7 +160,6 @@ export class ExpenseCommand implements Command, MessageHandler {
         amount,
       });
 
-      // Generate category buttons dynamically based on type
       let inline_keyboard: TelegramBot.InlineKeyboardButton[][] = [];
 
       if (stateData.type === "expense") {
@@ -207,7 +178,6 @@ export class ExpenseCommand implements Command, MessageHandler {
           ],
         ];
       } else {
-        // Income categories
         inline_keyboard = [
           [
             { text: INCOME_CATEGORIES.salary, callback_data: "exp_cat_salary" },
@@ -221,7 +191,6 @@ export class ExpenseCommand implements Command, MessageHandler {
         ];
       }
 
-      // Show category buttons instead of text prompt
       await bot.sendMessage(chatId, `Nominal: Rp${amount.toLocaleString("id-ID")}\n\nPilih kategori:`, {
         parse_mode: "Markdown",
         reply_markup: {
@@ -231,29 +200,25 @@ export class ExpenseCommand implements Command, MessageHandler {
       return;
     }
 
-    // Handle description input
     if (state.step === "description") {
       const stateData = state.data as { type: TransactionType; amount: number };
       const description = text.trim();
 
       if (!description) {
-        await bot.sendMessage(chatId, "⚠︎ Deskripsi wajib diisi.");
+        await bot.sendMessage(chatId, `${S.WARN} Deskripsi wajib diisi.`);
         return;
       }
 
-      // Save transaction
       await this.db.addTransaction(chatId, stateData.type, stateData.amount, description);
 
-      // Clear state
       await this.db.clearConversationState(chatId);
 
-      // Get updated summary
       const summary = await this.db.getTransactionSummary(chatId);
 
       const typeLabel = stateData.type === "expense" ? "Pengeluaran" : "Pemasukan";
 
       const message =
-        `✓ *TRANSAKSI BERHASIL*\n\n` +
+        `${S.SUCCESS} *TRANSAKSI BERHASIL*\n\n` +
         `\`\`\`\n` +
         `Type:      ${typeLabel}\n` +
         `Jumlah:    Rp${stateData.amount.toLocaleString("id-ID")}\n` +
@@ -269,9 +234,6 @@ export class ExpenseCommand implements Command, MessageHandler {
   }
 }
 
-/**
- * View transaction summary and history
- */
 export class LaporanCommand implements Command {
   pattern = /^\/laporan$/;
   private db: JsonDb;
@@ -305,10 +267,6 @@ export class LaporanCommand implements Command {
   }
 }
 
-/**
- * Reporting Command
- * View daily, monthly, and all-time financial reports
- */
 export class RekapCommand implements Command, CallbackHandler {
   pattern = /^\/rekap$/;
   prefix = "rekap_";
@@ -371,7 +329,6 @@ export class RekapCommand implements Command, CallbackHandler {
       return;
     }
 
-    // Calculate totals
     const totalIncome = transactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
     const totalExpense = transactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
     const balance = totalIncome - totalExpense;
@@ -381,7 +338,6 @@ export class RekapCommand implements Command, CallbackHandler {
     message += `Masuk: Rp${totalIncome.toLocaleString("id-ID")}\n`;
     message += `Keluar: Rp${totalExpense.toLocaleString("id-ID")}\n\n`;
 
-    // Grouping for Monthly/All Time
     if (type === "monthly" || type === "all") {
       message += `*5 Pengeluaran Terbesar:*\n`;
       const expenses = transactions
@@ -397,7 +353,6 @@ export class RekapCommand implements Command, CallbackHandler {
         message += `_Nihil_\n`;
       }
     } else {
-      // Daily: Show all transactions
       message += `*Rincian Transaksi:*\n`;
       for (const tx of transactions) {
         const typeSymbol = tx.type === "income" ? "+" : "-";

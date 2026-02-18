@@ -1,21 +1,10 @@
-/**
- * Download Command - Wizard-Style Menu
- * Universal media downloader with step-by-step flow:
- * 1. /download → Show platform selection
- * 2. Select platform → Show video/audio choice
- * 3. Select format → Ask for URL
- * 4. Send URL → Download and send
- *
- * Memory-Optimized: Works with stream URLs instead of local files.
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command, CallbackHandler, MessageHandler } from "./types.js";
 import { DownloadService, DownloadResult } from "../services/DownloadService.js";
+import { S } from "../config/symbols.js";
 import { sessionManager, DownloadSessionData } from "../utils/SessionManager.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
 
-// Platform configurations
 const PLATFORMS = {
   youtube: { label: "YouTube" },
   tiktok: { label: "TikTok" },
@@ -26,9 +15,6 @@ const PLATFORMS = {
 
 type PlatformKey = keyof typeof PLATFORMS;
 
-/**
- * Main Download Command - Shows wizard menu
- */
 export class DownloadCommand implements Command {
   pattern = /^\/download$/;
 
@@ -61,9 +47,6 @@ export class DownloadCommand implements Command {
   }
 }
 
-/**
- * Download Callback Handler - Handles inline button presses
- */
 export class DownloadCallbackHandler implements CallbackHandler {
   prefix = "dl_";
 
@@ -81,27 +64,23 @@ export class DownloadCallbackHandler implements CallbackHandler {
 
     await bot.answerCallbackQuery(query.id);
 
-    // Handle cancel
     if (data === "dl_cancel") {
       sessionManager.clearState(chatId);
-      await safeEditMessage(bot, chatId, messageId, "× Download dibatalkan.");
+      await safeEditMessage(bot, chatId, messageId, `${S.FAIL} Download dibatalkan.`);
       return;
     }
 
-    // Handle back to platform selection
     if (data === "dl_back_platform") {
       await this.showPlatformMenu(bot, chatId, messageId);
       return;
     }
 
-    // Handle platform selection
     if (data.startsWith("dl_platform_")) {
       const platform = data.replace("dl_platform_", "") as PlatformKey;
       await this.showFormatSelection(bot, chatId, messageId, platform);
       return;
     }
 
-    // Handle format selection
     if (data.startsWith("dl_format_")) {
       const format = data.replace("dl_format_", "") as "video" | "audio";
       await this.askForUrl(bot, chatId, messageId, format);
@@ -109,9 +88,6 @@ export class DownloadCallbackHandler implements CallbackHandler {
     }
   }
 
-  /**
-   * Show platform selection menu (for back button)
-   */
   private async showPlatformMenu(bot: TelegramBot, chatId: number, messageId: number): Promise<void> {
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [
       [
@@ -138,9 +114,6 @@ export class DownloadCallbackHandler implements CallbackHandler {
     });
   }
 
-  /**
-   * Step 2: Show video/audio format selection
-   */
   private async showFormatSelection(
     bot: TelegramBot,
     chatId: number,
@@ -158,7 +131,7 @@ export class DownloadCallbackHandler implements CallbackHandler {
       [{ text: "Batal", callback_data: "dl_cancel" }],
     ];
 
-    await safeEditMessage(bot, chatId, messageId, `*Download → ${platformInfo.label}*\n\nPilih format:`, {
+    await safeEditMessage(bot, chatId, messageId, `*Download ${S.ARROW_R} ${platformInfo.label}*\n\nPilih format:`, {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: keyboard },
     });
@@ -170,9 +143,6 @@ export class DownloadCallbackHandler implements CallbackHandler {
     });
   }
 
-  /**
-   * Step 3: Ask user to send URL
-   */
   private async askForUrl(
     bot: TelegramBot,
     chatId: number,
@@ -189,12 +159,12 @@ export class DownloadCallbackHandler implements CallbackHandler {
       bot,
       chatId,
       messageId,
-      `*Download → ${platformInfo.label} → ${formatText}*\n\n` + `Kirim link yang ingin diunduh:`,
+      `*Download ${S.ARROW_R} ${platformInfo.label} ${S.ARROW_R} ${formatText}*\n\n` + `Kirim link yang ingin diunduh:`,
       {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
-            [{ text: "× Batal", callback_data: "dl_cancel" }, { text: "Kembali", callback_data: "dl_back_format" }],
+            [{ text: `${S.FAIL} Batal`, callback_data: "dl_cancel" }, { text: "Kembali", callback_data: "dl_back_format" }],
           ],
         },
       },
@@ -207,17 +177,11 @@ export class DownloadCallbackHandler implements CallbackHandler {
     });
   }
 
-  /**
-   * Get download service for input handler
-   */
   getDownloadService(): DownloadService {
     return this.downloadService;
   }
 }
 
-/**
- * Download Input Handler - Handles URL text input
- */
 export class DownloadInputHandler implements MessageHandler {
   private downloadService: DownloadService;
 
@@ -242,35 +206,26 @@ export class DownloadInputHandler implements MessageHandler {
     const state = sessionManager.getState(chatId);
     if (state?.flow !== "download" || state.step !== "url") return;
 
-    // Clear session
     const sessionData = state.data as DownloadSessionData;
     sessionManager.clearState(chatId);
 
-    // Delete wizard message if we have messageId
     if (sessionData.messageId) {
       try {
         await bot.deleteMessage(chatId, sessionData.messageId);
-      } catch {
-        // Ignore if message already deleted
-      }
+      } catch { /* noop */ }
     }
 
-    // Process download
     await this.processDownload(bot, chatId, url, sessionData.format === "audio");
   }
 
-  /**
-   * Core download logic - Memory-Optimized
-   * Public so SmartPasteHandler can reuse it
-   */
   async processDownload(bot: TelegramBot, chatId: number, url: string, isAudioOnly: boolean): Promise<void> {
-    const statusMsg = await bot.sendMessage(chatId, "⧗ Menganalisis URL...");
+    const statusMsg = await bot.sendMessage(chatId, `${S.LOADING} Menganalisis URL...`);
     await bot.sendChatAction(chatId, "typing");
 
     let result: DownloadResult;
 
     try {
-      await safeEditMessage(bot, chatId, statusMsg.message_id, "⧗ Memproses media...");
+      await safeEditMessage(bot, chatId, statusMsg.message_id, `${S.LOADING} Memproses media...`);
 
       result = await this.downloadService.downloadMedia(url, isAudioOnly);
 
@@ -281,12 +236,12 @@ export class DownloadInputHandler implements MessageHandler {
 
       if (result.isAudio) {
         await bot.sendAudio(chatId, result.url, {
-          caption: `✓ Audio via ${source}`,
+          caption: `${S.SUCCESS} Audio via ${source}`,
           title: result.filename,
         });
       } else {
         await bot.sendVideo(chatId, result.url, {
-          caption: `✓ Video via ${source}`,
+          caption: `${S.SUCCESS} Video via ${source}`,
         });
       }
     } catch (error) {
@@ -298,13 +253,13 @@ export class DownloadInputHandler implements MessageHandler {
           bot,
           chatId,
           statusMsg.message_id,
-          `⚠︎ *Tidak dapat mengirim file langsung.*\n\n` +
+          `${S.WARN} *Tidak dapat mengirim file langsung.*\n\n` +
             `Alasan: ${errorMessage.split("\n")[0]}\n\n` +
-            `→ Download langsung:\n${directUrl}`,
+            `${S.ARROW_R} Download langsung:\n${directUrl}`,
           { parse_mode: "Markdown" },
         );
       } catch {
-        await safeEditMessage(bot, chatId, statusMsg.message_id, `× ${errorMessage}`);
+        await safeEditMessage(bot, chatId, statusMsg.message_id, `${S.FAIL} ${errorMessage}`);
       }
     }
   }

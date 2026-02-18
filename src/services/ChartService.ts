@@ -1,8 +1,3 @@
-/**
- * Chart Service
- * Server-side candlestick chart generation using chartjs-node-canvas
- */
-
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import {
   Chart,
@@ -36,7 +31,6 @@ export class ChartService {
   constructor(financeService: FinanceDataService) {
     this.financeService = financeService;
 
-    // Initialize canvas with dark background
     console.log("Initializing ChartJSNodeCanvas...");
     console.log("CandlestickController.id:", CandlestickController.id);
 
@@ -45,8 +39,6 @@ export class ChartService {
       height: 600,
       backgroundColour: "#131722",
       chartCallback: (ChartJS) => {
-        // Fix for multiple Chart.js instances (Dual Package Hazard):
-        // Manually register components to bypass instanceof checks in ChartJS.register()
         if (ChartJS !== Chart) {
           // @ts-expect-error - Internal Chart.js registry access
           ChartJS.registry.controllers.items["candlestick"] = CandlestickController;
@@ -54,14 +46,12 @@ export class ChartService {
           // @ts-expect-error - Internal Chart.js registry access
           ChartJS.registry.elements.items["candlestick"] = CandlestickElement;
 
-          // Register Defaults
           if (CandlestickController.defaults) {
             // @ts-expect-error - Dynamic defaults assignment
             if (!ChartJS.defaults.controllers) ChartJS.defaults.controllers = {};
             // @ts-expect-error - Dynamic defaults assignment
             ChartJS.defaults.controllers["candlestick"] = CandlestickController.defaults;
 
-            // V4 often looks in datasets for types
             // @ts-expect-error - Dynamic defaults assignment
             if (!ChartJS.defaults.datasets) ChartJS.defaults.datasets = {};
             // @ts-expect-error - Dynamic defaults assignment
@@ -77,8 +67,6 @@ export class ChartService {
             // @ts-expect-error - Dynamic defaults assignment
             ChartJS.defaults.datasets["candlestick"] = CandlestickController.defaults;
 
-            // CRITICAL FIX: CandlestickController extends ESM BarController, so it uses ESM defaults!
-            // We must register defaults on the global Chart (ESM) instance too.
             // @ts-expect-error - Dynamic defaults assignment to ESM Chart instance
             if (!Chart.defaults.elements) Chart.defaults.elements = {};
             // @ts-expect-error - Dynamic defaults assignment to ESM Chart instance
@@ -106,9 +94,6 @@ export class ChartService {
     });
   }
 
-  /**
-   * Calculate Simple Moving Average
-   */
   private calculateSMA(data: OHLCVData[], period: number): (number | null)[] {
     const sma: (number | null)[] = [];
 
@@ -127,9 +112,6 @@ export class ChartService {
     return sma;
   }
 
-  /**
-   * Calculate Bollinger Bands
-   */
   private calculateBollingerBands(
     data: OHLCVData[],
     period: number = 20,
@@ -163,14 +145,10 @@ export class ChartService {
     return { middle, upper, lower };
   }
 
-  /**
-   * Calculate RSI (Relative Strength Index)
-   */
   private calculateRSI(data: OHLCVData[], period: number = 14): (number | null)[] {
     const rsi: (number | null)[] = [];
     const deltas: number[] = [];
 
-    // Calculate price changes
     for (let i = 1; i < data.length; i++) {
       deltas.push(data[i].close - data[i - 1].close);
     }
@@ -206,33 +184,18 @@ export class ChartService {
     return rsi;
   }
 
-  /**
-   * Generate candlestick chart with Bollinger Bands, RSI, and Volume
-   * TradingView Dark Mode aesthetics with professional styling
-   * Fixes: Data truncation (thick candles), dual Y-axis (no squishing), proper dataset ordering
-   * @param symbol Asset symbol (BTC, ETH, XAUUSD, etc.)
-   * @param timeframe Timeframe (1m, 5m, 15m, 1h, 4h, 1d)
-   * @returns PNG image buffer
-   */
   async generateChart(symbol: string, timeframe: string = "1h"): Promise<Buffer> {
-    // Fetch OHLCV data
     let ohlcv = await this.financeService.getOHLCV(symbol, timeframe, 60);
 
     if (ohlcv.length === 0) {
       throw new Error(`No data available for ${symbol}`);
     }
 
-    // ===== FIX 1: DATA TRUNCATION (Thick Candles) =====
-    // Keep only last 90 periods to avoid needle-thin candles
     ohlcv = ohlcv.slice(-90);
 
-    // Calculate Bollinger Bands on truncated data
     const bollingerBands = this.calculateBollingerBands(ohlcv, 20, 2);
-
-    // Calculate RSI(14) on truncated data
     const rsi = this.calculateRSI(ohlcv, 14);
 
-    // Prepare labels (time)
     const labels = ohlcv.map((candle) => {
       const date = new Date(candle.timestamp);
       if (timeframe === "1d") {
@@ -244,7 +207,6 @@ export class ChartService {
       }
     });
 
-    // Prepare candlestick data
     const candleData = ohlcv.map((candle) => ({
       x: candle.timestamp,
       o: candle.open,
@@ -253,28 +215,21 @@ export class ChartService {
       c: candle.close,
     }));
 
-    // ===== VOLUME DATA PREPARATION =====
     const volumeData = ohlcv.map((candle, idx) => ({
       x: idx,
       y: candle.volume,
     }));
     const maxVolume = Math.max(...ohlcv.map((c) => c.volume));
 
-    // Color volume bars based on candlestick direction (bullish/bearish)
     const volumeColors = ohlcv.map((candle) => {
       const isBullish = candle.close >= candle.open;
       return isBullish ? "rgba(8, 153, 129, 0.5)" : "rgba(242, 54, 69, 0.5)";
     });
 
-    // Get price range for scaling
     const allPrices = ohlcv.flatMap((c) => [c.open, c.high, c.low, c.close]);
     const minPrice = Math.min(...allPrices);
     const maxPrice = Math.max(...allPrices);
     const padding = (maxPrice - minPrice) * 0.15;
-
-    // ===== FIX 2 & 3: DUAL Y-AXIS + PROPER DATASET ORDERING + TRADINGVIEW STYLING =====
-    // Dataset order: [Volume, BB Fill, BB Upper, BB Lower, BB Middle (SMA), RSI, Candlesticks (LAST)]
-    // THIS ORDER ENSURES CANDLESTICKS ARE DRAWN ON TOP
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ChartConfiguration uses complex nested types
     const configuration: any = {
@@ -282,7 +237,6 @@ export class ChartService {
       data: {
         labels,
         datasets: [
-          // ===== VOLUME BARS (Bottom Layer, Light Opacity) =====
           {
             label: "Volume",
             type: "bar" as const,
@@ -296,7 +250,6 @@ export class ChartService {
             order: 1,
           },
 
-          // ===== BOLLINGER BANDS FILL (Background) =====
           {
             label: "BB Band",
             type: "line" as const,
@@ -311,7 +264,6 @@ export class ChartService {
             order: 2,
           },
 
-          // ===== BOLLINGER BANDS UPPER (Resistance) =====
           {
             label: "BB Upper (20)",
             type: "line" as const,
@@ -325,7 +277,6 @@ export class ChartService {
             order: 3,
           },
 
-          // ===== BOLLINGER BANDS LOWER (Support) =====
           {
             label: "BB Lower (20)",
             type: "line" as const,
@@ -339,7 +290,6 @@ export class ChartService {
             order: 3,
           },
 
-          // ===== BOLLINGER BANDS MIDDLE (SMA 20) =====
           {
             label: "SMA (20)",
             type: "line" as const,
@@ -352,7 +302,6 @@ export class ChartService {
             order: 4,
           },
 
-          // ===== RSI (Relative Strength Index) =====
           {
             label: "RSI (14)",
             type: "line" as const,
@@ -366,7 +315,6 @@ export class ChartService {
             order: 5,
           },
 
-          // ===== CANDLESTICKS (MUST BE LAST FOR Z-INDEX) =====
           {
             label: symbol.toUpperCase(),
             data: candleData,
@@ -394,7 +342,6 @@ export class ChartService {
           intersect: false,
         },
         plugins: {
-          // ===== LEGEND HIDDEN, USING TITLE AS WATERMARK =====
           legend: {
             display: false,
           },
@@ -411,7 +358,6 @@ export class ChartService {
           },
         },
 
-        // ===== LAYOUT WITH PADDING =====
         layout: {
           padding: {
             right: 50,
@@ -421,9 +367,7 @@ export class ChartService {
           },
         },
 
-        // ===== FIX 2: DUAL Y-AXIS CONFIGURATION (CRITICAL) =====
         scales: {
-          // ===== X-AXIS (Time/Labels) =====
           x: {
             type: "category" as const,
             ticks: {
@@ -441,7 +385,6 @@ export class ChartService {
             },
           },
 
-          // ===== Y-AXIS (PRICE - RIGHT SIDE) =====
           y: {
             type: "linear" as const,
             position: "right" as const,
@@ -466,7 +409,6 @@ export class ChartService {
             },
           },
 
-          // ===== Y1-AXIS (RSI - LEFT SIDE, SEPARATE SCALE) =====
           yRsi: {
             type: "linear" as const,
             position: "left" as const,
@@ -490,7 +432,6 @@ export class ChartService {
             },
           },
 
-          // ===== YVOLUME AXIS (HIDDEN FOR CLEAN LOOK) =====
           yVolume: {
             type: "linear" as const,
             position: "right" as const,
@@ -508,7 +449,6 @@ export class ChartService {
       },
     };
 
-    // Render chart to buffer
     const buffer = await this.chartCanvas.renderToBuffer(configuration);
     return buffer;
   }

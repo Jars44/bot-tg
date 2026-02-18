@@ -1,14 +1,11 @@
-/**
- * Alert Scheduler Service
- * Cron-based monitoring for price alerts, whale trades, and arbitrage opportunities
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import cron from "node-cron";
 import type { JsonDb } from "../database/JsonDb.js";
 import type { FinanceDataService } from "./FinanceDataService.js";
 import type { EconomicCalendarService } from "./EconomicCalendarService.js";
 import { CONFIG } from "../config/index.js";
+import { getCountryFlag } from "../utils/helpers.js";
+import { S } from "../config/symbols.js";
 
 export class AlertScheduler {
   private db: JsonDb;
@@ -28,14 +25,10 @@ export class AlertScheduler {
     this.economicCalendarService = economicCalendarService;
   }
 
-  /**
-   * Start all monitoring jobs
-   */
   startAll(bot: TelegramBot): void {
     this.bot = bot;
 
     this.startPriceAlertMonitor();
-    // this.startWhaleMonitor(); // Disabled per user request
     this.startArbitrageMonitor();
     this.startEconomicCalendarNotifier();
     this.startPositionMonitor();
@@ -43,23 +36,14 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Monitoring jobs started (Whale monitor disabled)");
   }
 
-  /**
-   * Subscribe a chat to economic calendar notifications
-   */
   subscribeToCalendar(chatId: number): void {
     this.subscribedChats.add(chatId);
   }
 
-  /**
-   * Unsubscribe a chat from economic calendar notifications
-   */
   unsubscribeFromCalendar(chatId: number): void {
     this.subscribedChats.delete(chatId);
   }
 
-  /**
-   * Price alert monitor - runs every minute
-   */
   private startPriceAlertMonitor(): void {
     this.priceAlertJob = cron.schedule("* * * * *", async () => {
       await this.checkPriceAlerts();
@@ -68,9 +52,6 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Price alert monitor started");
   }
 
-  /**
-   * Check all pending price alerts
-   */
   private async checkPriceAlerts(): Promise<void> {
     if (!this.bot) return;
 
@@ -79,7 +60,6 @@ export class AlertScheduler {
 
       if (pendingAlerts.length === 0) return;
 
-      // Group alerts by symbol for efficient price fetching
       const symbolAlerts = new Map<string, typeof pendingAlerts>();
       for (const alert of pendingAlerts) {
         const existing = symbolAlerts.get(alert.symbol) || [];
@@ -87,7 +67,6 @@ export class AlertScheduler {
         symbolAlerts.set(alert.symbol, existing);
       }
 
-      // Check each symbol
       for (const [symbol, alerts] of symbolAlerts) {
         try {
           const priceData = await this.financeService.getPrice(symbol);
@@ -125,9 +104,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Send price alert notification
-   */
   private async sendAlertNotification(
     chatId: number,
     symbol: string,
@@ -140,7 +116,7 @@ export class AlertScheduler {
       `*Price Alert Triggered*\n\n` +
       `${symbol}\n` +
       `Current Price: $${currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n` +
-      `→ Target: ${alert.condition} $${alert.targetPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      `${S.ARROW_R} Target: ${alert.condition} $${alert.targetPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
     try {
       await this.bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
@@ -149,9 +125,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Whale monitor - runs every minute
-   */
   // @ts-expect-error - Disabled per user request
   private startWhaleMonitor(): void {
     this.whaleJob = cron.schedule("* * * * *", async () => {
@@ -161,9 +134,6 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Whale monitor started");
   }
 
-  /**
-   * Check for whale trades on major crypto pairs
-   */
   private async checkWhaleTrades(): Promise<void> {
     if (!this.bot) return;
 
@@ -174,7 +144,6 @@ export class AlertScheduler {
         const largeTrades = await this.financeService.getRecentLargeTrades(symbol, CONFIG.ALERTS.WHALE_THRESHOLD_USD);
 
         for (const trade of largeTrades) {
-          // Only notify for trades in the last minute
           if (Date.now() - trade.timestamp > 60000) continue;
 
           await this.broadcastWhaleAlert(symbol, trade);
@@ -185,9 +154,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Broadcast whale alert to subscribed users
-   */
   private async broadcastWhaleAlert(
     symbol: string,
     trade: { price: number; amount: number; valueUSD: number },
@@ -201,7 +167,6 @@ export class AlertScheduler {
       `Amount: ${trade.amount.toFixed(4)} ${symbol}\n` +
       `Price: $${trade.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 
-    // Broadcast to subscribed chats
     for (const chatId of this.subscribedChats) {
       try {
         await this.bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
@@ -211,9 +176,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Arbitrage monitor - runs every 5 minutes
-   */
   private startArbitrageMonitor(): void {
     this.arbitrageJob = cron.schedule("*/5 * * * *", async () => {
       await this.checkArbitrageOpportunities();
@@ -222,9 +184,6 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Arbitrage monitor started");
   }
 
-  /**
-   * Check for arbitrage opportunities
-   */
   private async checkArbitrageOpportunities(): Promise<void> {
     if (!this.bot) return;
 
@@ -243,9 +202,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Broadcast arbitrage opportunity alert
-   */
   private async broadcastArbitrageAlert(
     symbol: string,
     spreadPercent: number,
@@ -255,7 +211,7 @@ export class AlertScheduler {
 
     let priceList = "";
     for (const [exchange, price] of exchanges) {
-      priceList += `• ${exchange}: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
+      priceList += `${S.BULLET_ALT} ${exchange}: $${price.toLocaleString("en-US", { minimumFractionDigits: 2 })}\n`;
     }
 
     const message =
@@ -273,9 +229,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Economic calendar notifier - runs daily at 08:00 AM
-   */
   private startEconomicCalendarNotifier(): void {
     this.calendarJob = cron.schedule("0 8 * * *", async () => {
       await this.sendDailyCalendar();
@@ -284,9 +237,6 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Economic calendar notifier started");
   }
 
-  /**
-   * Send daily high-impact events summary
-   */
   private async sendDailyCalendar(): Promise<void> {
     if (!this.bot) return;
 
@@ -299,7 +249,7 @@ export class AlertScheduler {
       message += `*HIGH IMPACT EVENTS*\n\n`;
 
       for (const event of events.slice(0, 5)) {
-        message += `• ${event.time} ${this.getCountryFlag(event.country)} ${event.title}\n`;
+        message += `${S.BULLET_ALT} ${event.time} ${getCountryFlag(event.country)} ${event.title}\n`;
         if (event.forecast || event.previous) {
           message += `  Forecast: ${event.forecast || "N/A"} | Previous: ${event.previous || "N/A"}\n`;
         }
@@ -317,28 +267,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Get flag emoji for country code
-   */
-  private getCountryFlag(country: string): string {
-    const flags: Record<string, string> = {
-      USD: "US",
-      EUR: "EU",
-      GBP: "GB",
-      JPY: "JP",
-      CHF: "CH",
-      AUD: "AU",
-      CAD: "CA",
-      NZD: "NZ",
-      CNY: "CN",
-    };
-    return flags[country] || country;
-  }
-
-  /**
-   * Position TP/SL monitor - runs every minute
-   * Auto-closes positions when Take Profit or Stop Loss is hit
-   */
   private startPositionMonitor(): void {
     this.positionMonitorJob = cron.schedule("* * * * *", async () => {
       await this.checkPositionTpSl();
@@ -347,9 +275,6 @@ export class AlertScheduler {
     console.log("[AlertScheduler] Position TP/SL monitor started");
   }
 
-  /**
-   * Check all positions with TP/SL set
-   */
   private async checkPositionTpSl(): Promise<void> {
     if (!this.bot) return;
 
@@ -358,7 +283,6 @@ export class AlertScheduler {
 
       if (positions.length === 0) return;
 
-      // Group by symbol for efficient price fetching
       const symbolPositions = new Map<string, typeof positions>();
       for (const item of positions) {
         const existing = symbolPositions.get(item.position.symbol) || [];
@@ -366,7 +290,6 @@ export class AlertScheduler {
         symbolPositions.set(item.position.symbol, existing);
       }
 
-      // Check each symbol
       for (const [symbol, items] of symbolPositions) {
         try {
           const priceData = await this.financeService.getPrice(symbol);
@@ -375,12 +298,9 @@ export class AlertScheduler {
           for (const { chatId, position } of items) {
             let triggered: "tp" | "sl" | null = null;
 
-            // Check Take Profit (price >= TP)
             if (position.takeProfit && currentPrice >= position.takeProfit) {
               triggered = "tp";
-            }
-            // Check Stop Loss (price <= SL)
-            else if (position.stopLoss && currentPrice <= position.stopLoss) {
+            } else if (position.stopLoss && currentPrice <= position.stopLoss) {
               triggered = "sl";
             }
 
@@ -397,9 +317,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Execute position close for TP/SL hit
-   */
   private async executePositionClose(
     chatId: number,
     positionId: string,
@@ -417,10 +334,10 @@ export class AlertScheduler {
         return;
       }
 
-      const indicator = type === "tp" ? "✓" : "⚠︎";
+      const indicator = type === "tp" ? S.SUCCESS : S.WARN;
       const label = type === "tp" ? "Take Profit" : "Stop Loss";
       const pnl = tradeRecord.pnl ?? 0;
-      const pnlIndicator = pnl >= 0 ? "▲" : "▼";
+      const pnlIndicator = pnl >= 0 ? S.UP : S.DOWN;
 
       const message =
         `${indicator} *${label} Hit*\n\n` +
@@ -436,9 +353,6 @@ export class AlertScheduler {
     }
   }
 
-  /**
-   * Stop all jobs
-   */
   stopAll(): void {
     this.priceAlertJob?.stop();
     this.whaleJob?.stop();

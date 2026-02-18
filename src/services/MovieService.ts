@@ -1,7 +1,3 @@
-/**
- * Movie service using TMDB API
- */
-
 import { HttpClient } from "./HttpClient.js";
 import { CONFIG, getEnvVar, ENV_KEYS } from "../config/index.js";
 

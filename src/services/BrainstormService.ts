@@ -1,14 +1,5 @@
-/**
- * Brainstorm Service — The Creative Engine
- * Infinite generation for writers and builders.
- *
- * Primary: AI-generated creative content (character profiles, plot hooks, world building)
- * Fallback: "Mad Libs" style RNG engine with structured templates
- */
-
 import type { AIService } from "./GenAIService.js";
-
-// ─── Types ────────────────────────────────────────────────────
+import { S } from "../config/symbols.js";
 
 export type BrainstormMode = "character" | "plot" | "world" | "idea" | "lore";
 
@@ -59,8 +50,6 @@ export type BrainstormResult =
   | { mode: "world"; data: WorldBuilding }
   | { mode: "idea"; data: IdeaSeed }
   | { mode: "lore"; data: LoreEntry };
-
-// ─── Fallback Templates ──────────────────────────────────────
 
 const ARCHETYPES = [
   "The Reluctant Hero",
@@ -213,8 +202,6 @@ const NAMES = [
   "Dex Aloysius",
 ];
 
-// ─── Service ──────────────────────────────────────────────────
-
 export class BrainstormService {
   private aiService: AIService;
 
@@ -222,11 +209,7 @@ export class BrainstormService {
     this.aiService = aiService;
   }
 
-  /**
-   * Generate creative content for the given mode and optional topic.
-   */
   async generate(mode: BrainstormMode, topic?: string): Promise<BrainstormResult> {
-    // Primary: AI generation
     try {
       return await this.generateAI(mode, topic);
     } catch (error: unknown) {
@@ -237,11 +220,8 @@ export class BrainstormService {
       console.log("[BrainstormService] Falling back to procedural generation");
     }
 
-    // Fallback: Procedural
     return this.generateFallback(mode, topic);
   }
-
-  // ─── AI Path ──────────────────────────────────────────────
 
   private async generateAI(mode: BrainstormMode, topic?: string): Promise<BrainstormResult> {
     const prompts: Record<BrainstormMode, string> = {
@@ -277,8 +257,6 @@ export class BrainstormService {
       }
     }
   }
-
-  // ─── Fallback Path ────────────────────────────────────────
 
   private generateFallback(mode: BrainstormMode, _topic?: string): BrainstormResult {
     switch (mode) {
@@ -354,8 +332,6 @@ export class BrainstormService {
     };
   }
 
-  // ─── Prompt Builders ──────────────────────────────────────
-
   private buildCharacterPrompt(topic?: string): string {
     const context = topic ? ` Karakter harus sesuai dengan tema/genre: "${topic}".` : "";
     return [
@@ -411,15 +387,10 @@ export class BrainstormService {
     ].join("\n");
   }
 
-  // ─── Helpers ──────────────────────────────────────────────
-
   private pick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /**
-   * Format a brainstorm result into a Telegram message.
-   */
   formatResult(result: BrainstormResult): string {
     switch (result.mode) {
       case "character":
@@ -437,7 +408,7 @@ export class BrainstormService {
 
   private formatCharacter(c: CharacterProfile): string {
     return [
-      `*🧑 Profil Karakter*`,
+      `*${S.PERSON} Profil Karakter*`,
       ``,
       `*Nama:* ${c.name}`,
       `*Arketipe:* ${c.archetype}`,
@@ -452,7 +423,7 @@ export class BrainstormService {
 
   private formatPlot(p: PlotHook): string {
     return [
-      `*📖 Plot Hook*`,
+      `*${S.BOOK} Plot Hook*`,
       ``,
       `*"${p.title}"*`,
       `Genre: ${p.genre}`,
@@ -470,7 +441,7 @@ export class BrainstormService {
 
   private formatWorld(w: WorldBuilding): string {
     return [
-      `*🌍 Pembangunan Dunia*`,
+      `*${S.GLOBE} Pembangunan Dunia*`,
       ``,
       `*${w.name}*`,
       `Tipe: ${w.type}`,
@@ -491,7 +462,7 @@ export class BrainstormService {
 
   private formatIdea(i: IdeaSeed): string {
     return [
-      `*✨ Ide Kreatif*`,
+      `*${S.SPARK} Ide Kreatif*`,
       ``,
       `*Konsep*`,
       `${i.concept}`,
@@ -506,7 +477,7 @@ export class BrainstormService {
 
   private formatLore(l: LoreEntry): string {
     return [
-      `*📜 Fragmen Lore*`,
+      `*${S.SCROLL} Fragmen Lore*`,
       ``,
       `*${l.title}*`,
       `Era: ${l.era}`,

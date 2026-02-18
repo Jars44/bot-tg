@@ -1,7 +1,3 @@
-/**
- * Earthquake data command
- */
-
 import TelegramBot from "node-telegram-bot-api";
 import type { Command } from "./types.js";
 import { EarthquakeService } from "../services/EarthquakeService.js";
@@ -53,7 +49,6 @@ Potensi: ${quake.potential}
 
       await bot.deleteMessage(chatId, searchingMessage.message_id);
 
-      // Wrap URL with .name property to help library determine content-type
       const namedUrl = Object.assign(quake.shakemapUrl, { name: "shakemap.jpg" });
 
       await bot.sendPhoto(chatId, namedUrl as unknown as string, {

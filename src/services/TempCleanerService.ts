@@ -1,8 +1,3 @@
-/**
- * Temp directory cleaner service
- * Runs as a cron job to delete files older than configured max age
- */
-
 import cron from "node-cron";
 import fs from "fs";
 import path from "path";
@@ -16,18 +11,12 @@ export class TempCleanerService {
     this.tempDir = tempDir ?? path.resolve(process.cwd(), "temp");
   }
 
-  /**
-   * Ensure temp directory exists
-   */
   ensureTempDir(): void {
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
     }
   }
 
-  /**
-   * Clean temp directory of files older than max age
-   */
   cleanTempDirectory(): void {
     try {
       if (!fs.existsSync(this.tempDir)) {
@@ -57,13 +46,9 @@ export class TempCleanerService {
     }
   }
 
-  /**
-   * Start the cron job (runs every hour at minute 0)
-   */
   start(): void {
     this.ensureTempDir();
 
-    // Run every hour at minute 0
     this.cronJob = cron.schedule("0 * * * *", () => {
       console.log("[TempCleaner] Running scheduled cleanup...");
       this.cleanTempDirectory();
@@ -72,9 +57,6 @@ export class TempCleanerService {
     console.log("[TempCleaner] Service started - cleaning temp files every hour");
   }
 
-  /**
-   * Stop the cron job
-   */
   stop(): void {
     if (this.cronJob) {
       this.cronJob.stop();
@@ -83,24 +65,15 @@ export class TempCleanerService {
     }
   }
 
-  /**
-   * Get temp directory path
-   */
   getTempDir(): string {
     return this.tempDir;
   }
 
-  /**
-   * Generate a unique temp file path
-   */
   getTempFilePath(prefix: string, extension: string): string {
     const timestamp = Date.now();
     return path.join(this.tempDir, `${prefix}-${timestamp}${extension}`);
   }
 
-  /**
-   * Safely delete a file
-   */
   deleteFile(filePath: string): void {
     try {
       if (fs.existsSync(filePath)) {

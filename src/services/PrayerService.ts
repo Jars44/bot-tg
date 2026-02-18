@@ -1,7 +1,3 @@
-/**
- * Prayer times service using Aladhan API
- */
-
 import { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
 
@@ -32,7 +28,7 @@ export class PrayerService {
         params: {
           city,
           country: "Indonesia",
-          method: 11, // Muhammadiyah calculation method
+          method: 11,
         },
       });
 
@@ -46,16 +42,13 @@ export class PrayerService {
     }
   }
 
-  /**
-   * Get prayer times by coordinates
-   */
   async getPrayerTimesByCoords(lat: number, lon: number): Promise<PrayerTimes | null> {
     try {
       const response = await this.http.get<AladhanResponse>(`${CONFIG.API.ALADHAN}/timings`, {
         params: {
           latitude: lat,
           longitude: lon,
-          method: 11, // Muhammadiyah calculation method
+          method: 11,
         },
       });
 
@@ -68,9 +61,7 @@ export class PrayerService {
       return null;
     }
   }
-  /**
-   * Get formatted prayer timings string for coordinates
-   */
+
   async formattedTimingsByCoords(lat: number, lon: number): Promise<string> {
     const times = await this.getPrayerTimesByCoords(lat, lon);
 

@@ -1,8 +1,3 @@
-/**
- * Weather service with Nominatim geocoding and Open-Meteo weather API
- * IMPORTANT: User-Agent header is required for Nominatim to avoid IP blocking
- */
-
 import { HttpClient } from "./HttpClient.js";
 import { CONFIG } from "../config/index.js";
 
@@ -33,10 +28,6 @@ export class WeatherService {
     this.http = http;
   }
 
-  /**
-   * Get coordinates for a city name using Nominatim
-   * CRITICAL: User-Agent header is injected to prevent IP blocking
-   */
   async getCoordinates(cityName: string): Promise<Coordinates | null> {
     try {
       const response = await this.http.get<NominatimResult[]>(`${CONFIG.API.NOMINATIM}/search`, {
@@ -45,7 +36,6 @@ export class WeatherService {
           q: cityName,
         },
         headers: {
-          // CRITICAL: Nominatim requires User-Agent to avoid blocking
           "User-Agent": CONFIG.USER_AGENT,
         },
       });
@@ -62,9 +52,6 @@ export class WeatherService {
     }
   }
 
-  /**
-   * Get current weather for coordinates
-   */
   async getWeather(lat: number, lon: number): Promise<WeatherData> {
     const response = await this.http.get<OpenMeteoResponse>(`${CONFIG.API.OPEN_METEO}/forecast`, {
       params: {
@@ -77,10 +64,6 @@ export class WeatherService {
     return response.current_weather;
   }
 
-  /**
-   * Get weather for a location name
-   * Falls back to default location if not specified
-   */
   async getWeatherByLocation(location?: string): Promise<{
     weather: WeatherData;
     locationName: string;
@@ -103,9 +86,6 @@ export class WeatherService {
     return { weather, locationName };
   }
 
-  /**
-   * Get weather directly from coordinates (for GPS location)
-   */
   async getWeatherByCoords(
     lat: number,
     lon: number,
@@ -115,16 +95,13 @@ export class WeatherService {
   } | null> {
     try {
       const weather = await this.getWeather(lat, lon);
-      // Use coordinates as location name when we don't have a city name
       const locationName = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
       return { weather, locationName };
     } catch {
       return null;
     }
   }
-  /**
-   * Get formatted weather string for coordinates
-   */
+
   async formattedWeatherByCoords(lat: number, lon: number): Promise<string> {
     const result = await this.getWeatherByCoords(lat, lon);
 
