@@ -149,7 +149,9 @@ export class SessionInputHandler implements MessageHandler {
         const messageId = state.data.messageId;
         try {
           await bot.deleteMessage(chatId, msg.message_id);
-        } catch { /* empty */ }
+        } catch {
+          /* empty */
+        }
         await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
       }
     } else if (state.flow === SESSION_FLOWS.RISK) {

@@ -84,7 +84,9 @@ export class SmartPasteCallbackHandler implements CallbackHandler {
 
     try {
       await bot.deleteMessage(chatId, messageId);
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
 
     await this.downloadHandler.processDownload(bot, chatId, url, isAudio);
   }

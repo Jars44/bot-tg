@@ -146,9 +146,7 @@ export function formatEarthquakeMessage(data: {
     .build();
 }
 
-export function formatNewsMessage(
-  articles: Array<{ title: string; url: string }>,
-): string {
+export function formatNewsMessage(articles: Array<{ title: string; url: string }>): string {
   const rb = ResponseBuilder.create().title("Berita Terkini").blank();
 
   for (const article of articles) {
@@ -186,7 +184,9 @@ export function formatPortfolioMessage(summary: {
     .blank()
     .keyValue("Cash", formatUsd(summary.cashBalance))
     .keyValue("Equity", formatUsd(summary.equity))
-    .line(`${pnlIcon} Unrealized PnL: ${sign}${formatUsd(summary.unrealizedPnL)} (${sign}${summary.unrealizedPnLPercent.toFixed(2)}%)`);
+    .line(
+      `${pnlIcon} Unrealized PnL: ${sign}${formatUsd(summary.unrealizedPnL)} (${sign}${summary.unrealizedPnLPercent.toFixed(2)}%)`,
+    );
 
   if (summary.positions.length > 0) {
     rb.blank().title("Open Positions");

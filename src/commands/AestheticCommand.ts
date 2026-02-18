@@ -37,8 +37,9 @@ export class AestheticCommand implements Command {
 
       try {
         await bot.deleteMessage(chatId, msgId);
-      } catch { /* empty */ }
-
+      } catch {
+        /* empty */
+      }
 
       if (result.images.length > 0) {
         const mediaGroup: TelegramBot.InputMediaPhoto[] = result.images.map((img, i) => ({
@@ -59,7 +60,9 @@ export class AestheticCommand implements Command {
               await bot.sendPhoto(chatId, img.thumbUrl, {
                 caption: `${img.altText} — ${img.photographer}`,
               });
-            } catch { /* empty */ }
+            } catch {
+              /* empty */
+            }
           }
         }
       }

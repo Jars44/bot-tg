@@ -164,7 +164,10 @@ export class DownloadCallbackHandler implements CallbackHandler {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
-            [{ text: `${S.FAIL} Batal`, callback_data: "dl_cancel" }, { text: "Kembali", callback_data: "dl_back_format" }],
+            [
+              { text: `${S.FAIL} Batal`, callback_data: "dl_cancel" },
+              { text: "Kembali", callback_data: "dl_back_format" },
+            ],
           ],
         },
       },
@@ -212,7 +215,9 @@ export class DownloadInputHandler implements MessageHandler {
     if (sessionData.messageId) {
       try {
         await bot.deleteMessage(chatId, sessionData.messageId);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     }
 
     await this.processDownload(bot, chatId, url, sessionData.format === "audio");

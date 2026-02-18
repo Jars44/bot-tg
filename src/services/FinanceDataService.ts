@@ -265,7 +265,9 @@ export class FinanceDataService {
         if (ticker.last) {
           results.set(exchangeId, ticker.last);
         }
-      } catch { /* empty */ }
+      } catch {
+        /* empty */
+      }
     });
 
     await Promise.all(promises);

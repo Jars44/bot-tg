@@ -21,14 +21,18 @@ export class HuntCommand implements Command {
       return;
     }
 
-    await bot.sendMessage(chatId, `*${S.LENS} Photography Hunt*\n\nKirim lokasi Anda untuk mendapatkan misi fotografi unik.`, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        keyboard: [[{ text: `${S.PIN} Kirim Lokasi Saya`, request_location: true }]],
-        one_time_keyboard: true,
-        resize_keyboard: true,
+    await bot.sendMessage(
+      chatId,
+      `*${S.LENS} Photography Hunt*\n\nKirim lokasi Anda untuk mendapatkan misi fotografi unik.`,
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          keyboard: [[{ text: `${S.PIN} Kirim Lokasi Saya`, request_location: true }]],
+          one_time_keyboard: true,
+          resize_keyboard: true,
+        },
       },
-    });
+    );
   }
 
   async executeFromLocation(bot: TelegramBot, chatId: number, lat: number, lon: number): Promise<void> {

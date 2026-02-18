@@ -23,6 +23,5 @@ export function escapeMarkdown(input: string): string {
     .replace(/~/g, "\\~")
     .replace(/\|/g, "\\|")
     .replace(/\{/g, "\\{")
-    .replace(/\}/g, "\\}")
+    .replace(/\}/g, "\\}");
 }
-

@@ -168,7 +168,8 @@ ${S.BULLET} /alert ${S.DASH} Alarm harga aset`,
 
   RISK_INVALID_INPUT: `${S.WARN} Input tidak valid. Masukkan angka positif.`,
 
-  SMART_PASTE_CONFIRM: (url: string) => `${S.SUCCESS} Link terdeteksi. Pilih format untuk download:\n\n\`${escapeMarkdown(url)}\``,
+  SMART_PASTE_CONFIRM: (url: string) =>
+    `${S.SUCCESS} Link terdeteksi. Pilih format untuk download:\n\n\`${escapeMarkdown(url)}\``,
   SMART_PASTE_SESSION_EXPIRED: `${S.LOADING} Sesi telah berakhir. Kirim ulang link untuk mencoba lagi.`,
   SMART_PASTE_CANCELLED: `${S.FAIL} Download dibatalkan.`,
 
@@ -256,8 +257,7 @@ Informasi dan sinopsis dari MyAnimeList.
 \`/anime Jujutsu Kaisen\``,
 
   GEOGUESSR_SEARCHING: `${S.LOADING} Mencari lokasi misterius...`,
-  GEOGUESSR_PROMPT:
-    `${S.PIN} **Tebak Lokasi**\n\nLihat pin di atas. Balas pesan ini dengan nama *Negara*, *Provinsi*, atau *Kota* dari lokasi tersebut.\n\n_Ketik /nyerah untuk menyerah._`,
+  GEOGUESSR_PROMPT: `${S.PIN} **Tebak Lokasi**\n\nLihat pin di atas. Balas pesan ini dengan nama *Negara*, *Provinsi*, atau *Kota* dari lokasi tersebut.\n\n_Ketik /nyerah untuk menyerah._`,
   GEOGUESSR_CORRECT_CITY: (city: string, country: string, points: number) =>
     `${S.SUCCESS} **Tepat sekali!**\n\nLokasi: *${escapeMarkdown(toTitleCase(city))}, ${escapeMarkdown(toTitleCase(country))}*\n+${points} poin`,
   GEOGUESSR_CORRECT_STATE: (state: string, country: string, points: number) =>
@@ -292,8 +292,7 @@ ${S.BULLET} Tebak Negara: +2 poin
 
 _Lokasi random: 60% Indonesia, 40% dunia._`,
 
-  AI_MODE_ACTIVATED:
-    `**Mode AI Aktif**\n\nSilakan tanya apa saja. Jarvis akan membalas sebagai asisten AI.\n\n_Ketik /exit untuk kembali ke menu utama._`,
+  AI_MODE_ACTIVATED: `**Mode AI Aktif**\n\nSilakan tanya apa saja. Jarvis akan membalas sebagai asisten AI.\n\n_Ketik /exit untuk kembali ke menu utama._`,
   AI_MODE_DEACTIVATED: "**Mode AI dinonaktifkan**\n\nKembali ke sistem utama.",
   AI_NO_ACTIVE_SESSION: `${S.FAIL} Tidak ada sesi AI aktif.`,
   AI_ERROR: `${S.FAIL} Gagal mendapatkan respons AI. Silakan coba lagi.`,
