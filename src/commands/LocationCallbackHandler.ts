@@ -51,12 +51,12 @@ export class LocationCallbackHandler implements CallbackHandler {
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Mencari cuaca...");
+        await safeEditMessage(bot, chatId, messageId, "⧗ Mengambil data cuaca...");
 
         const result = await this.weatherService.getWeatherByCoords(lat, lon);
 
         if (!result) {
-          await safeEditMessage(bot, chatId, messageId, "× Gagal mendapatkan data cuaca.");
+          await safeEditMessage(bot, chatId, messageId, "× Gagal mendapatkan data cuaca. Coba lagi nanti.");
           return;
         }
 
@@ -79,7 +79,7 @@ export class LocationCallbackHandler implements CallbackHandler {
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Mencari jadwal sholat...");
+        await safeEditMessage(bot, chatId, messageId, "⧗ Mengambil jadwal sholat...");
 
         const timings = await this.prayerService.formattedTimingsByCoords(lat, lon);
 
@@ -96,7 +96,7 @@ export class LocationCallbackHandler implements CallbackHandler {
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Generating vibe...");
+        await safeEditMessage(bot, chatId, messageId, "⧗ Mendeteksi vibe lokasi...");
 
         const vibe = await this.vibeService.getVibe(lat, lon);
         const message = this.vibeService.formatVibeMessage(vibe);
@@ -113,7 +113,7 @@ export class LocationCallbackHandler implements CallbackHandler {
           return;
         }
 
-        await safeEditMessage(bot, chatId, messageId, "⧗ Generating mission...");
+        await safeEditMessage(bot, chatId, messageId, "⧗ Membuat misi fotografi...");
 
         const mission = await this.urbanService.generateMission(lat, lon);
         const message = this.urbanService.formatMissionMessage(mission);

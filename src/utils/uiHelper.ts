@@ -132,10 +132,10 @@ export const MENU_EXPERIMENTAL_BUTTONS = [
  * Main menu buttons - Lifestyle Suite
  */
 export const MENU_LIFESTYLE_BUTTONS = [
-  { text: "Vibe", callback_data: "menu_vibe" },
-  { text: "Moodboard", callback_data: "menu_moodboard" },
-  { text: "Hunt", callback_data: "menu_hunt" },
-  { text: "Brainstorm", callback_data: "menu_brainstorm" },
+  { text: "🎵 Vibe", callback_data: "menu_vibe" },
+  { text: "🎨 Moodboard", callback_data: "menu_moodboard" },
+  { text: "📸 Hunt", callback_data: "menu_hunt" },
+  { text: "💡 Brainstorm", callback_data: "menu_brainstorm" },
 ];
 
 /**

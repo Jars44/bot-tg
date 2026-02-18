@@ -269,9 +269,10 @@ export class AestheticService {
     // Try AI-generated palette
     try {
       const prompt = [
-        `Generate a 5-color palette for the aesthetic/mood: "${keyword}".`,
+        `Buat palet 5 warna untuk estetik/mood: "${keyword}".`,
+        `Nama warna (label) HARUS dalam Bahasa Indonesia (misal: "Biru Langit", "Merah Marun", "Hitam Pekat").`,
         `Return ONLY valid JSON (no markdown) with this structure:`,
-        `{ "colors": [{ "hex": "#RRGGBB", "label": "Color Name" }] }`,
+        `{ "colors": [{ "hex": "#RRGGBB", "label": "Nama Warna" }] }`,
       ].join("\n");
 
       const result = await this.aiService.generateJSON<AIPaletteResponse>(prompt, 0.7);
@@ -298,15 +299,15 @@ export class AestheticService {
     const b = parseInt(hex.slice(5, 7), 16);
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
-    if (brightness < 30) return "Near Black";
-    if (brightness > 230) return "Near White";
-    if (r > g && r > b) return r > 200 ? "Warm Red" : "Deep Red";
-    if (g > r && g > b) return g > 200 ? "Bright Green" : "Forest Green";
-    if (b > r && b > g) return b > 200 ? "Sky Blue" : "Deep Blue";
-    if (r > 180 && g > 180) return "Golden";
+    if (brightness < 30) return "Hitam Pekat";
+    if (brightness > 230) return "Putih Bersih";
+    if (r > g && r > b) return r > 200 ? "Merah Hangat" : "Merah Tua";
+    if (g > r && g > b) return g > 200 ? "Hijau Terang" : "Hijau Hutan";
+    if (b > r && b > g) return b > 200 ? "Biru Langit" : "Biru Tua";
+    if (r > 180 && g > 180) return "Keemasan";
     if (r > 180 && b > 180) return "Magenta";
     if (g > 180 && b > 180) return "Teal";
-    return brightness > 128 ? "Light Tone" : "Dark Tone";
+    return brightness > 128 ? "Nada Terang" : "Nada Gelap";
   }
 
   /**
@@ -316,14 +317,14 @@ export class AestheticService {
     const paletteLines = result.palette.map((c) => `\`${c.hex}\` — ${c.label}`);
 
     return [
-      `*Moodboard — "${result.keyword}"*`,
+      `*🎨 Moodboard — "${result.keyword}"*`,
       ``,
-      `*Color Palette*`,
+      `*Palet Warna*`,
       ...paletteLines,
       ``,
       result.images.length > 0
-        ? `_${result.images.length} images sourced from Unsplash_`
-        : `_No images available. Color palette generated from theme analysis._`,
+        ? `_${result.images.length} gambar dari Unsplash_`
+        : `_Gambar tidak tersedia. Palet warna dibuat dari analisis tema._`,
     ].join("\n");
   }
 }

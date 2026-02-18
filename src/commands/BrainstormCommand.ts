@@ -5,9 +5,9 @@
  */
 
 import TelegramBot from "node-telegram-bot-api";
-import type { Command } from "./types.js";
+import type { Command, CallbackHandler } from "./types.js";
 import type { BrainstormService, BrainstormMode } from "../services/BrainstormService.js";
-import { withLoading } from "../utils/uiHelper.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 /**
  * /brainstorm [topic] — Generates random creative content
@@ -23,20 +23,20 @@ export class BrainstormCommand implements Command {
     // Show mode selection
     await bot.sendMessage(
       chatId,
-      `*Brainstorm Engine*${topic ? `\nTopic: "${topic}"` : ""}\n\nPilih tipe konten yang ingin di-generate:`,
+      `*💡 Brainstorm Engine*${topic ? `\nTopik: "${topic}"` : ""}\n\nPilih tipe konten yang ingin di-generate:`,
       {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "Character", callback_data: `brain_character${topic ? `_${topic}` : ""}` },
-              { text: "Plot Hook", callback_data: `brain_plot${topic ? `_${topic}` : ""}` },
+              { text: "🧑 Karakter", callback_data: `brain_character${topic ? `_${topic}` : ""}` },
+              { text: "📖 Plot Hook", callback_data: `brain_plot${topic ? `_${topic}` : ""}` },
             ],
             [
-              { text: "World", callback_data: `brain_world${topic ? `_${topic}` : ""}` },
-              { text: "Lore", callback_data: `brain_lore${topic ? `_${topic}` : ""}` },
+              { text: "🌍 Dunia", callback_data: `brain_world${topic ? `_${topic}` : ""}` },
+              { text: "📜 Lore", callback_data: `brain_lore${topic ? `_${topic}` : ""}` },
             ],
-            [{ text: "Random Idea", callback_data: `brain_idea${topic ? `_${topic}` : ""}` }],
+            [{ text: "✨ Ide Acak", callback_data: `brain_idea${topic ? `_${topic}` : ""}` }],
           ],
         },
       },
@@ -60,16 +60,22 @@ export class IdeaCommand implements Command {
     const chatId = msg.chat.id;
     const topic = match?.[1]?.trim();
 
-    await withLoading(bot, chatId, async () => {
-      try {
-        const result = await this.brainstormService.generate("idea", topic);
-        const message = this.brainstormService.formatResult(result);
-        await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-      } catch (error) {
-        console.error("[IdeaCommand] Error:", error);
-        await bot.sendMessage(chatId, "× Gagal menghasilkan ide. Silakan coba lagi.");
-      }
-    });
+    const loadingMsg = await bot.sendMessage(
+      chatId,
+      `⧗ Membuat ide kreatif${topic ? ` untuk topik *${topic}*` : ""}...`,
+      { parse_mode: "Markdown" },
+    );
+    const msgId = loadingMsg.message_id;
+
+    try {
+      const result = await this.brainstormService.generate("idea", topic);
+      const message = this.brainstormService.formatResult(result);
+      const edited = await safeEditMessage(bot, chatId, msgId, message, { parse_mode: "Markdown" });
+      if (!edited) await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+    } catch (error) {
+      console.error("[IdeaCommand] Error:", error);
+      await safeEditMessage(bot, chatId, msgId, "× Gagal menghasilkan ide. Silakan coba lagi.");
+    }
   }
 }
 
@@ -89,23 +95,29 @@ export class LoreCommand implements Command {
     const chatId = msg.chat.id;
     const topic = match?.[1]?.trim();
 
-    await withLoading(bot, chatId, async () => {
-      try {
-        const result = await this.brainstormService.generate("lore", topic);
-        const message = this.brainstormService.formatResult(result);
-        await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
-      } catch (error) {
-        console.error("[LoreCommand] Error:", error);
-        await bot.sendMessage(chatId, "× Gagal menghasilkan lore. Silakan coba lagi.");
-      }
-    });
+    const loadingMsg = await bot.sendMessage(
+      chatId,
+      `⧗ Membuat fragmen lore${topic ? ` untuk topik *${topic}*` : ""}...`,
+      { parse_mode: "Markdown" },
+    );
+    const msgId = loadingMsg.message_id;
+
+    try {
+      const result = await this.brainstormService.generate("lore", topic);
+      const message = this.brainstormService.formatResult(result);
+      const edited = await safeEditMessage(bot, chatId, msgId, message, { parse_mode: "Markdown" });
+      if (!edited) await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+    } catch (error) {
+      console.error("[LoreCommand] Error:", error);
+      await safeEditMessage(bot, chatId, msgId, "× Gagal menghasilkan lore. Silakan coba lagi.");
+    }
   }
 }
 
 /**
  * Callback handler for brainstorm mode selection
  */
-export class BrainstormCallbackHandler {
+export class BrainstormCallbackHandler implements CallbackHandler {
   prefix = "brain_";
 
   private brainstormService: BrainstormService;
@@ -116,7 +128,8 @@ export class BrainstormCallbackHandler {
 
   async handle(bot: TelegramBot, query: TelegramBot.CallbackQuery, data: string): Promise<void> {
     const chatId = query.message?.chat.id;
-    if (!chatId) return;
+    const messageId = query.message?.message_id;
+    if (!chatId || !messageId) return;
 
     const payload = data.replace("brain_", "");
 
@@ -135,20 +148,39 @@ export class BrainstormCallbackHandler {
     // Validate mode
     const validModes: BrainstormMode[] = ["character", "plot", "world", "idea", "lore"];
     if (!validModes.includes(mode)) {
-      await bot.answerCallbackQuery(query.id, { text: "Mode tidak valid" });
+      await bot.answerCallbackQuery(query.id, { text: "Mode tidak dikenali" });
       return;
     }
 
-    await bot.answerCallbackQuery(query.id, { text: `Generating ${mode}...` });
+    const modeLabels: Record<BrainstormMode, string> = {
+      character: "🧑 karakter",
+      plot: "📖 plot hook",
+      world: "🌍 dunia",
+      idea: "✨ ide",
+      lore: "📜 lore",
+    };
+
+    await bot.answerCallbackQuery(query.id);
+    await safeEditMessage(
+      bot,
+      chatId,
+      messageId,
+      `⧗ Sedang membuat ${modeLabels[mode]}${topic ? ` untuk topik "${topic}"` : ""}...`,
+    );
     await bot.sendChatAction(chatId, "typing");
 
     try {
       const result = await this.brainstormService.generate(mode, topic);
       const message = this.brainstormService.formatResult(result);
-      await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      // Edit the loading message → final result
+      const edited = await safeEditMessage(bot, chatId, messageId, message, { parse_mode: "Markdown" });
+      // If edit fails (e.g. content too long), send as new message
+      if (!edited) {
+        await bot.sendMessage(chatId, message, { parse_mode: "Markdown" });
+      }
     } catch (error) {
       console.error("[BrainstormCallback] Error:", error);
-      await bot.sendMessage(chatId, "× Gagal generate konten. Silakan coba lagi.");
+      await safeEditMessage(bot, chatId, messageId, "× Gagal membuat konten. Silakan coba lagi.");
     }
   }
 }

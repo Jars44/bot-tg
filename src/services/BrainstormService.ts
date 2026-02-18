@@ -357,52 +357,57 @@ export class BrainstormService {
   // ─── Prompt Builders ──────────────────────────────────────
 
   private buildCharacterPrompt(topic?: string): string {
-    const context = topic ? ` The character should fit the theme/genre: "${topic}".` : "";
+    const context = topic ? ` Karakter harus sesuai dengan tema/genre: "${topic}".` : "";
     return [
-      `You are a master character designer for fiction.${context}`,
-      `Generate a unique, compelling character profile.`,
+      `Kamu adalah desainer karakter fiksi ahli.${context}`,
+      `Buat profil karakter yang unik dan menarik.`,
+      `SEMUA teks (nama, arketipe, motivasi, kelemahan, latar belakang, kebiasaan) HARUS dalam Bahasa Indonesia.`,
       `Return ONLY valid JSON:`,
-      `{ "name": "string", "archetype": "string", "motivation": "string", "flaw": "string", "backstory": "string (2-3 sentences)", "quirk": "string" }`,
+      `{ "name": "string", "archetype": "string", "motivation": "string", "flaw": "string", "backstory": "string (2-3 kalimat)", "quirk": "string" }`,
     ].join("\n");
   }
 
   private buildPlotPrompt(topic?: string): string {
-    const context = topic ? ` Theme/genre constraint: "${topic}".` : "";
+    const context = topic ? ` Batasan tema/genre: "${topic}".` : "";
     return [
-      `You are a screenplay writer creating compelling story hooks.${context}`,
-      `Generate a unique plot hook with an unexpected twist.`,
+      `Kamu adalah penulis skenario yang membuat plot hook memikat.${context}`,
+      `Buat plot hook yang unik dengan twist yang tidak terduga.`,
+      `SEMUA teks (judul, genre, premis, konflik, twist) HARUS dalam Bahasa Indonesia.`,
       `Return ONLY valid JSON:`,
-      `{ "title": "string (catchy 3-5 words)", "genre": "string", "premise": "string (2-3 sentences)", "conflict": "string", "twist": "string" }`,
+      `{ "title": "string (judul menarik 3-5 kata)", "genre": "string", "premise": "string (2-3 kalimat)", "conflict": "string", "twist": "string" }`,
     ].join("\n");
   }
 
   private buildWorldPrompt(topic?: string): string {
-    const context = topic ? ` The world should reflect the theme: "${topic}".` : "";
+    const context = topic ? ` Dunia harus mencerminkan tema: "${topic}".` : "";
     return [
-      `You are a fantasy/sci-fi world architect.${context}`,
-      `Generate a unique fictional world or setting.`,
+      `Kamu adalah arsitek dunia fiksi (fantasy/sci-fi).${context}`,
+      `Buat dunia fiksi yang unik dan detail.`,
+      `SEMUA teks (nama, tipe, geografi, budaya, konflik, rahasia) HARUS dalam Bahasa Indonesia.`,
       `Return ONLY valid JSON:`,
-      `{ "name": "string", "type": "string (1 sentence description)", "geography": "string", "culture": "string (unique social system)", "conflict": "string", "secret": "string (hidden truth)" }`,
+      `{ "name": "string", "type": "string (deskripsi 1 kalimat)", "geography": "string", "culture": "string (sistem sosial unik)", "conflict": "string", "secret": "string (kebenaran tersembunyi)" }`,
     ].join("\n");
   }
 
   private buildIdeaPrompt(topic?: string): string {
-    const context = topic ? ` Domain/theme: "${topic}".` : "";
+    const context = topic ? ` Domain/tema: "${topic}".` : "";
     return [
-      `You are a creative director brainstorming project ideas.${context}`,
-      `Generate a unique creative project idea (story, game, film, product, app).`,
+      `Kamu adalah creative director yang sedang brainstorm ide proyek kreatif.${context}`,
+      `Buat ide proyek kreatif yang unik (cerita, game, film, produk, aplikasi).`,
+      `SEMUA teks (konsep, tagline, audiens, keunikan) HARUS dalam Bahasa Indonesia.`,
       `Return ONLY valid JSON:`,
-      `{ "concept": "string (what-if question)", "tagline": "string (elevator pitch)", "audience": "string", "uniqueAngle": "string (what makes it different)" }`,
+      `{ "concept": "string (pertanyaan 'bagaimana jika')", "tagline": "string (elevator pitch)", "audience": "string", "uniqueAngle": "string (apa yang membuatnya berbeda)" }`,
     ].join("\n");
   }
 
   private buildLorePrompt(topic?: string): string {
-    const context = topic ? ` The lore should exist in a world inspired by: "${topic}".` : "";
+    const context = topic ? ` Lore harus berada di dunia yang terinspirasi dari: "${topic}".` : "";
     return [
-      `You are a lore master crafting ancient histories.${context}`,
-      `Generate a fragment of lore — an event from a fictional history.`,
+      `Kamu adalah maestro lore yang merancang sejarah kuno fiksi.${context}`,
+      `Buat fragmen lore — sebuah peristiwa dari sejarah fiksi.`,
+      `SEMUA teks (judul, era, peristiwa, dampak, artefak) HARUS dalam Bahasa Indonesia.`,
       `Return ONLY valid JSON:`,
-      `{ "title": "string (name of the lore entry)", "era": "string (what age/era)", "event": "string (what happened)", "consequence": "string (what it caused)", "artifact": "string (a relic tied to this event)" }`,
+      `{ "title": "string (nama entri lore)", "era": "string (zaman/era)", "event": "string (apa yang terjadi)", "consequence": "string (dampak yang ditimbulkan)", "artifact": "string (relik yang terkait)" }`,
     ].join("\n");
   }
 
@@ -432,30 +437,30 @@ export class BrainstormService {
 
   private formatCharacter(c: CharacterProfile): string {
     return [
-      `*Character Profile*`,
+      `*🧑 Profil Karakter*`,
       ``,
-      `*Name:* ${c.name}`,
-      `*Archetype:* ${c.archetype}`,
-      `*Motivation:* ${c.motivation}`,
-      `*Fatal Flaw:* ${c.flaw}`,
-      `*Quirk:* ${c.quirk}`,
+      `*Nama:* ${c.name}`,
+      `*Arketipe:* ${c.archetype}`,
+      `*Motivasi:* ${c.motivation}`,
+      `*Kelemahan:* ${c.flaw}`,
+      `*Kebiasaan Unik:* ${c.quirk}`,
       ``,
-      `*Backstory*`,
+      `*Latar Belakang*`,
       `_${c.backstory}_`,
     ].join("\n");
   }
 
   private formatPlot(p: PlotHook): string {
     return [
-      `*Plot Hook*`,
+      `*📖 Plot Hook*`,
       ``,
       `*"${p.title}"*`,
       `Genre: ${p.genre}`,
       ``,
-      `*Premise*`,
+      `*Premis*`,
       `${p.premise}`,
       ``,
-      `*Central Conflict*`,
+      `*Konflik Utama*`,
       `${p.conflict}`,
       ``,
       `*Twist*`,
@@ -465,54 +470,54 @@ export class BrainstormService {
 
   private formatWorld(w: WorldBuilding): string {
     return [
-      `*World Building*`,
+      `*🌍 Pembangunan Dunia*`,
       ``,
       `*${w.name}*`,
-      `Type: ${w.type}`,
+      `Tipe: ${w.type}`,
       ``,
-      `*Geography*`,
+      `*Geografi*`,
       `${w.geography}`,
       ``,
-      `*Culture*`,
+      `*Budaya*`,
       `${w.culture}`,
       ``,
-      `*Conflict*`,
+      `*Konflik*`,
       `${w.conflict}`,
       ``,
-      `*Hidden Truth*`,
+      `*Rahasia Tersembunyi*`,
       `_${w.secret}_`,
     ].join("\n");
   }
 
   private formatIdea(i: IdeaSeed): string {
     return [
-      `*Creative Idea*`,
+      `*✨ Ide Kreatif*`,
       ``,
-      `*Concept*`,
+      `*Konsep*`,
       `${i.concept}`,
       ``,
       `*Tagline*`,
       `_"${i.tagline}"_`,
       ``,
-      `*Target Audience:* ${i.audience}`,
-      `*Unique Angle:* ${i.uniqueAngle}`,
+      `*Target Audiens:* ${i.audience}`,
+      `*Keunikan:* ${i.uniqueAngle}`,
     ].join("\n");
   }
 
   private formatLore(l: LoreEntry): string {
     return [
-      `*Lore Fragment*`,
+      `*📜 Fragmen Lore*`,
       ``,
       `*${l.title}*`,
       `Era: ${l.era}`,
       ``,
-      `*The Event*`,
+      `*Peristiwa*`,
       `${l.event}`,
       ``,
-      `*The Consequence*`,
+      `*Dampak*`,
       `${l.consequence}`,
       ``,
-      `*Artifact*`,
+      `*Artefak*`,
       `_${l.artifact}_`,
     ].join("\n");
   }

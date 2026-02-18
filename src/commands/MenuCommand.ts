@@ -167,11 +167,17 @@ export class MenuCommand implements Command, CallbackHandler {
       case "moodboard":
         // Wizard flow: Ask for aesthetic keyword
         sessionManager.startMoodboardMenu(chatId, messageId);
-        await safeEditMessage(bot, chatId, messageId, "Masukkan keyword estetik (contoh: Cyberpunk, Old Money):", {
-          reply_markup: {
-            inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
+        await safeEditMessage(
+          bot,
+          chatId,
+          messageId,
+          "🎨 Masukkan keyword estetik (contoh: *Cyberpunk*, *Old Money*, *Dark Academia*):",
+          {
+            reply_markup: {
+              inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
+            },
           },
-        });
+        );
         break;
 
       case "hunt":

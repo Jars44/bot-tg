@@ -106,8 +106,8 @@ export class LocationHandler implements MessageHandler {
       // Remove any existing keyboard just in case
       const buttons: TelegramBot.InlineKeyboardButton[][] = [
         [
-          { text: "Cuaca", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
-          { text: "Sholat", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
+          { text: "🌤 Cuaca", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
+          { text: "🕌 Sholat", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
         ],
       ];
 
@@ -116,20 +116,20 @@ export class LocationHandler implements MessageHandler {
         const lifestyleRow: TelegramBot.InlineKeyboardButton[] = [];
         if (this.vibeCommand) {
           lifestyleRow.push({
-            text: "Vibe",
+            text: "🎵 Vibe",
             callback_data: `loc_vibe_${location.latitude}_${location.longitude}`,
           });
         }
         if (this.huntCommand) {
           lifestyleRow.push({
-            text: "Hunt",
+            text: "📸 Hunt",
             callback_data: `loc_hunt_${location.latitude}_${location.longitude}`,
           });
         }
         buttons.push(lifestyleRow);
       }
 
-      await bot.sendMessage(chatId, "Lokasi diterima. Apa yang ingin Anda periksa?", {
+      await bot.sendMessage(chatId, "📍 Lokasi diterima. Apa yang ingin Anda periksa?", {
         reply_markup: {
           remove_keyboard: true,
           inline_keyboard: buttons,
