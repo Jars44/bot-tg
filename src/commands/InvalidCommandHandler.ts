@@ -47,6 +47,14 @@ const VALID_COMMANDS = [
   "stopai",
   "geoguessr",
   "nyerah",
+  // Lifestyle Suite
+  "vibe",
+  "moodboard",
+  "aesthetic",
+  "hunt",
+  "brainstorm",
+  "idea",
+  "lore",
 ];
 
 export class InvalidCommandHandler implements MessageHandler {

@@ -116,6 +116,11 @@ export interface ChartSessionData {
   messageId: number;
 }
 
+/** Moodboard wizard session data */
+export interface MoodboardSessionData {
+  messageId: number;
+}
+
 /** Sticker wizard session data */
 export interface StickerSessionData {
   messageId: number;
@@ -182,6 +187,7 @@ export type SessionState =
   | { flow: "reminder"; step: "input"; data: ReminderSessionData }
   | { flow: "geoguessr"; step: "guessing"; data: GeoGuessrSessionData }
   | { flow: "ai_chat"; step: "chatting"; data: AiChatSessionData }
+  | { flow: "moodboard"; step: "keyword_input"; data: MoodboardSessionData }
   | null;
 
 /** Session with metadata */
@@ -219,6 +225,7 @@ export const SESSION_FLOWS = {
   REMINDER: "reminder",
   GEOGUESSR: "geoguessr",
   AI_CHAT: "ai_chat",
+  MOODBOARD: "moodboard",
 } as const;
 
 /**
@@ -534,6 +541,14 @@ export class SessionManager {
     this.setState(chatId, {
       flow: SESSION_FLOWS.CHART,
       step: "input",
+      data: { messageId },
+    });
+  }
+
+  startMoodboardMenu(chatId: number, messageId: number): void {
+    this.setState(chatId, {
+      flow: SESSION_FLOWS.MOODBOARD,
+      step: "keyword_input",
       data: { messageId },
     });
   }

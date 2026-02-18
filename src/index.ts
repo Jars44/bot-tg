@@ -35,6 +35,13 @@ import { EconomicCalendarService } from "./services/EconomicCalendarService.js";
 import { AlertScheduler } from "./services/AlertScheduler.js";
 import { ChartService } from "./services/ChartService.js";
 
+// Lifestyle Services
+import { AIService } from "./services/GenAIService.js";
+import { VibeService } from "./services/VibeService.js";
+import { AestheticService } from "./services/AestheticService.js";
+import { UrbanExplorationService } from "./services/UrbanExplorationService.js";
+import { BrainstormService } from "./services/BrainstormService.js";
+
 // Commands
 import type { Command, MessageHandler, CallbackHandler } from "./commands/types.js";
 import { StopCommand } from "./commands/StartCommand.js";
@@ -77,6 +84,17 @@ import { ChartCommand, ChartCallbackHandler } from "./commands/ChartCommand.js";
 import { TpSlInputHandler, TpSlCallbackHandler } from "./commands/TpSlHandler.js";
 import { GeoGuessrCommand, GiveUpCommand } from "./commands/GeoGuessrCommand.js";
 import { AiStartCommand, AiStopCommand } from "./commands/AiChatCommand.js";
+
+// Lifestyle Commands
+import { VibeCommand } from "./commands/VibeCommand.js";
+import { AestheticCommand } from "./commands/AestheticCommand.js";
+import { HuntCommand } from "./commands/HuntCommand.js";
+import {
+  BrainstormCommand,
+  IdeaCommand,
+  LoreCommand,
+  BrainstormCallbackHandler,
+} from "./commands/BrainstormCommand.js";
 
 // Utils
 import { setupErrorHandlers } from "./utils/errorHandler.js";
@@ -132,6 +150,14 @@ async function main(): Promise<void> {
   const chartService = new ChartService(financeDataService);
   console.log("[Bot] Financial services initialized");
 
+  // Lifestyle Services
+  const aiService = new AIService();
+  const vibeService = new VibeService(aiService, weatherService, httpClient);
+  const aestheticService = new AestheticService(httpClient, aiService);
+  const urbanExplorationService = new UrbanExplorationService(aiService, httpClient);
+  const brainstormService = new BrainstormService(aiService);
+  console.log("[Bot] Lifestyle services initialized");
+
   // Initialize bot with polling options
   const bot = new TelegramBot(token, {
     polling: {
@@ -184,7 +210,25 @@ async function main(): Promise<void> {
   const newsCommand = new NewsCommand(newsService);
   const helpCommand = new HelpCommand();
   const geoGuessrCommand = new GeoGuessrCommand();
-  const menuCommand = new MenuCommand(newsCommand, helpCommand, geoGuessrCommand, quoteService);
+
+  // Lifestyle Commands
+  const vibeCommand = new VibeCommand(vibeService);
+  const aestheticCommand = new AestheticCommand(aestheticService);
+  const huntCommand = new HuntCommand(urbanExplorationService);
+  const brainstormCommand = new BrainstormCommand();
+  const ideaCommand = new IdeaCommand(brainstormService);
+  const loreCommand = new LoreCommand(brainstormService);
+  const brainstormCallbackHandler = new BrainstormCallbackHandler(brainstormService);
+
+  const menuCommand = new MenuCommand(
+    newsCommand,
+    helpCommand,
+    geoGuessrCommand,
+    quoteService,
+    vibeCommand,
+    huntCommand,
+    brainstormCommand,
+  );
 
   // Market Hub Command (with DI)
   const marketCommand = new MarketCommand(tradingEngine);
@@ -218,6 +262,7 @@ async function main(): Promise<void> {
     reminderCommand,
     buyCommand,
     sellCommand,
+    aestheticCommand,
   );
 
   const commands: Command[] = [
@@ -275,12 +320,20 @@ async function main(): Promise<void> {
     // AI Chat
     new AiStartCommand(), // /ai or /chat
     new AiStopCommand(), // /exit or /stopai
+
+    // Lifestyle Suite
+    vibeCommand, // /vibe [city]
+    aestheticCommand, // /moodboard [keyword] or /aesthetic [keyword]
+    huntCommand, // /hunt
+    brainstormCommand, // /brainstorm [topic]
+    ideaCommand, // /idea [topic]
+    loreCommand, // /lore [topic]
   ];
 
   // Message handlers (for non-command messages)
   const messageHandlers: MessageHandler[] = [
     new SmartPasteHandler(), // Smart Paste: Auto-detect URLs (highest priority)
-    new LocationHandler(weatherService, prayerService), // Handle location messages (high priority)
+    new LocationHandler(weatherService, prayerService, vibeCommand, huntCommand), // Handle location messages (high priority)
     new StickerHandler(stickerService, tempCleaner, db), // Handle photo messages for sticker creation
     expenseCommand, // Handle expense flow text input
     sessionInputHandler, // Handle general session input (weather, lyrics, anime, market, risk)
@@ -318,8 +371,9 @@ async function main(): Promise<void> {
     downloadCallbackHandler, // dl_ prefix
     stickerCommand, // sticker_ prefix
     new ChartCallbackHandler(chartService), // chart_ prefix
-    new LocationCallbackHandler(weatherService, prayerService), // loc_ prefix
+    new LocationCallbackHandler(weatherService, prayerService, vibeService, urbanExplorationService), // loc_ prefix
     new SmartPasteCallbackHandler(downloadInputHandler), // sp_ prefix
+    brainstormCallbackHandler, // brain_ prefix
   ];
 
   // Start cron jobs
@@ -389,6 +443,7 @@ async function main(): Promise<void> {
   console.log(
     "[Bot] Financial Suite: Portfolio (/portfolio), Trading (/buy, /sell), Expense (/catat), Alerts (/alert)",
   );
+  console.log("[Bot] Lifestyle Suite: Vibe (/vibe), Moodboard (/moodboard), Hunt (/hunt), Brainstorm (/brainstorm)");
   console.log("[Bot] Bot is running! Press Ctrl+C to stop.");
 }
 

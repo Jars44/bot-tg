@@ -9,6 +9,7 @@ import type { MessageHandler, CallbackHandler } from "./types.js";
 import { sessionManager, isSmartPasteSession } from "../utils/SessionManager.js";
 import { DownloadInputHandler } from "./DownloadCommand.js";
 import { MESSAGES } from "../config/messages.js";
+import { safeEditMessage } from "../utils/uiHelper.js";
 
 /** Supported platform URL patterns */
 const SUPPORTED_URL_PATTERNS = [

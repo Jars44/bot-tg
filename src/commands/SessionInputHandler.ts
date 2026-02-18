@@ -30,6 +30,7 @@ import { ReminderCommand } from "./ReminderCommand.js";
 import { BuyCommand, SellCommand } from "./TradeCommand.js";
 import { GeoGuessrService } from "../services/GeoGuessrService.js";
 import { AiService } from "../services/AiService.js";
+import type { AestheticCommand } from "./AestheticCommand.js";
 import { MESSAGES } from "../config/messages.js";
 import { withLoading } from "../utils/uiHelper.js";
 
@@ -53,6 +54,7 @@ export class SessionInputHandler implements MessageHandler {
   private sellCommand: SellCommand;
   private geoGuessrService: GeoGuessrService;
   private aiService: AiService;
+  private aestheticCommand: AestheticCommand | null;
 
   constructor(
     animeCommand: AnimeCommand,
@@ -69,6 +71,7 @@ export class SessionInputHandler implements MessageHandler {
     reminderCommand: ReminderCommand,
     buyCommand: BuyCommand,
     sellCommand: SellCommand,
+    aestheticCommand?: AestheticCommand,
   ) {
     this.animeCommand = animeCommand;
     this.lyricsCommand = lyricsCommand;
@@ -86,6 +89,7 @@ export class SessionInputHandler implements MessageHandler {
     this.sellCommand = sellCommand;
     this.geoGuessrService = new GeoGuessrService();
     this.aiService = new AiService();
+    this.aestheticCommand = aestheticCommand ?? null;
   }
 
   /**
@@ -116,7 +120,8 @@ export class SessionInputHandler implements MessageHandler {
       state.flow === SESSION_FLOWS.BUY_WIZARD ||
       state.flow === SESSION_FLOWS.SELL_WIZARD ||
       state.flow === SESSION_FLOWS.GEOGUESSR ||
-      state.flow === SESSION_FLOWS.AI_CHAT
+      state.flow === SESSION_FLOWS.AI_CHAT ||
+      state.flow === SESSION_FLOWS.MOODBOARD
     );
   }
 
@@ -298,6 +303,11 @@ export class SessionInputHandler implements MessageHandler {
           });
         }
       }
+    } else if (state.flow === SESSION_FLOWS.MOODBOARD && this.aestheticCommand) {
+      // Handle moodboard keyword input
+      sessionManager.clearState(chatId);
+      const moodboardMatch = ["/moodboard " + text, "moodboard", text] as RegExpMatchArray;
+      await this.aestheticCommand.execute(bot, msg, moodboardMatch);
     } else if (state.flow === SESSION_FLOWS.AI_CHAT) {
       // Handle AI Chat
       if (state.step === "chatting") {

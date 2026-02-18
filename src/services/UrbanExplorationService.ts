@@ -1,0 +1,321 @@
+/**
+ * Urban Exploration Service — Lokasi & Rute Hunting
+ * Generates photography missions based on user's GPS coordinates.
+ *
+ * Primary: AI-generated quests from geo-context
+ * Fallback: Procedural "Mad Libs" style mission generator
+ */
+
+import type { AIService } from "./GenAIService.js";
+import type { HttpClient } from "./HttpClient.js";
+import { CONFIG } from "../config/index.js";
+
+// ─── Types ────────────────────────────────────────────────────
+
+export interface PhotographyMission {
+  title: string;
+  description: string;
+  subject: string;
+  technique: string;
+  lighting: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  tips: string[];
+  locationType: string;
+}
+
+interface NominatimReverseResult {
+  display_name: string;
+  type?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    suburb?: string;
+    neighbourhood?: string;
+    road?: string;
+    state?: string;
+    country?: string;
+    amenity?: string;
+    building?: string;
+    shop?: string;
+    tourism?: string;
+    leisure?: string;
+  };
+}
+
+interface AIMissionResponse {
+  title: string;
+  description: string;
+  subject: string;
+  technique: string;
+  lighting: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  tips: string[];
+}
+
+// ─── Fallback Data ────────────────────────────────────────────
+
+const SUBJECTS = [
+  "A lone figure walking away from camera",
+  "Symmetrical architecture or doorways",
+  "A cat or street animal in its element",
+  "Hands performing a craft or trade",
+  "Reflections in puddles or glass",
+  "An elderly person with character-rich features",
+  "Stacked textures (rust, peeling paint, graffiti layers)",
+  "A child mid-play or mid-laugh",
+  "Geometric shadows cast by buildings",
+  "Tangled wires or cables against the sky",
+  "A vendor serving food from a cart",
+  "Silhouettes through a backlit doorway",
+  "A row of identical objects with one break in pattern",
+  "Street signage with interesting typography",
+  "Motion blur of a passing vehicle",
+];
+
+const TECHNIQUES = [
+  "Shoot through a frame (doorway, window, arch)",
+  "Use leading lines to draw the eye",
+  "Fill the frame — get close, eliminate background",
+  "Use the Dutch angle for tension",
+  "Capture a long exposure (1–3 seconds)",
+  "Shoot from ground level (worm's eye view)",
+  "Use negative space to isolate the subject",
+  "Layer foreground, midground, and background",
+  "Shoot through glass or water for distortion",
+  "Use repetition and pattern recognition",
+  "Capture a decisive moment (Bresson-style)",
+  "Intentional camera movement for abstraction",
+  "Use high contrast black & white thinking",
+  "Find and exploit color contrast",
+];
+
+const LIGHTING_CONDITIONS = [
+  "Golden Hour — warm, directional, long shadows",
+  "Blue Hour — cool ambient, neon signs pop",
+  "Harsh Midday Sun — deep shadows, high contrast",
+  "Overcast — soft, even light, saturated colors",
+  "Artificial light — fluorescent, tungsten, LED mix",
+  "Backlighting — silhouettes and rim light",
+  "Dappled light filtering through trees or lattice",
+  "Mixed lighting — street lamps + twilight sky",
+  "Direct flash — raw, documentary, confrontational",
+  "Window light — soft, single-direction, portrait-ready",
+];
+
+const LOCATION_CLASSIFICATIONS: Record<string, string[]> = {
+  market: ["market", "marketplace", "bazaar", "shop", "retail", "commercial"],
+  park: ["park", "garden", "recreation", "playground", "green", "leisure"],
+  industrial: ["industrial", "factory", "warehouse", "construction"],
+  residential: ["residential", "suburb", "neighbourhood", "housing", "apartments"],
+  religious: ["mosque", "church", "temple", "religious", "cemetery"],
+  transport: ["station", "bus_stop", "terminal", "airport", "railway"],
+  education: ["school", "university", "college", "library"],
+  historic: ["historic", "heritage", "monument", "castle", "museum", "tourism"],
+  waterfront: ["river", "lake", "beach", "harbour", "pier", "waterway"],
+  urban: ["road", "street", "avenue", "highway", "intersection"],
+};
+
+const DIFFICULTIES: Array<"Beginner" | "Intermediate" | "Advanced"> = ["Beginner", "Intermediate", "Advanced"];
+
+// ─── Service ──────────────────────────────────────────────────
+
+export class UrbanExplorationService {
+  private aiService: AIService;
+  private httpClient: HttpClient;
+
+  constructor(aiService: AIService, httpClient: HttpClient) {
+    this.aiService = aiService;
+    this.httpClient = httpClient;
+  }
+
+  /**
+   * Generate a photography mission for given coordinates.
+   */
+  async generateMission(lat: number, lon: number): Promise<PhotographyMission> {
+    // Get location context
+    const geoContext = await this.getGeoContext(lat, lon);
+
+    // Primary: AI generation
+    try {
+      return await this.generateMissionAI(geoContext);
+    } catch (error: unknown) {
+      const isUnavailable = error instanceof Error && error.name === "AIServiceUnavailableError";
+      if (!isUnavailable) {
+        console.error("[UrbanExplorationService] Unexpected AI error:", error);
+      }
+      console.log("[UrbanExplorationService] Falling back to procedural mission");
+    }
+
+    // Fallback: Procedural
+    return this.generateMissionFallback(geoContext);
+  }
+
+  // ─── AI Path ──────────────────────────────────────────────
+
+  private async generateMissionAI(context: GeoContext): Promise<PhotographyMission> {
+    const prompt = [
+      `You are a street photography mentor creating a specific mission.`,
+      ``,
+      `Location context: ${context.description}`,
+      `Location type: ${context.locationType}`,
+      `Address: ${context.address}`,
+      ``,
+      `Generate a creative, specific street photography quest for this location.`,
+      `Consider the location type when crafting the mission.`,
+      ``,
+      `Return ONLY valid JSON (no markdown) with:`,
+      `{`,
+      `  "title": "string (catchy 3-5 word mission name)",`,
+      `  "description": "string (2-3 sentence detailed quest description)",`,
+      `  "subject": "string (what to photograph)",`,
+      `  "technique": "string (how to shoot it)",`,
+      `  "lighting": "string (lighting condition to exploit)",`,
+      `  "difficulty": "Beginner|Intermediate|Advanced",`,
+      `  "tips": ["string", "string"] (2-3 pro tips)`,
+      `}`,
+    ].join("\n");
+
+    const result = await this.aiService.generateJSON<AIMissionResponse>(prompt, 0.9);
+
+    return {
+      ...result,
+      locationType: context.locationType,
+    };
+  }
+
+  // ─── Fallback Path ────────────────────────────────────────
+
+  private generateMissionFallback(context: GeoContext): PhotographyMission {
+    const subject = this.randomPick(SUBJECTS);
+    const technique = this.randomPick(TECHNIQUES);
+    const lighting = this.randomPick(LIGHTING_CONDITIONS);
+    const difficulty = this.randomPick(DIFFICULTIES);
+
+    const tips = this.generateTips(context.locationType);
+
+    return {
+      title: `${context.locationType} Expedition`,
+      description: `Your mission at this ${context.locationType.toLowerCase()} location: find and capture "${subject}" using the technique described below. Pay attention to available light.`,
+      subject,
+      technique,
+      lighting,
+      difficulty,
+      tips,
+      locationType: context.locationType,
+    };
+  }
+
+  private generateTips(locationType: string): string[] {
+    const baseTips = [
+      "Observe for 5 minutes before shooting. Let the scene reveal itself.",
+      "Shoot in bursts during peak action — review later.",
+      "Look behind you. The best shot is often where you didn't expect.",
+    ];
+
+    const locationTips: Record<string, string> = {
+      Market: "Markets are chaotic. Embrace layers — stack vendors, goods, and customers.",
+      Park: "Use natural frames (branches, archways) for added depth.",
+      Industrial: "Look for repetitive patterns — pipes, bricks, containers.",
+      Residential: "Respect privacy. Shoot wide establishing shots, not close portraits.",
+      Religious: "Be respectful and silent. Capture light through architecture.",
+      Transport: "Motion is your friend. Slow shutter + panning = dynamic energy.",
+      Urban: "Crosswalks and intersections create natural leading lines.",
+    };
+
+    const specific = locationTips[locationType];
+    const selected = [baseTips[Math.floor(Math.random() * baseTips.length)]];
+    if (specific) selected.push(specific);
+
+    return selected;
+  }
+
+  // ─── Geo Context ──────────────────────────────────────────
+
+  private async getGeoContext(lat: number, lon: number): Promise<GeoContext> {
+    try {
+      const result = await this.httpClient.get<NominatimReverseResult>(`${CONFIG.API.NOMINATIM}/reverse`, {
+        params: { format: "json", lat, lon, zoom: 18, addressdetails: 1 },
+        headers: { "User-Agent": CONFIG.USER_AGENT },
+      });
+
+      const locationType = this.classifyLocation(result);
+
+      return {
+        address: result.display_name,
+        locationType,
+        description: `${locationType} area: ${result.display_name}`,
+      };
+    } catch {
+      return {
+        address: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+        locationType: "Urban",
+        description: "Urban area (location details unavailable)",
+      };
+    }
+  }
+
+  private classifyLocation(result: NominatimReverseResult): string {
+    const searchText = [
+      result.type ?? "",
+      result.address?.amenity ?? "",
+      result.address?.building ?? "",
+      result.address?.shop ?? "",
+      result.address?.tourism ?? "",
+      result.address?.leisure ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    for (const [category, keywords] of Object.entries(LOCATION_CLASSIFICATIONS)) {
+      if (keywords.some((kw) => searchText.includes(kw))) {
+        return this.capitalize(category);
+      }
+    }
+
+    return "Urban";
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────
+
+  private randomPick<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  private capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * Format a mission into a Telegram-friendly message.
+   */
+  formatMissionMessage(mission: PhotographyMission): string {
+    const tips = mission.tips.map((t) => `• ${t}`).join("\n");
+
+    return [
+      `*Photography Mission*`,
+      `"${mission.title}"`,
+      ``,
+      `*Area:* ${mission.locationType}`,
+      `*Difficulty:* ${mission.difficulty}`,
+      ``,
+      `*Quest*`,
+      `${mission.description}`,
+      ``,
+      `*Subject:* ${mission.subject}`,
+      `*Technique:* ${mission.technique}`,
+      `*Lighting:* ${mission.lighting}`,
+      ``,
+      `*Tips*`,
+      tips,
+    ].join("\n");
+  }
+}
+
+// ─── Internal Types ─────────────────────────────────────────
+
+interface GeoContext {
+  address: string;
+  locationType: string;
+  description: string;
+}

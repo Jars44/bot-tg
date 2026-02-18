@@ -129,16 +129,27 @@ export const MENU_EXPERIMENTAL_BUTTONS = [
 ];
 
 /**
+ * Main menu buttons - Lifestyle Suite
+ */
+export const MENU_LIFESTYLE_BUTTONS = [
+  { text: "Vibe", callback_data: "menu_vibe" },
+  { text: "Moodboard", callback_data: "menu_moodboard" },
+  { text: "Hunt", callback_data: "menu_hunt" },
+  { text: "Brainstorm", callback_data: "menu_brainstorm" },
+];
+
+/**
  * Create main menu keyboard with segmentation
  */
 export function createMenuKeyboard(): TelegramBot.InlineKeyboardButton[][] {
   const coreGrid = createGrid(MENU_CORE_BUTTONS, 2);
+  const lifestyleGrid = createGrid(MENU_LIFESTYLE_BUTTONS, 2);
   const experimentalGrid = createGrid(MENU_EXPERIMENTAL_BUTTONS, 3);
 
-  // Visual separator for experimental features
+  // Visual separators
   const separator: TelegramBot.InlineKeyboardButton[] = [{ text: "· · ·", callback_data: "noop" }];
 
-  return [...coreGrid, separator, ...experimentalGrid];
+  return [...coreGrid, separator, ...lifestyleGrid, separator, ...experimentalGrid];
 }
 
 /**

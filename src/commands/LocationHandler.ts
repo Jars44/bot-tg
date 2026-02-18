@@ -9,14 +9,25 @@ import { sessionManager, LocationSessionData } from "../utils/SessionManager.js"
 import { withLoading } from "../utils/uiHelper.js";
 import { WeatherService } from "../services/WeatherService.js";
 import { PrayerService } from "../services/PrayerService.js";
+import type { VibeCommand } from "./VibeCommand.js";
+import type { HuntCommand } from "./HuntCommand.js";
 
 export class LocationHandler implements MessageHandler {
   private weatherService: WeatherService;
   private prayerService: PrayerService;
+  private vibeCommand: VibeCommand | null;
+  private huntCommand: HuntCommand | null;
 
-  constructor(weatherService: WeatherService, prayerService: PrayerService) {
+  constructor(
+    weatherService: WeatherService,
+    prayerService: PrayerService,
+    vibeCommand?: VibeCommand,
+    huntCommand?: HuntCommand,
+  ) {
     this.weatherService = weatherService;
     this.prayerService = prayerService;
+    this.vibeCommand = vibeCommand ?? null;
+    this.huntCommand = huntCommand ?? null;
   }
 
   async shouldHandle(msg: TelegramBot.Message): Promise<boolean> {
@@ -53,7 +64,7 @@ export class LocationHandler implements MessageHandler {
                 return;
               }
               // Send result directly (remove_keyboard in options)
-              await bot.sendMessage(chatId, weather, { 
+              await bot.sendMessage(chatId, weather, {
                 parse_mode: "Markdown",
                 reply_markup: { remove_keyboard: true },
               });
@@ -71,7 +82,7 @@ export class LocationHandler implements MessageHandler {
                 return;
               }
               // Send result directly (remove_keyboard in options)
-              await bot.sendMessage(chatId, timings, { 
+              await bot.sendMessage(chatId, timings, {
                 parse_mode: "Markdown",
                 reply_markup: { remove_keyboard: true },
               });
@@ -93,16 +104,35 @@ export class LocationHandler implements MessageHandler {
 
       // Scenario A: Unsolicited Location (Menu Flow)
       // Remove any existing keyboard just in case
+      const buttons: TelegramBot.InlineKeyboardButton[][] = [
+        [
+          { text: "Cuaca", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
+          { text: "Sholat", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
+        ],
+      ];
+
+      // Add lifestyle options if commands are injected
+      if (this.vibeCommand || this.huntCommand) {
+        const lifestyleRow: TelegramBot.InlineKeyboardButton[] = [];
+        if (this.vibeCommand) {
+          lifestyleRow.push({
+            text: "Vibe",
+            callback_data: `loc_vibe_${location.latitude}_${location.longitude}`,
+          });
+        }
+        if (this.huntCommand) {
+          lifestyleRow.push({
+            text: "Hunt",
+            callback_data: `loc_hunt_${location.latitude}_${location.longitude}`,
+          });
+        }
+        buttons.push(lifestyleRow);
+      }
+
       await bot.sendMessage(chatId, "Lokasi diterima. Apa yang ingin Anda periksa?", {
         reply_markup: {
           remove_keyboard: true,
-          inline_keyboard: [
-            [
-              { text: "Cuaca", callback_data: `loc_weather_${location.latitude}_${location.longitude}` },
-              { text: "Sholat", callback_data: `loc_prayer_${location.latitude}_${location.longitude}` },
-            ],
-            // [ { text: "Qibla (Segera hadir)", callback_data: "loc_qibla" } ]
-          ],
+          inline_keyboard: buttons,
         },
       });
     });

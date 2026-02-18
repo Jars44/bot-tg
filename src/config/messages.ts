@@ -144,6 +144,14 @@ Mencari rating, sinopsis, dan info rilis film.
 • /laporan — Laporan keuangan detail
 • /sentimen — Analisis sentimen pasar
 
+*Lifestyle*
+• /vibe — Music & scent pairing dari lokasi
+• /moodboard — Visual moodboard & color palette
+• /hunt — Misi fotografi street photography
+• /brainstorm — Generator ide kreatif
+• /idea — Random creative idea seed
+• /lore — Fragment lore fiksi
+
 *Utilitas*
 • /stiker — Buat stiker dari teks
 • /quote — Kutipan kata bijak

@@ -25,6 +25,9 @@ import type { MyAlertsCommand } from "./AlertCommand.js";
 import type { GeoGuessrCommand } from "./GeoGuessrCommand.js";
 import type { QuoteService } from "../services/QuoteService.js";
 import type { ExpenseCommand, LaporanCommand, RekapCommand } from "./ExpenseCommand.js";
+import type { VibeCommand } from "./VibeCommand.js";
+import type { HuntCommand } from "./HuntCommand.js";
+import type { BrainstormCommand } from "./BrainstormCommand.js";
 
 /**
  * Main menu command handler
@@ -38,17 +41,26 @@ export class MenuCommand implements Command, CallbackHandler {
   private helpCommand: HelpCommand;
   private geoGuessrCommand: GeoGuessrCommand;
   private quoteService: QuoteService;
+  private vibeCommand: VibeCommand;
+  private huntCommand: HuntCommand;
+  private brainstormCommand: BrainstormCommand;
 
   constructor(
     newsCommand: NewsCommand,
     helpCommand: HelpCommand,
     geoGuessrCommand: GeoGuessrCommand,
     quoteService: QuoteService,
+    vibeCommand: VibeCommand,
+    huntCommand: HuntCommand,
+    brainstormCommand: BrainstormCommand,
   ) {
     this.newsCommand = newsCommand;
     this.helpCommand = helpCommand;
     this.geoGuessrCommand = geoGuessrCommand;
     this.quoteService = quoteService;
+    this.vibeCommand = vibeCommand;
+    this.huntCommand = huntCommand;
+    this.brainstormCommand = brainstormCommand;
   }
 
   async execute(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
@@ -144,6 +156,32 @@ export class MenuCommand implements Command, CallbackHandler {
         // Direct execution of GeoGuessrCommand
         await bot.deleteMessage(chatId, messageId);
         await this.geoGuessrCommand.execute(bot, createMockMessage(query));
+        break;
+
+      // Lifestyle Suite — Direct execution
+      case "vibe":
+        await bot.deleteMessage(chatId, messageId);
+        await this.vibeCommand.execute(bot, createMockMessage(query), null);
+        break;
+
+      case "moodboard":
+        // Wizard flow: Ask for aesthetic keyword
+        sessionManager.startMoodboardMenu(chatId, messageId);
+        await safeEditMessage(bot, chatId, messageId, "Masukkan keyword estetik (contoh: Cyberpunk, Old Money):", {
+          reply_markup: {
+            inline_keyboard: createGrid([{ text: "Batal", callback_data: "menu_back" }]),
+          },
+        });
+        break;
+
+      case "hunt":
+        await bot.deleteMessage(chatId, messageId);
+        await this.huntCommand.execute(bot, createMockMessage(query));
+        break;
+
+      case "brainstorm":
+        await bot.deleteMessage(chatId, messageId);
+        await this.brainstormCommand.execute(bot, createMockMessage(query), null);
         break;
 
       case "anime":

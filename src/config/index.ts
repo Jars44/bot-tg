@@ -123,3 +123,8 @@ export function getEnvVar(key: keyof typeof ENV_KEYS): string {
   }
   return value;
 }
+
+/** Get optional environment variable (returns null if not set) */
+export function getOptionalEnvVar(key: string): string | null {
+  return process.env[key] ?? null;
+}
