@@ -1,73 +1,83 @@
 /**
  * Invalid command handler
+ * Handles /unknown and /incomplete commands
  */
 
 import TelegramBot from "node-telegram-bot-api";
 import type { MessageHandler } from "./types.js";
 import { MESSAGES } from "../config/messages.js";
 
-/** Valid command patterns - Must match patterns in index.ts command registration */
-const VALID_COMMAND_PATTERNS = [
-  // Core commands
-  /^\/start/,
-  /^\/stop/,
-  /^\/help/,
-  /^\/menu/,
-
-  // Utility commands
-  /^\/lirik/,
-  /^\/quote/,
-  /^\/anime/,
-  /^\/cuaca/,
-  /^\/berita/,
-  /^\/sholat/,
-  /^\/gempa/,
-  /^\/ingatkan/,
-  /^\/download/,
-  /^\/film/,
-  /^\/stiker/,
-
-  // Financial commands
-  /^\/chart/,
-  /^\/portfolio/,
-  /^\/catat/,
-  /^\/buy/,
-  /^\/sell/,
-  /^\/close/,
-  /^\/alert/,
-  /^\/risk/,
-  /^\/rekap/,
-  /^\/laporan/,
-  /^\/market/,
-  /^\/calendar/,
-  /^\/highimpact/,
-  /^\/sentimen/,
+/**
+ * Valid command base names (without leading slash).
+ * Must match all commands registered in index.ts.
+ */
+const VALID_COMMANDS = [
+  "start",
+  "stop",
+  "help",
+  "menu",
+  "lirik",
+  "quote",
+  "anime",
+  "cuaca",
+  "berita",
+  "sholat",
+  "gempa",
+  "ingatkan",
+  "download",
+  "film",
+  "stiker",
+  "chart",
+  "portfolio",
+  "catat",
+  "buy",
+  "sell",
+  "close",
+  "alert",
+  "risk",
+  "rekap",
+  "laporan",
+  "market",
+  "calendar",
+  "highimpact",
+  "sentimen",
+  "ai",
+  "chat",
+  "exit",
+  "stopai",
+  "geoguessr",
+  "nyerah",
 ];
 
 export class InvalidCommandHandler implements MessageHandler {
   shouldHandle(msg: TelegramBot.Message): boolean {
     const text = msg.text ?? "";
-
-    // Only handle messages starting with /
-    if (!text.startsWith("/")) {
-      return false;
-    }
-
-    // Check if this message matches ANY registered command pattern
-    const matchesValidPattern = VALID_COMMAND_PATTERNS.some((pattern) => pattern.test(text));
-
-    // If it matches a valid pattern, let the command handler deal with it
-    // (including cases where the command needs arguments)
-    if (matchesValidPattern) {
-      return false;
-    }
-
-    // Only handle truly invalid commands
-    return true;
+    // Only handle messages that start with /
+    return text.startsWith("/");
   }
 
   async handle(bot: TelegramBot, msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
-    await bot.sendMessage(chatId, MESSAGES.UNKNOWN_COMMAND);
+    const text = msg.text ?? "";
+
+    // Extract the typed command word (no slash, no args)
+    const commandMatch = text.match(/^\/([a-zA-Z0-9_]+)/);
+    if (!commandMatch) return;
+
+    const typed = commandMatch[1].toLowerCase();
+
+    // Exact match → valid command (should never reach here normally, but guard anyway)
+    if (VALID_COMMANDS.includes(typed)) return;
+
+    // Check if the typed string is a prefix of any valid command
+    // e.g. "/cuac" is a prefix of "cuaca"
+    const partialMatch = VALID_COMMANDS.find((cmd) => cmd.startsWith(typed) && cmd !== typed);
+
+    if (partialMatch) {
+      await bot.sendMessage(chatId, MESSAGES.INCOMPLETE_COMMAND(typed));
+    } else {
+      const errorMsg = `${MESSAGES.UNKNOWN_COMMAND}`;
+      await bot.sendMessage(chatId, errorMsg);
+    }
   }
 }

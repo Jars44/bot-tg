@@ -100,6 +100,7 @@ export class SessionInputHandler implements MessageHandler {
     if (!state) return false;
 
     return (
+      state.flow === SESSION_FLOWS.LOCATION ||
       state.flow === SESSION_FLOWS.LYRICS ||
       state.flow === SESSION_FLOWS.ANIME ||
       state.flow === SESSION_FLOWS.MOVIE ||
@@ -128,6 +129,20 @@ export class SessionInputHandler implements MessageHandler {
     const state = sessionManager.getState(chatId);
 
     if (!state) return;
+
+    // Handle location text input for weather/prayer commands
+    if (state.flow === SESSION_FLOWS.LOCATION) {
+      const pendingCommand = state.data?.pendingCommand;
+      if (pendingCommand === "weather") {
+        sessionManager.clearState(chatId);
+        await this.weatherCommand.fetchAndSendWeather(bot, chatId, text);
+        return;
+      } else if (pendingCommand === "prayer") {
+        sessionManager.clearState(chatId);
+        await this.prayerCommand.fetchAndSendPrayerTimes(bot, chatId, text);
+        return;
+      }
+    }
 
     // Route based on flow type
     if (state.flow === SESSION_FLOWS.LYRICS) {

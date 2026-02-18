@@ -356,8 +356,20 @@ async function main(): Promise<void> {
 
   // Register message handlers
   bot.on("message", async (msg) => {
-    // Skip command messages (they're handled by onText)
-    if (msg.text && msg.text.startsWith("/")) return;
+    // Handle /command messages — route only to InvalidCommandHandler
+    // (valid commands are handled by onText listeners above; this catches unknown/incomplete ones)
+    if (msg.text && msg.text.startsWith("/")) {
+      const invalidHandler = new InvalidCommandHandler();
+      if (invalidHandler.shouldHandle(msg)) {
+        try {
+          await invalidHandler.handle(bot, msg);
+        } catch (err) {
+          console.error("[Bot] Error in invalid command handler:", err);
+        }
+      }
+      return;
+    }
+
     // Process messages with text, location, or photos
     if (!msg.text && !msg.location && !msg.photo) return;
 

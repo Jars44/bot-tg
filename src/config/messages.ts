@@ -12,6 +12,8 @@ export const MESSAGES = {
   WELCOME: "Jarvis Bot\nAkses menu utama dengan /menu atau /help untuk panduan.",
   GOODBYE: "Sesi diakhiri.\nGunakan /start untuk memulai kembali.",
   UNKNOWN_COMMAND: "Perintah tidak dikenali.\nGunakan /help untuk daftar perintah.",
+  INCOMPLETE_COMMAND: (cmd: string) =>
+    `× Perintah /${cmd} tidak lengkap.\nGunakan /help untuk melihat format perintah yang benar.`,
   INVALID_FORMAT: "Format perintah tidak valid.\nGunakan /help untuk panduan.",
 
   // Search states
@@ -22,7 +24,7 @@ export const MESSAGES = {
   SEARCHING_WEATHER: (location: string) => `⧗ Mengambil data cuaca: ${location}...`,
   SEARCHING_NEWS: "⧗ Mengambil berita terkini...",
   SEARCHING_PRAYER: (city: string) => `⧗ Mengambil jadwal sholat: ${city}...`,
-  SEARCHING_MOVIE: (keyword: string) => `⧗ Mencari database film: ${keyword}...`,
+  SEARCHING_MOVIE: (keyword: string) => `⧗ Mencari data film: ${keyword}...`,
   SEARCHING_QUOTE: "⧗ Mengambil kutipan...",
 
   // Errors

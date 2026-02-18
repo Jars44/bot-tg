@@ -52,7 +52,11 @@ Potensi: ${quake.potential}
       }
 
       await bot.deleteMessage(chatId, searchingMessage.message_id);
-      await bot.sendPhoto(chatId, quake.shakemapUrl, {
+
+      // Wrap URL with .name property to help library determine content-type
+      const namedUrl = Object.assign(quake.shakemapUrl, { name: "shakemap.jpg" });
+
+      await bot.sendPhoto(chatId, namedUrl as unknown as string, {
         caption: resultText,
       });
     } catch (error) {

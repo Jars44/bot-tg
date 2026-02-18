@@ -87,15 +87,11 @@ export class StickerHandler implements MessageHandler {
       // Process image to sticker
       const webpPath = await this.stickerService.processImageToSticker(imageBuffer);
 
+      // Assign .name property to avoid deprecation warning from node-telegram-bot-api
+      const namedPath = Object.assign(webpPath, { name: "sticker.webp" });
+
       // Send sticker
-      await bot.sendSticker(
-        chatId,
-        webpPath,
-        {},
-        {
-          contentType: "image/webp",
-        },
-      );
+      await bot.sendSticker(chatId, namedPath as unknown as string, {});
 
       // Increment rate limit counter
       await this.db.incrementStickerCount(userId);

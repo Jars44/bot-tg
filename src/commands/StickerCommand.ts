@@ -219,15 +219,11 @@ export class StickerCommand implements Command, CallbackHandler {
       // Generate sticker
       const webpPath = await this.stickerService.createSticker(text);
 
-      // Send sticker with explicit content type to avoid deprecation warning
-      await bot.sendSticker(
-        chatId,
-        webpPath,
-        {},
-        {
-          contentType: "image/webp",
-        },
-      );
+      // Assign .name property to avoid deprecation warning from node-telegram-bot-api
+      const namedPath = Object.assign(webpPath, { name: "sticker.webp" });
+
+      // Send sticker
+      await bot.sendSticker(chatId, namedPath as unknown as string, {});
 
       // Increment rate limit counter in database
       await this.db.incrementStickerCount(userId);

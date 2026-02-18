@@ -51,21 +51,33 @@ export class ChartCommand implements Command {
       // Delete loading message
       await bot.deleteMessage(chatId, loadingMsg.message_id).catch(() => {});
 
+      // Assign .name so node-telegram-bot-api uses it as the filename (suppresses deprecation warning)
+      const namedBuffer = Object.assign(chartBuffer, { name: `${symbol}_chart.png` });
+
       // Send chart image
-      await bot.sendPhoto(chatId, chartBuffer, {
+      await bot.sendPhoto(chatId, namedBuffer as unknown as Buffer, {
         caption: `*${symbol}* | ${timeframe.toUpperCase()}\n\n_Grafik candlestick dengan Bollinger Bands & RSI_`,
         parse_mode: "Markdown",
       });
     } catch (error) {
       console.error(`[ChartCommand] Error generating chart:`, error);
 
-      // Edit loading message with error
-      await safeEditMessage(
+      // Edit loading message with error, with fallback
+      const edited = await safeEditMessage(
         bot,
         chatId,
         loadingMsg.message_id,
         `× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`,
       );
+
+      if (!edited) {
+        // Fallback: send error as new message
+        try {
+          await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}. Pastikan symbol valid.`);
+        } catch (sendError) {
+          console.error("[ChartCommand] Failed to send error message:", sendError);
+        }
+      }
     }
   }
 }
@@ -104,8 +116,9 @@ export class ChartCallbackHandler implements CallbackHandler {
 
     try {
       const chartBuffer = await this.chartService.generateChart(symbol, "1h");
+      const namedBuffer = Object.assign(chartBuffer, { name: `${symbol}_chart.png` });
 
-      await bot.sendPhoto(chatId, chartBuffer, {
+      await bot.sendPhoto(chatId, namedBuffer as unknown as Buffer, {
         caption: `*${symbol}* | 1H\n\n_Grafik candlestick dengan Bollinger Bands & RSI_`,
         parse_mode: "Markdown",
       });

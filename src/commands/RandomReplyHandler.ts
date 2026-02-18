@@ -7,6 +7,7 @@ import TelegramBot from "node-telegram-bot-api";
 
 import type { MessageHandler } from "./types.js";
 import { StickerService } from "../services/StickerService.js";
+import { sessionManager } from "../utils/SessionManager.js";
 
 /** Sticker asset filenames */
 const STICKER_OPTIONS = ["stk1.webm", "stk2.webm", "stk3.webm"] as const;
@@ -82,6 +83,11 @@ export class RandomReplyHandler implements MessageHandler {
       return false;
     }
 
+    // Skip if user has an active session (e.g. waiting for location input for weather/prayer)
+    if (sessionManager.getState(msg.chat.id)) {
+      return false;
+    }
+
     const isRandom = this.isRandomText(text);
     const isInsult = this.containsInsult(text);
     const isCompliment = this.isCompliment(text);
@@ -124,8 +130,10 @@ export class RandomReplyHandler implements MessageHandler {
       try {
         const stickerPath = this.stickerService.getStickerAssetPath(stickerOption);
 
-        // Send sticker using file path with explicit content type to avoid deprecation warning
-        await bot.sendSticker(chatId, stickerPath, {}, { contentType: "video/webm" });
+        // Assign .name property to avoid deprecation warning from node-telegram-bot-api
+        const namedPath = Object.assign(stickerPath, { name: `sticker.${stickerOption.split(".")[1]}` });
+
+        await bot.sendSticker(chatId, namedPath as unknown as string, {});
       } catch (err) {
         console.error("[RandomReplyHandler] Failed to send sticker:", err);
         // Fallback to text reply if sticker fails

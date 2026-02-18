@@ -23,9 +23,7 @@ export class WeatherCommand implements Command {
 
     // If no city provided, show location request button
     if (!location) {
-      sessionManager.startLocationRequest(chatId, "weather");
-
-      await bot.sendMessage(chatId, "*Cuaca*\n\nKetik nama kota atau kirim lokasimu:", {
+      const promptMsg = await bot.sendMessage(chatId, "*Cuaca*\n\nKetik nama kota atau kirim lokasimu:", {
         parse_mode: "Markdown",
         reply_markup: {
           keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: "× Batal" }]],
@@ -33,6 +31,7 @@ export class WeatherCommand implements Command {
           one_time_keyboard: true,
         },
       });
+      sessionManager.startLocationRequest(chatId, "weather", promptMsg.message_id);
       return;
     }
 
@@ -66,13 +65,22 @@ export class WeatherCommand implements Command {
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
 
       if (!edited) {
-        // Loading message was deleted, send new message
-        await bot.sendMessage(chatId, weatherMessage, editOptions);
+        // Loading message was deleted, send new message with same options
+        try {
+          if (hasMenuButton) {
+            await bot.sendMessage(chatId, weatherMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
+          } else {
+            await bot.sendMessage(chatId, weatherMessage);
+          }
+        } catch (sendError) {
+          console.error("[WeatherCommand] Failed to send message:", sendError);
+          await bot.sendMessage(chatId, "× Gagal menampilkan cuaca.");
+        }
       }
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);
@@ -110,12 +118,21 @@ export class WeatherCommand implements Command {
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, weatherMessage, editOptions);
+        try {
+          if (hasMenuButton) {
+            await bot.sendMessage(chatId, weatherMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
+          } else {
+            await bot.sendMessage(chatId, weatherMessage);
+          }
+        } catch (sendError) {
+          console.error("[WeatherCommand] Failed to send message:", sendError);
+          await bot.sendMessage(chatId, "× Gagal menampilkan cuaca.");
+        }
       }
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);

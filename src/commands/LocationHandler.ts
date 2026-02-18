@@ -39,28 +39,54 @@ export class LocationHandler implements MessageHandler {
         const data = state.data as LocationSessionData;
         const pendingCommand = data.pendingCommand;
 
-        // Clear session immediately
-        sessionManager.clearState(chatId);
+        // Clear session immediately to prevent duplicate processing
+        await sessionManager.clearState(chatId);
 
         try {
           if (pendingCommand === "weather") {
-            const weather = await this.weatherService.formattedWeatherByCoords(location.latitude, location.longitude);
-            // Remove keyboard
-            await bot.sendMessage(chatId, "✅ Location received! Fetching weather...", {
-              reply_markup: { remove_keyboard: true },
-            });
-            await bot.sendMessage(chatId, weather, { parse_mode: "Markdown" });
+            try {
+              const weather = await this.weatherService.formattedWeatherByCoords(location.latitude, location.longitude);
+              if (!weather) {
+                await bot.sendMessage(chatId, "× Gagal mendapatkan data cuaca.", {
+                  reply_markup: { remove_keyboard: true },
+                });
+                return;
+              }
+              // Send result directly (remove_keyboard in options)
+              await bot.sendMessage(chatId, weather, { 
+                parse_mode: "Markdown",
+                reply_markup: { remove_keyboard: true },
+              });
+            } catch (weatherError) {
+              console.error("[LocationHandler] Weather error:", weatherError);
+              await bot.sendMessage(chatId, "× Gagal mengambil data cuaca.");
+            }
           } else if (pendingCommand === "prayer") {
-            const timings = await this.prayerService.formattedTimingsByCoords(location.latitude, location.longitude);
-            // Remove keyboard
-            await bot.sendMessage(chatId, "✓ Lokasi diterima. Mengambil jadwal sholat...", {
-              reply_markup: { remove_keyboard: true },
-            });
-            await bot.sendMessage(chatId, timings, { parse_mode: "Markdown" });
+            try {
+              const timings = await this.prayerService.formattedTimingsByCoords(location.latitude, location.longitude);
+              if (!timings) {
+                await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.", {
+                  reply_markup: { remove_keyboard: true },
+                });
+                return;
+              }
+              // Send result directly (remove_keyboard in options)
+              await bot.sendMessage(chatId, timings, { 
+                parse_mode: "Markdown",
+                reply_markup: { remove_keyboard: true },
+              });
+            } catch (prayerError) {
+              console.error("[LocationHandler] Prayer error:", prayerError);
+              await bot.sendMessage(chatId, "× Gagal mendapatkan jadwal sholat.");
+            }
+          } else {
+            // Unknown pending command
+            console.warn("[LocationHandler] Unknown pending command:", pendingCommand);
+            await bot.sendMessage(chatId, "× Perintah yang diminta tidak dikenali.");
           }
         } catch (error) {
           console.error("[LocationHandler] Error executing pending command:", error);
-          await bot.sendMessage(chatId, "× Gagal mengambil data untuk lokasi Anda.");
+          await bot.sendMessage(chatId, "× Gagal memproses lokasi Anda.");
         }
         return;
       }

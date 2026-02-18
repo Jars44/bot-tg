@@ -38,6 +38,7 @@ export interface AnimeSessionData {
 /** Location request session data */
 export interface LocationSessionData {
   pendingCommand?: "weather" | "prayer";
+  messageId?: number;
 }
 
 /** Lyrics search session data */
@@ -192,7 +193,7 @@ interface Session {
 
 /** Session timeout in milliseconds (10 minutes) */
 /** Session timeout in milliseconds (10 minutes) */
-const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 
 /** Centralized Session Flow Keys */
 export const SESSION_FLOWS = {
@@ -391,11 +392,11 @@ export class SessionManager {
   /**
    * Start location request flow
    */
-  startLocationRequest(chatId: number, pendingCommand: "weather" | "prayer"): void {
+  startLocationRequest(chatId: number, pendingCommand: "weather" | "prayer", messageId?: number): void {
     this.setState(chatId, {
       flow: SESSION_FLOWS.LOCATION,
       step: "waiting",
-      data: { pendingCommand },
+      data: { pendingCommand, messageId },
     });
   }
 

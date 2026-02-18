@@ -138,14 +138,28 @@ export class DownloadService {
    */
   private readonly COBALT_INSTANCES: string[] = [
     ...(process.env.COBALT_API_URL ? [process.env.COBALT_API_URL] : []),
-    "https://cobalt.api.sc",
-    "https://api.cobalt.kwiatekmiki.pl",
-    "https://cobalt.canine.tools",
-    "https://cobalt.slpy.one",
-    "https://cobalt.startpage.xyz",
-    "https://api.cobalt.aizuu.pl",
-    "https://cobalt.club",
-    "https://api.cobalt.tools", // Official as last resort (often restricted)
+      "https://cobalt.canine.tools",
+      "https://cobalt-backend.canine.tools",
+      "https://cobalt-api.meowing.de",
+      "https://subito-c.meowing.de",
+      "https://nuko-c.meowing.de",
+      "https://kityune.imput.net",
+      "https://nachos.imput.net",
+      "https://sunny.imput.net",
+      "https://cobalt.omega.wolfy.love",
+      "https://cobalt.alpha.wolfy.love",
+      "https://api.dl.woof.monster",
+      "https://cobalt.slpy.one",
+      "https://api.cobalt.kwiatekmiki.pl",
+      "https://cobalt.api.sc",
+      "https://grapefruit.clxxped.lol",
+      "https://melon.clxxped.lol",
+      "https://cobaltapi.squair.xyz",
+      "https://api.qwkuns.me",
+      "https://api.cobalt.aizuu.pl",
+      "https://cobalt.startpage.xyz",
+      "https://cobalt.club",
+      "https://api.cobalt.tools",
   ];
 
   constructor(tempCleaner: TempCleanerService) {

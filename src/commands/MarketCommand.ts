@@ -182,8 +182,12 @@ export class MarketCallbackHandler implements CallbackHandler {
           // Delete the loading message
           await bot.deleteMessage(chatId, messageId);
 
+          // Assign a .name property to the buffer so node-telegram-bot-api uses it as the filename,
+          // suppressing the deprecation warning about defaulting to "data".
+          const namedBuffer = Object.assign(chartBuffer, { name: `${symbol}_chart.png` });
+
           // Send chart as photo
-          await bot.sendPhoto(chatId, chartBuffer, {
+          await bot.sendPhoto(chatId, namedBuffer as unknown as Buffer, {
             caption: `*${symbol} Grafik (1D)*\n_Klik tombol untuk kembali ke dashboard_`,
             parse_mode: "Markdown",
             reply_markup: {
@@ -192,11 +196,23 @@ export class MarketCallbackHandler implements CallbackHandler {
           });
         } catch (error) {
           console.error("[MarketCallback] Chart error:", error);
-          await safeEditMessage(bot, chatId, messageId, `× Gagal membuat grafik untuk ${symbol}`, {
+          const edited = await safeEditMessage(bot, chatId, messageId, `× Gagal membuat grafik untuk ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
             },
           });
+
+          if (!edited) {
+            try {
+              await bot.sendMessage(chatId, `× Gagal membuat grafik untuk ${symbol}.`, {
+                reply_markup: {
+                  inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
+                },
+              });
+            } catch (sendError) {
+              console.error("[MarketCallback] Failed to send error:", sendError);
+            }
+          }
         }
         break;
       }
@@ -217,11 +233,29 @@ export class MarketCallbackHandler implements CallbackHandler {
           });
         } catch (error) {
           console.error("[MarketCallback] Sentiment error:", error);
-          await safeEditMessage(bot, chatId, messageId, `× Gagal menganalisis sentimen untuk ${symbol}`, {
-            reply_markup: {
-              inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
+          const edited = await safeEditMessage(
+            bot,
+            chatId,
+            messageId,
+            `× Gagal menganalisis sentimen untuk ${symbol}`,
+            {
+              reply_markup: {
+                inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
+              },
             },
-          });
+          );
+
+          if (!edited) {
+            try {
+              await bot.sendMessage(chatId, `× Gagal menganalisis sentimen untuk ${symbol}.`, {
+                reply_markup: {
+                  inline_keyboard: [[{ text: "Kembali ke Dashboard", callback_data: `mkt_back_${symbol}` }]],
+                },
+              });
+            } catch (sendError) {
+              console.error("[MarketCallback] Failed to send error:", sendError);
+            }
+          }
         }
         break;
       }
@@ -270,12 +304,25 @@ export class MarketCallbackHandler implements CallbackHandler {
               },
             },
           );
-        } catch {
-          await safeEditMessage(bot, chatId, messageId, `× Gagal mengambil harga ${symbol}`, {
+        } catch (error) {
+          console.error("[MarketCallback] Alert price error:", error);
+          const edited = await safeEditMessage(bot, chatId, messageId, `× Gagal mengambil harga ${symbol}`, {
             reply_markup: {
               inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
             },
           });
+
+          if (!edited) {
+            try {
+              await bot.sendMessage(chatId, `× Gagal mengambil harga ${symbol}.`, {
+                reply_markup: {
+                  inline_keyboard: [[{ text: "Kembali", callback_data: `mkt_back_${symbol}` }]],
+                },
+              });
+            } catch (sendError) {
+              console.error("[MarketCallback] Failed to send error:", sendError);
+            }
+          }
         }
         break;
       }
@@ -343,8 +390,18 @@ export class MarketCallbackHandler implements CallbackHandler {
       }
 
       case "back": {
-        // Return to dashboard for the symbol
-        await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
+        // When coming back from a chart (photo message), delete it and send a new text message.
+        // We cannot editMessageText on a photo message - it will throw "there is no text in the message".
+        const sourceMessage = query.message;
+        const isPhotoMessage =
+          sourceMessage && (sourceMessage.photo || sourceMessage.sticker || sourceMessage.document);
+
+        if (isPhotoMessage) {
+          await bot.deleteMessage(chatId, messageId).catch(() => {});
+          await this.marketCommand.showDashboard(bot, chatId, symbol);
+        } else {
+          await this.marketCommand.showDashboard(bot, chatId, symbol, messageId);
+        }
         break;
       }
     }

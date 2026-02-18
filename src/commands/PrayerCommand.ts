@@ -23,9 +23,7 @@ export class PrayerCommand implements Command {
 
     // If no city provided, show location request button
     if (!city) {
-      sessionManager.startLocationRequest(chatId, "prayer");
-
-      await bot.sendMessage(chatId, "*Jadwal Sholat*\n\nKetik nama kota atau kirim lokasimu:", {
+      const promptMsg = await bot.sendMessage(chatId, "*Jadwal Sholat*\n\nKetik nama kota atau kirim lokasimu:", {
         parse_mode: "Markdown",
         reply_markup: {
           keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: "× Batal" }]],
@@ -33,6 +31,7 @@ export class PrayerCommand implements Command {
           one_time_keyboard: true,
         },
       });
+      sessionManager.startLocationRequest(chatId, "prayer", promptMsg.message_id);
       return;
     }
 
@@ -59,12 +58,21 @@ export class PrayerCommand implements Command {
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, prayerMessage, editOptions);
+        try {
+          if (hasMenuButton) {
+            await bot.sendMessage(chatId, prayerMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
+          } else {
+            await bot.sendMessage(chatId, prayerMessage);
+          }
+        } catch (sendError) {
+          console.error("[PrayerCommand] Failed to send message:", sendError);
+          await bot.sendMessage(chatId, "× Gagal menampilkan jadwal sholat.");
+        }
       }
     } catch (error) {
       console.error("[PrayerCommand] Error:", error);
@@ -100,12 +108,21 @@ export class PrayerCommand implements Command {
 
       // Only add back button if triggered from menu
       const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : {};
+      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
 
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, prayerMessage, editOptions);
 
       if (!edited) {
-        await bot.sendMessage(chatId, prayerMessage, editOptions);
+        try {
+          if (hasMenuButton) {
+            await bot.sendMessage(chatId, prayerMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
+          } else {
+            await bot.sendMessage(chatId, prayerMessage);
+          }
+        } catch (sendError) {
+          console.error("[PrayerCommand] Failed to send message:", sendError);
+          await bot.sendMessage(chatId, "× Gagal menampilkan jadwal sholat.");
+        }
       }
     } catch (error) {
       console.error("[PrayerCommand] Error:", error);

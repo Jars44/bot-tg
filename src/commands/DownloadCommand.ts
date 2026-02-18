@@ -193,7 +193,9 @@ export class DownloadCallbackHandler implements CallbackHandler {
       {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [[{ text: "× Batal", callback_data: "dl_cancel" }]],
+          inline_keyboard: [
+            [{ text: "× Batal", callback_data: "dl_cancel" }, { text: "Kembali", callback_data: "dl_back_format" }],
+          ],
         },
       },
     );
