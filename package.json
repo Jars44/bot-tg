@@ -1,6 +1,6 @@
 {
   "name": "jarvis",
-  "version": "2.0.0",
+  "version": "2.39.0",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
