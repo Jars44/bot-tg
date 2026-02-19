@@ -5,7 +5,6 @@ import { PrayerService } from "../services/PrayerService.js";
 import type { VibeService } from "../services/VibeService.js";
 import type { UrbanExplorationService } from "../services/UrbanExplorationService.js";
 import { safeEditMessage } from "../utils/uiHelper.js";
-import { toTitleCase } from "../utils/helpers.js";
 import { S } from "../config/symbols.js";
 
 export class LocationCallbackHandler implements CallbackHandler {
@@ -55,15 +54,10 @@ export class LocationCallbackHandler implements CallbackHandler {
           return;
         }
 
-        const { weather, locationName } = result;
-        const dayTime = weather.is_day ? "Siang" : "Malam";
+        const { weather } = result;
+        const message = this.weatherService.formatWeatherMessage(weather);
 
-        await safeEditMessage(
-          bot,
-          chatId,
-          messageId,
-          `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}°C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`,
-        );
+        await safeEditMessage(bot, chatId, messageId, message, { parse_mode: "Markdown" });
       } else if (data.startsWith("loc_prayer_")) {
         const parts = data.replace("loc_prayer_", "").split("_");
         const lat = parseFloat(parts[0]);

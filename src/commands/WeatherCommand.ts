@@ -5,7 +5,6 @@ import { MESSAGES } from "../config/messages.js";
 import { S } from "../config/symbols.js";
 import { sessionManager } from "../utils/SessionManager.js";
 import { getBackToMenuButton, safeEditMessage } from "../utils/uiHelper.js";
-import { toTitleCase } from "../utils/helpers.js";
 
 export class WeatherCommand implements Command {
   pattern = /^\/cuaca(?:\s+(.+))?$/;
@@ -20,19 +19,41 @@ export class WeatherCommand implements Command {
     const location = match?.[1]?.trim();
 
     if (!location) {
-      const promptMsg = await bot.sendMessage(chatId, "*Cuaca*\n\nKetik nama kota atau kirim lokasimu:", {
-        parse_mode: "Markdown",
-        reply_markup: {
-          keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: `${S.FAIL} Batal` }]],
-          resize_keyboard: true,
-          one_time_keyboard: true,
+      const promptMsg = await bot.sendMessage(
+        chatId,
+        "*Cuaca*\n\nKetik nama kota atau kirim lokasimu:\n\n_Tip: Untuk hasil lebih akurat, ketik spesifik seperti_ `Singosari, Malang` _atau_ `Singosari, Malang, Jawa Timur`",
+        {
+          parse_mode: "Markdown",
+          reply_markup: {
+            keyboard: [[{ text: "Kirim Lokasi", request_location: true }], [{ text: `${S.FAIL} Batal` }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+          },
         },
-      });
+      );
       sessionManager.startLocationRequest(chatId, "weather", promptMsg.message_id);
       return;
     }
 
     await this.fetchAndSendWeather(bot, chatId, location);
+  }
+
+  private async sendWeatherResult(bot: TelegramBot, chatId: number, msgId: number, message: string): Promise<void> {
+    const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
+    const options = hasMenuButton
+      ? { parse_mode: "Markdown" as const, reply_markup: { inline_keyboard: getBackToMenuButton() } }
+      : { parse_mode: "Markdown" as const };
+
+    const edited = await safeEditMessage(bot, chatId, msgId, message, options);
+    if (!edited) {
+      // Edit failed — delete the stale loading message before sending a fresh one
+      try {
+        await bot.deleteMessage(chatId, msgId);
+      } catch {
+        /* ignore if already gone */
+      }
+      await bot.sendMessage(chatId, message, options);
+    }
   }
 
   async fetchAndSendWeather(bot: TelegramBot, chatId: number, location: string): Promise<void> {
@@ -51,36 +72,27 @@ export class WeatherCommand implements Command {
           MESSAGES.ERROR_LOCATION_NOT_FOUND(location),
         );
         if (!edited) {
+          try {
+            await bot.deleteMessage(chatId, searchingMessage.message_id);
+          } catch {
+            /* ignore */
+          }
           await bot.sendMessage(chatId, MESSAGES.ERROR_LOCATION_NOT_FOUND(location));
         }
         return;
       }
 
-      const { weather, locationName } = result;
-      const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}${S.TEMP}C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
-
-      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
-
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
-
-      if (!edited) {
-        try {
-          if (hasMenuButton) {
-            await bot.sendMessage(chatId, weatherMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
-          } else {
-            await bot.sendMessage(chatId, weatherMessage);
-          }
-        } catch (sendError) {
-          console.error("[WeatherCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan cuaca.`);
-        }
-      }
+      const message = this.weatherService.formatWeatherMessage(result.weather);
+      await this.sendWeatherResult(bot, chatId, searchingMessage.message_id, message);
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_WEATHER);
       if (!edited) {
+        try {
+          await bot.deleteMessage(chatId, searchingMessage.message_id);
+        } catch {
+          /* ignore */
+        }
         await bot.sendMessage(chatId, MESSAGES.ERROR_WEATHER);
       }
     }
@@ -102,36 +114,27 @@ export class WeatherCommand implements Command {
           `${S.FAIL} Gagal mendapatkan data cuaca.`,
         );
         if (!edited) {
+          try {
+            await bot.deleteMessage(chatId, searchingMessage.message_id);
+          } catch {
+            /* ignore */
+          }
           await bot.sendMessage(chatId, `${S.FAIL} Gagal mendapatkan data cuaca.`);
         }
         return;
       }
 
-      const { weather, locationName } = result;
-      const dayTime = weather.is_day ? "Siang" : "Malam";
-      const weatherMessage = `Cuaca di ${toTitleCase(locationName)}:\nSuhu: ${weather.temperature}${S.TEMP}C\nAngin: ${weather.windspeed} km/h\nSiang/Malam: ${dayTime}`;
-
-      const hasMenuButton = sessionManager.shouldShowMenuButton(chatId);
-      const editOptions = hasMenuButton ? { reply_markup: { inline_keyboard: getBackToMenuButton() } } : undefined;
-
-      const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, weatherMessage, editOptions);
-
-      if (!edited) {
-        try {
-          if (hasMenuButton) {
-            await bot.sendMessage(chatId, weatherMessage, { reply_markup: { inline_keyboard: getBackToMenuButton() } });
-          } else {
-            await bot.sendMessage(chatId, weatherMessage);
-          }
-        } catch (sendError) {
-          console.error("[WeatherCommand] Failed to send message:", sendError);
-          await bot.sendMessage(chatId, `${S.FAIL} Gagal menampilkan cuaca.`);
-        }
-      }
+      const message = this.weatherService.formatWeatherMessage(result.weather);
+      await this.sendWeatherResult(bot, chatId, searchingMessage.message_id, message);
     } catch (error) {
       console.error("[WeatherCommand] Error:", error);
       const edited = await safeEditMessage(bot, chatId, searchingMessage.message_id, MESSAGES.ERROR_WEATHER);
       if (!edited) {
+        try {
+          await bot.deleteMessage(chatId, searchingMessage.message_id);
+        } catch {
+          /* ignore */
+        }
         await bot.sendMessage(chatId, MESSAGES.ERROR_WEATHER);
       }
     }

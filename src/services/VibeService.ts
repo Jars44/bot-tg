@@ -213,7 +213,23 @@ export class VibeService {
       this.reverseGeocode(lat, lon),
     ]);
 
-    const weather = weatherResult?.weather ?? { temperature: 25, windspeed: 10, is_day: true };
+    const weather = weatherResult?.weather ?? {
+      temperature: 25,
+      apparent_temperature: 25,
+      humidity: 60,
+      windspeed: 10,
+      wind_direction: 0,
+      cloud_cover: 20,
+      precipitation_probability: 0,
+      description: "Cerah",
+      sunrise: "06:00",
+      sunset: "18:00",
+      temp_max: 28,
+      temp_min: 22,
+      uv_index_max: 5,
+      provider: "Open-Meteo" as const,
+      resolvedAddress: "default",
+    };
     const resolvedLocation = locationName ?? `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
     const hour = new Date().getHours();
     const timeLabel = this.getTimeLabel(hour);
@@ -234,7 +250,23 @@ export class VibeService {
   async getVibeByCity(cityName: string): Promise<VibeProfile> {
     const result = await this.weatherService.getWeatherByLocation(cityName);
     if (!result) {
-      return this.generateVibeFallback({ temperature: 25, windspeed: 10, is_day: true });
+      return this.generateVibeFallback({
+        temperature: 25,
+        apparent_temperature: 25,
+        humidity: 60,
+        windspeed: 10,
+        wind_direction: 0,
+        cloud_cover: 20,
+        precipitation_probability: 0,
+        description: "Cerah",
+        sunrise: "06:00",
+        sunset: "18:00",
+        temp_max: 28,
+        temp_min: 22,
+        uv_index_max: 5,
+        provider: "Open-Meteo" as const,
+        resolvedAddress: "default",
+      });
     }
 
     const hour = new Date().getHours();
@@ -281,12 +313,20 @@ export class VibeService {
     return FALLBACK_VIBES.get(condition) ?? FALLBACK_VIBES.get("clear_day")!;
   }
 
+  private isDaytime(weather: WeatherData): boolean {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const [rh, rm] = weather.sunrise.split(":").map(Number);
+    const [sh, sm] = weather.sunset.split(":").map(Number);
+    return cur >= rh * 60 + rm && cur < sh * 60 + sm;
+  }
+
   private classifyWeather(weather: WeatherData): WeatherCondition {
     if (weather.windspeed > 40) return "windy";
     if (weather.temperature < 10) return "cold";
     if (weather.temperature > 33) return "hot";
 
-    if (!weather.is_day) return "clear_night";
+    if (!this.isDaytime(weather)) return "clear_night";
     if (weather.windspeed > 20) return "cloudy";
 
     return "clear_day";
@@ -294,7 +334,7 @@ export class VibeService {
 
   private describeWeather(weather: WeatherData): string {
     const parts: string[] = [];
-    if (!weather.is_day) parts.push("nighttime");
+    if (!this.isDaytime(weather)) parts.push("nighttime");
     if (weather.windspeed > 30) parts.push("windy");
     if (weather.temperature < 15) parts.push("cold");
     else if (weather.temperature > 30) parts.push("hot");

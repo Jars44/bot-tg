@@ -14,8 +14,10 @@ export const CONFIG = {
 
   API: {
     BMKG_BASE: "https://data.bmkg.go.id/DataMKG/TEWS/",
+    BMKG_API: "https://api.bmkg.go.id/publik/prakiraan-cuaca",
+    BMKG_NOWCAST: "https://www.bmkg.go.id/alerts/nowcast/id",
     NOMINATIM: "https://nominatim.openstreetmap.org",
-    OPEN_METEO: "https://api.open-meteo.com/v1",
+    OPEN_METEO: "https://api.open-meteo.com/v1/forecast",
     LYRICS: "https://lrclib.net/api/search",
     FAVQS: "https://favqs.com/api/qotd",
     GNEWS: "https://gnews.io/api/v4",
