@@ -1,5 +1,6 @@
 import "dotenv/config";
 import TelegramBot from "node-telegram-bot-api";
+import express from "express";
 
 import { getEnvVar, ENV_KEYS } from "./config/index.js";
 
@@ -84,6 +85,17 @@ import {
 
 import { setupErrorHandlers } from "./utils/errorHandler.js";
 import { sessionManager } from "./utils/SessionManager.js";
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get("/", (_req: express.Request, res: express.Response) => {
+  res.send("Bot is running!");
+});
+
+app.listen(port, () => {
+  console.log(`[Express] Server is listening on port ${port}`);
+});
 
 async function main(): Promise<void> {
   console.log("[Bot] Starting initialization...");

@@ -371,7 +371,6 @@ export class WeatherService {
     const country = addr.country ?? "";
     const normPlace = place.replace(stripPrefix, "").trim();
     const showCounty = county.length > 0 && normPlace.toLowerCase() !== county.toLowerCase();
-    // Fall back to state, then country when place-level data is absent
     return [normPlace, showCounty ? county : "", state || (!normPlace && !county ? country : "")]
       .filter(Boolean)
       .join(", ");
@@ -449,9 +448,6 @@ export class WeatherService {
         const itemXml = m[1];
         const title = this.extractXmlTag(itemXml, "title") ?? "";
         const titleNorm = title.toLowerCase();
-        // Only match if the full normalized province phrase appears in the title.
-        // Word-by-word matching causes false positives between provinces that share
-        // a common word (e.g. "jawa" matching both Jawa Timur and Jawa Tengah).
         if (titleNorm.includes(normalizedQuery)) {
           const description = this.extractXmlTag(itemXml, "description") ?? "";
           return { title, description };
@@ -542,7 +538,6 @@ export class WeatherService {
     resolvedAddress: string,
     province: string | null,
   ): Promise<UnifiedWeatherData> {
-    // Fetch BMKG and Open-Meteo in parallel
     const [bmkgResult, omResult] = await Promise.allSettled([
       this.fetchFromBMKG(lat, lon, adm4Code, resolvedAddress, province),
       this.fetchFromOpenMeteo(lat, lon, resolvedAddress),
@@ -552,7 +547,6 @@ export class WeatherService {
     const bmkg = bmkgResult.status === "fulfilled" ? bmkgResult.value : null;
 
     if (bmkg && om) {
-      // Merge: BMKG for core weather fields; Open-Meteo for UV index and accurate sunrise/sunset
       return {
         provider: "BMKG",
         resolvedAddress,
@@ -566,7 +560,6 @@ export class WeatherService {
         wind_direction: bmkg.wind_direction,
         precipitation_probability: bmkg.precipitation_probability,
         description: bmkg.description,
-        // Open-Meteo provides accurate UV and astronomical sunrise/sunset
         uv_index_max: om.uv_index_max,
         sunrise: om.sunrise,
         sunset: om.sunset,
@@ -624,7 +617,6 @@ export class WeatherService {
     }
 
     if (countryCode === "id") {
-      // If forward geocode already gave us locationName, also do reverse to get adm4+province
       const rev = await this.reverseGeocodeCoords(lat, lon);
       adm4Code = rev.adm4Code;
       province = rev.province;

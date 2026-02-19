@@ -10,12 +10,12 @@ import {
 } from "../utils/uiHelper.js";
 import { MESSAGES } from "../config/messages.js";
 import { S } from "../config/symbols.js";
-import { sessionManager, type RiskSessionData } from "../utils/SessionManager.js";
+import { sessionManager, type RiskSessionData, type SessionState } from "../utils/SessionManager.js";
 
 export class RiskInputHandler {
   constructor() {}
 
-  async handle(bot: TelegramBot, msg: TelegramBot.Message, state: any): Promise<void> {
+  async handle(bot: TelegramBot, msg: TelegramBot.Message, state: SessionState & { flow: "risk" }): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text || "";
     const value = parseFloat(text);
@@ -32,7 +32,7 @@ export class RiskInputHandler {
       await bot.sendMessage(chatId, `Modal: ${formatUSD(value)}\n\nPilih persentase risiko per trade:`, {
         reply_markup: { inline_keyboard: createRiskPercentButtons() },
       });
-    } else if (state.step === "risk_percentage") {
+    } else if (state.step === "risk_percent") {
       sessionManager.updateRiskData(chatId, { riskPercent: value });
       sessionManager.setRiskStep(chatId, "stop_loss");
 

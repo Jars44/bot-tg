@@ -233,8 +233,8 @@ export class CloseCommand implements Command {
           sessionManager.startTradeConfirmation(chatId, {
             action: "sell",
             symbol: "ALL",
-            quantity: 0, // Not used for close all
-            price: 0, // Not used for close all
+            quantity: 0,
+            price: 0,
             messageId: sentMessage.message_id,
           });
         } catch (error) {

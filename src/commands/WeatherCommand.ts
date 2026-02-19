@@ -46,11 +46,10 @@ export class WeatherCommand implements Command {
 
     const edited = await safeEditMessage(bot, chatId, msgId, message, options);
     if (!edited) {
-      // Edit failed — delete the stale loading message before sending a fresh one
       try {
         await bot.deleteMessage(chatId, msgId);
       } catch {
-        /* ignore if already gone */
+        /* ignore */
       }
       await bot.sendMessage(chatId, message, options);
     }
