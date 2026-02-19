@@ -11,7 +11,7 @@
   },
   "keywords": [],
   "author": "jarsz",
-  "license": "ISC",
+  "license": "MIT",
   "description": "Production-grade Telegram Bot",
   "dependencies": {
     "@google/genai": "^1.41.0",
