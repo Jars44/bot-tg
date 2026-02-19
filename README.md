@@ -584,4 +584,8 @@ You're free to use this code for:
 
 ---
 
-<div align="center">**A production-grade Telegram bot fusing real-time financial intelligence, AI-powered lifestyle curation, and personal productivity — all from a single chat.**</div>
+<div align="center">
+
+**A production-grade Telegram bot fusing real-time financial intelligence, AI-powered lifestyle curation, and personal productivity — all from a single chat.**
+
+</div>

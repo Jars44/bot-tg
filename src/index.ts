@@ -87,7 +87,7 @@ import { setupErrorHandlers } from "./utils/errorHandler.js";
 import { sessionManager } from "./utils/SessionManager.js";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 7860;
 
 app.get("/", (_req: express.Request, res: express.Response) => {
   res.send("Bot is running!");
