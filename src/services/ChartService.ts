@@ -31,9 +31,6 @@ export class ChartService {
   constructor(financeService: FinanceDataService) {
     this.financeService = financeService;
 
-    console.log("Initializing ChartJSNodeCanvas...");
-    console.log("CandlestickController.id:", CandlestickController.id);
-
     this.chartCanvas = new ChartJSNodeCanvas({
       width: 800,
       height: 600,

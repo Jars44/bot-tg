@@ -107,13 +107,10 @@ export class DownloadService {
   }
 
   async downloadMedia(url: string, audioOnly: boolean = false): Promise<DownloadResult> {
-    console.log(`[DownloadService] Processing: ${url}`);
-
     let cobaltError: string | null = null;
 
     for (const instanceUrl of this.COBALT_INSTANCES) {
       try {
-        console.log(`[DownloadService] Trying Cobalt: ${instanceUrl}`);
         const result = await this.downloadViaCobalt(url, instanceUrl, audioOnly);
         console.log(`[DownloadService] ${S.SUCCESS} Cobalt success via ${instanceUrl}`);
         return result;
@@ -182,8 +179,6 @@ export class DownloadService {
   }
 
   private async downloadViaYtDlp(url: string, audioOnly: boolean): Promise<DownloadResult> {
-    console.log(`[DownloadService] Running yt-dlp metadata extraction for: ${url}`);
-
     try {
       const metadata = (await Promise.race([
         youtubedl(url, {
@@ -223,8 +218,6 @@ export class DownloadService {
 
       const title = metadata.title || "media";
       const ext = audioOnly ? "mp3" : metadata.ext || "mp4";
-
-      console.log(`[DownloadService] yt-dlp extracted stream URL for: ${title}`);
 
       return {
         url: streamUrl,

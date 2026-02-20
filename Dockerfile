@@ -1,13 +1,12 @@
 # 1. Gunakan official image dari Bun (Cepat & Ringan)
-FROM oven/bun:1 as base
+FROM oven/bun:1 as builder
 
 # 2. Set folder kerja di dalam container
 WORKDIR /app
 
-# 3. Install Python3 (Wajib untuk youtube-dl-exec)
-# Kita bersihkan cache apt setelah install agar ukuran image tetap kecil
+# 3. Install Python3 (Wajib untuk youtube-dl-exec) dan curl untuk health check
 RUN apt-get update && \
-    apt-get install -y python3 && \
+    apt-get install -y python3 curl build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 # 4. Copy file list dependency terlebih dahulu
@@ -21,11 +20,35 @@ RUN bun install
 COPY . .
 
 # 7. Build TypeScript menjadi JavaScript
-# (Pastikan di package.json kamu ada script: "build": "tsc" atau sejenisnya)
 RUN bun run build
+
+# ============================================
+# Production stage - lebih ringan
+# ============================================
+FROM oven/bun:1
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && \
+    apt-get install -y python3 curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy compiled app dan dependencies dari builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
 
 # 8. Set environment mode ke production
 ENV NODE_ENV=production
+ENV PORT=7860
 
-# 9. Perintah untuk menyalakan bot
+# 9. Expose port yang digunakan
+EXPOSE 7860
+
+# Health check - Telegram webhook mode requires quick startup
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+CMD curl -f http://localhost:7860/ || exit 1
+
+# 10. Perintah untuk menyalakan bot (webhook mode)
 CMD ["bun", "run", "start"]

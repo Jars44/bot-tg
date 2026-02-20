@@ -35,7 +35,6 @@ export class TempCleanerService {
 
           if (age > CONFIG.TEMP_FILE_MAX_AGE_MS) {
             fs.unlinkSync(filePath);
-            console.log(`[TempCleaner] Deleted old file: ${file}`);
           }
         } catch (err) {
           console.error(`[TempCleaner] Error processing file ${file}:`, err);
@@ -50,7 +49,6 @@ export class TempCleanerService {
     this.ensureTempDir();
 
     this.cronJob = cron.schedule("0 * * * *", () => {
-      console.log("[TempCleaner] Running scheduled cleanup...");
       this.cleanTempDirectory();
     });
 

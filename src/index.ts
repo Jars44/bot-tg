@@ -87,15 +87,12 @@ import { setupErrorHandlers } from "./utils/errorHandler.js";
 import { sessionManager } from "./utils/SessionManager.js";
 
 const app = express();
-const port = process.env.PORT || 7860;
 
 app.get("/", (_req: express.Request, res: express.Response) => {
   res.send("Bot is running!");
 });
 
-app.listen(port, () => {
-  console.log(`[Express] Server is listening on port ${port}`);
-});
+// Initialize and run the bot
 
 async function main(): Promise<void> {
   console.log("[Bot] Starting initialization...");
@@ -106,7 +103,6 @@ async function main(): Promise<void> {
   if (!token || token.length < 20 || !token.includes(":")) {
     throw new Error("Invalid or missing BOT_TOKEN. Check your .env file.");
   }
-  console.log("[Bot] Token format validated");
 
   const db = new JsonDb();
   await db.init();
@@ -137,35 +133,53 @@ async function main(): Promise<void> {
   const economicCalendarService = new EconomicCalendarService(httpClient);
   const alertScheduler = new AlertScheduler(db, financeDataService, economicCalendarService);
   const chartService = new ChartService(financeDataService);
-  console.log("[Bot] Financial services initialized");
 
   const aiService = new AIService();
   const vibeService = new VibeService(aiService, weatherService, httpClient);
   const aestheticService = new AestheticService(httpClient, aiService);
   const urbanExplorationService = new UrbanExplorationService(aiService, httpClient);
   const brainstormService = new BrainstormService(aiService);
-  console.log("[Bot] Lifestyle services initialized");
 
-  const bot = new TelegramBot(token, {
-    polling: {
-      interval: 1000,
-      autoStart: true,
-      params: {
-        timeout: 10,
+  const bot = new TelegramBot(token);
+  console.log("[Bot] Telegram bot initialized in webhook mode");
+
+  let webhookUrl: string;
+
+  if (process.env.WEBHOOK_URL) {
+    webhookUrl = process.env.WEBHOOK_URL.replace(/\/$/, "");
+    console.log(`[Webhook] Using explicit WEBHOOK_URL: ${webhookUrl}`);
+  } else if (process.env.SPACE_HOST) {
+    webhookUrl = `https://${process.env.SPACE_HOST}`;
+    console.log(`[Webhook] Using HF SPACE_HOST: ${webhookUrl}`);
+  } else {
+    console.warn("[Webhook] No WEBHOOK_URL or SPACE_HOST found. Skipping webhook registration.");
+    console.warn("[Webhook] Set WEBHOOK_URL in HF Spaces Secrets for webhook mode.");
+    webhookUrl = "";
+  }
+
+  if (webhookUrl) {
+    webhookUrl = `${webhookUrl}/bot${token}`;
+
+    try {
+      const webhookOptions = {
         allowed_updates: ["message", "callback_query"],
-      },
-    },
-  });
-  console.log("[Bot] Telegram bot initialized with polling");
+        drop_pending_updates: true,
+      };
 
-  bot.on("polling_error", (error) => {
-    const errorObj = error as unknown as Record<string, unknown>;
-    if (errorObj.code === "EFATAL") {
-      console.error("[Bot] Polling error EFATAL:", errorObj.message);
-      console.log("[Bot] Attempting to restart polling...");
-    } else {
-      console.error("[Bot] Polling error:", error);
+      await bot.setWebHook(webhookUrl, webhookOptions as Parameters<typeof bot.setWebHook>[1]);
+
+      console.log("[Bot] Webhook successfully registered with Telegram API");
+      console.log(`[Bot] Webhook URL: ${webhookUrl}`);
+    } catch (err) {
+      console.error("[Bot] Failed to set webhook (webhook mode disabled):", err);
+      console.error("[Bot] Using fallback: polling will be used if available. Check WEBHOOK_URL in HF Spaces Secrets.");
+      console.error("[Bot] To fix: Set WEBHOOK_URL env var to your HF Space's public URL");
     }
+  }
+
+  app.post(`/bot${token}`, express.json(), (req, res) => {
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
   });
 
   bot.on("error", (error) => {
@@ -387,12 +401,14 @@ async function main(): Promise<void> {
     }
   });
 
-  console.log("[Bot] All handlers registered");
-  console.log(
-    "[Bot] Financial Suite: Portfolio (/portfolio), Trading (/buy, /sell), Expense (/catat), Alerts (/alert)",
-  );
-  console.log("[Bot] Lifestyle Suite: Vibe (/vibe), Moodboard (/moodboard), Hunt (/hunt), Brainstorm (/brainstorm)");
   console.log("[Bot] Bot is running! Press Ctrl+C to stop.");
+
+  // Start the Express server after all handlers are registered
+  const port = Number(process.env.PORT || 7860);
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`[Express] Server listening on port ${port} (0.0.0.0)`);
+    console.log(`[Webhook] Ready to receive updates at /bot${token}`);
+  });
 }
 
 main().catch((err) => {
